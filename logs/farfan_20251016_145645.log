@@ -1,0 +1,15 @@
+2025-10-16 14:56:45,739 [INFO] __main__: ================================================================================
+2025-10-16 14:56:45,739 [INFO] __main__: FARFAN 3.0 - Policy Analysis Orchestrator
+2025-10-16 14:56:45,739 [INFO] __main__: World's First Causal Mechanism Analysis System
+2025-10-16 14:56:45,739 [INFO] __main__: ================================================================================
+2025-10-16 14:56:45,739 [INFO] orchestrator.core_orchestrator: Initializing FARFAN Orchestrator
+2025-10-16 14:56:45,739 [INFO] orchestrator.question_router: Loading questionnaire from /home/runner/work/FARFAN-3.0/FARFAN-3.0/cuestionario.json
+2025-10-16 14:56:45,743 [INFO] orchestrator.question_router: Loaded 300 questions
+2025-10-16 14:56:45,743 [INFO] orchestrator.question_router: Built routing table with 300 entries
+2025-10-16 14:56:45,743 [INFO] orchestrator.question_router: Loading questionnaire from /home/runner/work/FARFAN-3.0/FARFAN-3.0/cuestionario.json
+2025-10-16 14:56:45,747 [INFO] orchestrator.question_router: Loaded 300 questions
+2025-10-16 14:56:45,747 [INFO] orchestrator.question_router: Built routing table with 300 entries
+2025-10-16 14:56:45,747 [INFO] orchestrator.choreographer: Built dependency graph with 8 nodes and 7 edges
+2025-10-16 14:56:45,747 [INFO] orchestrator.circuit_breaker: Circuit Breaker initialized: failure_threshold=3, timeout=60s, half_open_timeout=30s
+2025-10-16 14:56:45,747 [INFO] orchestrator.core_orchestrator: FARFAN Orchestrator initialized successfully
+2025-10-16 14:56:45,747 [INFO] __main__: System Health Check
