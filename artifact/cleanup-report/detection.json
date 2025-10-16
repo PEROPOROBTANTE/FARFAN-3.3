@@ -1,0 +1,134 @@
+[
+  {
+    "path": "semantic_chunking_policy.py",
+    "size": 21267,
+    "language": "Python",
+    "protected": false
+  },
+  {
+    "path": "cuestionario_canonico.txt",
+    "size": 66953,
+    "language": "Text",
+    "protected": false
+  },
+  {
+    "path": "evidence_quality_auditors.py",
+    "size": 35190,
+    "language": "Python",
+    "protected": false
+  },
+  {
+    "path": "cuestionario.json",
+    "size": 840291,
+    "language": "JSON",
+    "protected": false
+  },
+  {
+    "path": "policy_processor.py",
+    "size": 42120,
+    "language": "Python",
+    "protected": false
+  },
+  {
+    "path": "rubric_scoring.json",
+    "size": 43413,
+    "language": "JSON",
+    "protected": false
+  },
+  {
+    "path": "temp_rest.txt",
+    "size": 90655,
+    "language": "Text",
+    "protected": false
+  },
+  {
+    "path": "financiero_viabilidad_tablas.py",
+    "size": 99111,
+    "language": "Python",
+    "protected": false
+  },
+  {
+    "path": "teoria_cambio.py",
+    "size": 34644,
+    "language": "Python",
+    "protected": false
+  },
+  {
+    "path": "contradiction_deteccion.py",
+    "size": 113953,
+    "language": "Python",
+    "protected": false
+  },
+  {
+    "path": "emebedding_policy.py",
+    "size": 54068,
+    "language": "Python",
+    "protected": false
+  },
+  {
+    "path": "dereck_beach",
+    "size": 179026,
+    "language": "Unknown",
+    "protected": false
+  },
+  {
+    "path": ".idea/vcs.xml",
+    "size": 167,
+    "language": "Unknown",
+    "protected": false
+  },
+  {
+    "path": ".idea/copilot.data.migration.edit.xml",
+    "size": 189,
+    "language": "Unknown",
+    "protected": false
+  },
+  {
+    "path": ".idea/FARFAN-3.0.iml",
+    "size": 226,
+    "language": "Unknown",
+    "protected": false
+  },
+  {
+    "path": ".idea/copilot.data.migration.ask.xml",
+    "size": 188,
+    "language": "Unknown",
+    "protected": false
+  },
+  {
+    "path": ".idea/misc.xml",
+    "size": 383,
+    "language": "Unknown",
+    "protected": false
+  },
+  {
+    "path": ".idea/.gitignore",
+    "size": 176,
+    "language": "Unknown",
+    "protected": false
+  },
+  {
+    "path": ".idea/copilot.data.migration.ask2agent.xml",
+    "size": 194,
+    "language": "Unknown",
+    "protected": false
+  },
+  {
+    "path": ".idea/copilot.data.migration.agent.xml",
+    "size": 190,
+    "language": "Unknown",
+    "protected": false
+  },
+  {
+    "path": ".idea/inspectionProfiles/profiles_settings.xml",
+    "size": 174,
+    "language": "Unknown",
+    "protected": false
+  },
+  {
+    "path": ".idea/inspectionProfiles/Project_Default.xml",
+    "size": 2325,
+    "language": "Unknown",
+    "protected": false
+  }
+]
