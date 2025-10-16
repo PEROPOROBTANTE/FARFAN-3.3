@@ -1446,4 +1446,4 @@ if __name__ == "__main__":
         dimension=PolicyDimension.ESTRATEGICO
     )
 
-    print(
+    print(result)
