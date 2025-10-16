@@ -139,20 +139,83 @@ def test_question_content(data):
 
 def test_question_router_integration():
     """Test that QuestionRouter can load the cuestionario"""
-    logger.info("\nTest 5: Testing QuestionRouter integration")
+    logger.info("\nTest 5: Testing QuestionRouter integration and validation")
     
     try:
-        # Import without triggering full orchestrator
+        # Test the validator directly without importing full orchestrator
         import sys
-        sys.path.insert(0, str(Path(__file__).parent))
+        import importlib.util
+        from pathlib import Path
         
-        # We'll test the loading logic without importing the full module
-        # since it has dependencies that may not be installed
-        logger.info("✓ Question router can be imported (structure validated above)")
-        return True
+        # Direct import of validator module
+        validator_path = Path('orchestrator/cuestionario_validator.py')
+        spec = importlib.util.spec_from_file_location("cuestionario_validator", validator_path)
+        validator_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(validator_module)
+        CuestionarioValidator = validator_module.CuestionarioValidator
+        
+        # Load cuestionario.json
+        import json
+        with open('cuestionario.json', 'r') as f:
+            data = json.load(f)
+        
+        # Create mock questions structure for validation
+        mock_questions = {}
+        policy_points = list(data['puntos_decalogo'].keys())
+        base_questions = data['preguntas_base']
+        
+        # Simple mock that mimics QuestionRouter structure
+        from dataclasses import dataclass
+        from typing import List, Dict
+        
+        @dataclass
+        class MockQuestion:
+            policy_area: str
+            dimension: str
+            question_num: int
+            verification_patterns: List[str]
+            rubric_levels: Dict[str, float]
+        
+        # Create mock questions
+        questions_per_policy = 30
+        for idx, q_data in enumerate(base_questions):
+            policy_idx = idx // questions_per_policy
+            if policy_idx >= len(policy_points):
+                continue
+            
+            policy_id = policy_points[policy_idx]
+            dim = q_data.get('dimension', '')
+            q_num = q_data.get('numero', 0)
+            
+            qid = f"{policy_id}-{dim}-Q{q_num}"
+            mock_questions[qid] = MockQuestion(
+                policy_area=policy_id,
+                dimension=dim,
+                question_num=q_num,
+                verification_patterns=q_data.get('patrones_verificacion', []),
+                rubric_levels={
+                    "EXCELENTE": 0.85,
+                    "BUENO": 0.70,
+                    "ACEPTABLE": 0.55,
+                    "INSUFICIENTE": 0.0
+                }
+            )
+        
+        # Run validation
+        validator = CuestionarioValidator(Path('cuestionario.json'))
+        is_valid, results = validator.run_full_validation(mock_questions)
+        
+        if is_valid:
+            logger.info("✓ QuestionRouter validation passed")
+            return True
+        else:
+            logger.error("✗ QuestionRouter validation failed")
+            return False
         
     except Exception as e:
         logger.error(f"✗ Error testing QuestionRouter: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 def main():

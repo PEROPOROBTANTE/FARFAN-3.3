@@ -115,8 +115,8 @@ class ReportAssembler:
         # Aggregate evidence from all modules
         all_evidence = self._aggregate_evidence(execution_results)
 
-        # Calculate quantitative score
-        score = self._calculate_question_score(question, all_evidence)
+        # Calculate quantitative score using verification patterns from cuestionario.json
+        score = self._calculate_question_score(question, all_evidence, plan_text)
 
         # Map to qualitative level
         qualitative = self._score_to_qualitative(score)
@@ -197,33 +197,80 @@ class ReportAssembler:
 
         return aggregated
 
+    def _match_verification_patterns(
+            self,
+            patterns: List[str],
+            text: str
+    ) -> Tuple[int, List[str]]:
+        """
+        Match verification patterns against text using regex.
+        
+        Args:
+            patterns: List of regex patterns from cuestionario.json
+            text: Text to search (plan document)
+            
+        Returns:
+            Tuple of (matched_count, matched_patterns)
+        """
+        if not patterns or not text:
+            return 0, []
+        
+        matched_patterns = []
+        text_lower = text.lower()
+        
+        for pattern in patterns:
+            try:
+                # Most patterns are case-insensitive keywords or regex
+                if re.search(pattern, text_lower, re.IGNORECASE):
+                    matched_patterns.append(pattern)
+            except re.error:
+                # If pattern is invalid regex, try simple string matching
+                if pattern.lower() in text_lower:
+                    matched_patterns.append(pattern)
+        
+        return len(matched_patterns), matched_patterns
+    
     def _calculate_question_score(
             self,
             question: Question,
-            evidence: Dict[str, Any]
+            evidence: Dict[str, Any],
+            plan_text: str = ""
     ) -> float:
         """
         Calculate quantitative score (0.0-1.0) for a question.
 
-        Scoring logic:
-        - Count verification patterns matched
-        - Weight by evidence confidence
-        - Apply rubric thresholds
+        Scoring logic (following cuestionario.json standards):
+        1. Match verification patterns from cuestionario.json against plan text
+        2. Weight by evidence confidence from modules
+        3. Apply rubric thresholds from question definition
+        4. Penalize contradictions
+        5. Bonus for successful component execution
         """
-        # Count matched verification patterns
+        # Match verification patterns from cuestionario.json
         patterns_matched = 0
         total_patterns = len(question.verification_patterns)
-
+        matched_pattern_list = []
+        
         if total_patterns == 0:
             # No patterns defined, score based on evidence presence
             base_score = 0.5
+            logger.warning(f"No verification patterns for {question.canonical_id}")
         else:
-            # Score based on pattern matching
-            # This is simplified - in production, you'd do actual regex matching
-            patterns_matched = total_patterns  # Placeholder
-            base_score = patterns_matched / total_patterns
+            # Use actual pattern matching from cuestionario.json
+            patterns_matched, matched_pattern_list = self._match_verification_patterns(
+                question.verification_patterns,
+                plan_text
+            )
+            
+            # Base score from pattern matching
+            if patterns_matched > 0:
+                base_score = min(1.0, patterns_matched / total_patterns)
+            else:
+                base_score = 0.0
+            
+            logger.info(f"{question.canonical_id}: Matched {patterns_matched}/{total_patterns} patterns")
 
-        # Adjust by confidence scores
+        # Adjust by confidence scores from module execution
         confidence_scores = evidence.get("confidence_scores", {})
         if confidence_scores:
             avg_confidence = statistics.mean(confidence_scores.values())
@@ -248,7 +295,17 @@ class ReportAssembler:
             adjusted_score = min(1.0, adjusted_score + component_bonus)
 
         # Clamp to [0, 1]
-        return max(0.0, min(1.0, adjusted_score))
+        final_score = max(0.0, min(1.0, adjusted_score))
+        
+        # Store pattern matching results in evidence for transparency
+        evidence["pattern_matching"] = {
+            "total_patterns": total_patterns,
+            "patterns_matched": patterns_matched,
+            "matched_patterns": matched_pattern_list,
+            "pattern_match_rate": patterns_matched / total_patterns if total_patterns > 0 else 0
+        }
+        
+        return final_score
 
     def _score_to_qualitative(self, score: float) -> str:
         """Map quantitative score to qualitative level"""

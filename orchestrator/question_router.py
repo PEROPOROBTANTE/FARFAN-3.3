@@ -36,14 +36,23 @@ class QuestionRouter:
 
     Enhanced with comprehensive module mapping based on the full inventory
     of available classes and methods.
+    
+    Enforces the use of cuestionario.json to ensure homogeneous evaluation
+    across all development plans.
     """
 
-    def __init__(self, cuestionario_path: Optional[Path] = None):
+    def __init__(self, cuestionario_path: Optional[Path] = None, validate: bool = True):
         self.cuestionario_path = cuestionario_path or CONFIG.cuestionario_path
         self.questions: Dict[str, Question] = {}
         self.routing_table: Dict[str, List[str]] = {}
+        self.validation_passed = False
+        
         self._load_questionnaire()
         self._build_routing_table()
+        
+        # Validate that cuestionario.json is properly loaded and enforced
+        if validate:
+            self._validate_cuestionario_usage()
 
     def _load_questionnaire(self):
         """Load the 300-question configuration from cuestionario.json"""
@@ -471,5 +480,41 @@ class QuestionRouter:
             "supporting_module_usage": supporting_module_usage,
             "avg_modules_per_question": sum(len(v) for v in self.routing_table.values()) / len(self.routing_table),
             "dimensions": list(set(q.dimension for q in self.questions.values())),
-            "policy_areas": list(set(q.policy_area for q in self.questions.values()))
+            "policy_areas": list(set(q.policy_area for q in self.questions.values())),
+            "validation_status": "PASSED" if self.validation_passed else "NOT VALIDATED"
         }
+    
+    def _validate_cuestionario_usage(self):
+        """
+        Validate that cuestionario.json is properly loaded and enforced.
+        
+        This ensures homogeneous evaluation across all 170 development plans.
+        """
+        try:
+            from .cuestionario_validator import CuestionarioValidator
+            
+            logger.info("Validating cuestionario.json usage...")
+            
+            validator = CuestionarioValidator(self.cuestionario_path)
+            is_valid, results = validator.run_full_validation(self.questions)
+            
+            if not is_valid:
+                error_msg = "Cuestionario validation FAILED - evaluation will not be homogeneous!"
+                logger.error(error_msg)
+                # Don't raise exception to allow system to continue, but log prominently
+                logger.error("="*80)
+                logger.error("CRITICAL: cuestionario.json validation failed!")
+                logger.error("This may result in inconsistent evaluation across plans.")
+                logger.error("="*80)
+            else:
+                logger.info("✓ Cuestionario validation PASSED - evaluation will be homogeneous")
+                self.validation_passed = True
+            
+            return is_valid
+            
+        except ImportError as e:
+            logger.warning(f"Could not import CuestionarioValidator: {e}")
+            return False
+        except Exception as e:
+            logger.error(f"Error during cuestionario validation: {e}")
+            return False
