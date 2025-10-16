@@ -1,0 +1,86 @@
+{
+  "files": [
+    {
+      "path": "semantic_chunking_policy.py",
+      "size": 21267,
+      "language": "Python",
+      "extension": ".py"
+    },
+    {
+      "path": "cuestionario_canonico.txt",
+      "size": 66953,
+      "language": "Text",
+      "extension": ".txt"
+    },
+    {
+      "path": "evidence_quality_auditors.py",
+      "size": 35190,
+      "language": "Python",
+      "extension": ".py"
+    },
+    {
+      "path": "cuestionario.json",
+      "size": 840291,
+      "language": "JSON",
+      "extension": ".json"
+    },
+    {
+      "path": "policy_processor.py",
+      "size": 42120,
+      "language": "Python",
+      "extension": ".py"
+    },
+    {
+      "path": "rubric_scoring.json",
+      "size": 43413,
+      "language": "JSON",
+      "extension": ".json"
+    },
+    {
+      "path": "temp_rest.txt",
+      "size": 90655,
+      "language": "Text",
+      "extension": ".txt"
+    },
+    {
+      "path": "financiero_viabilidad_tablas.py",
+      "size": 99111,
+      "language": "Python",
+      "extension": ".py"
+    },
+    {
+      "path": "teoria_cambio.py",
+      "size": 34644,
+      "language": "Python",
+      "extension": ".py"
+    },
+    {
+      "path": "contradiction_deteccion.py",
+      "size": 113953,
+      "language": "Python",
+      "extension": ".py"
+    },
+    {
+      "path": "emebedding_policy.py",
+      "size": 54068,
+      "language": "Python",
+      "extension": ".py"
+    },
+    {
+      "path": "dereck_beach",
+      "size": 179026,
+      "language": "unknown",
+      "extension": ""
+    }
+  ],
+  "summary": {
+    "total_files": 12,
+    "languages": {
+      "unknown": 1,
+      "Python": 7,
+      "Text": 2,
+      "JSON": 2
+    },
+    "total_size_bytes": 1620691
+  }
+}
