@@ -41,7 +41,7 @@ import pandas as pd
 import camelot
 import tabula
 import pdfplumber
-import fitz  # PyMuPDF
+import fitz # PyMuPDF
 
 # === NLP Y TRANSFORMERS ===
 from sentence_transformers import SentenceTransformer, util
@@ -956,7 +956,7 @@ class PDETMunicipalPlanAnalyzer:
         return CausalDAG(nodes=nodes, edges=edges, adjacency_matrix=adj_matrix, graph=G)
 
     def _identify_causal_nodes(self, text: str, tables: List[ExtractedTable], financial_analysis: Dict[str, Any]) -> \
-    Dict[str, CausalNode]:
+            Dict[str, CausalNode]:
         nodes = {}
 
         for pillar in self.context.PDET_PILLARS:
@@ -1091,16 +1091,19 @@ class PDETMunicipalPlanAnalyzer:
         pillar_lower = pillar.lower()
 
         for indicator in financial_analysis.get('financial_indicators', []):
-            source_start = text.lower().find(indicator['source_text'].lower())
-            if source_start == -1:
+            try:
+                source_start = text.lower().find(indicator['source_text'].lower())
+                if source_start == -1:
+                    continue
+
+                context_start = max(0, source_start - 500)
+                context_end = min(len(text), source_start + 500)
+                context = text[context_start:context_end].lower()
+
+                if pillar_lower in context:
+                    return Decimal(str(indicator['amount']))
+            except Exception:
                 continue
-
-            context_start = max(0, source_start - 500)
-            context_end = min(len(text), source_start + 500)
-            context = text[context_start:context_end].lower()
-
-            if pillar_lower in context:
-                return Decimal(str(indicator['amount']))
 
         return None
 
@@ -1302,116 +1305,117 @@ class PDETMunicipalPlanAnalyzer:
 
             trace = pm.sample(1500, tune=800, cores=1, return_inferencedata=True, progressbar=False, target_accept=0.9)
 
-            total_samples = trace.posterior['total_effect'].values.flatten()
-            direct_samples = trace.posterior['direct_effect'].values.flatten()
+        total_samples = trace.posterior['total_effect'].values.flatten()
+        direct_samples = trace.posterior['direct_effect'].values.flatten()
 
-            total_mean = float(np.mean(total_samples))
-            total_ci = tuple(float(x) for x in np.percentile(total_samples, [2.5, 97.5]))
-            prob_positive = float(np.mean(total_samples > 0))
-            prob_significant = float(np.mean(np.abs(total_samples) > 0.1))
+        total_mean = float(np.mean(total_samples))
+        total_ci = tuple(float(x) for x in np.percentile(total_samples, [2.5, 97.5]))
+        prob_positive = float(np.mean(total_samples > 0))
+        prob_significant = float(np.mean(np.abs(total_samples) > 0.1))
 
-            return CausalEffect(
-                treatment=treatment,
-                outcome=outcome,
-                effect_type='total',
-                point_estimate=float(np.median(total_samples)),
-                posterior_mean=total_mean,
-                credible_interval_95=total_ci,
-                probability_positive=prob_positive,
-                probability_significant=prob_significant,
-                mediating_paths=indirect_paths,
-                confounders_adjusted=confounders
-            )
+        return CausalEffect(
+            treatment=treatment,
+            outcome=outcome,
+            effect_type='total',
+            point_estimate=float(np.median(total_samples)),
+            posterior_mean=total_mean,
+            credible_interval_95=total_ci,
+            probability_positive=prob_positive,
+            probability_significant=prob_significant,
+            mediating_paths=indirect_paths,
+            confounders_adjusted=confounders
+        )
 
-        def _get_prior_effect(self, treatment: str, outcome: str) -> Tuple[float, float]:
-            """
-            Priors informados basados en meta-análisis de programas PDET
-            Referencia: Cinelli et al. (2022) - Sensitivity Analysis for Causal Inference
-            """
-            effect_priors = {
-                ('Infraestructura y adecuación de tierras', 'productividad_agricola'): (0.35, 0.15),
-                ('Salud rural', 'mortalidad_infantil'): (-0.28, 0.12),
-                ('Educación rural y primera infancia', 'cobertura_educativa'): (0.42, 0.18),
-                ('Vivienda, agua potable y saneamiento básico', 'enfermedades_hidricas'): (-0.33, 0.14),
-                ('Reactivación económica y producción agropecuaria', 'ingreso_rural'): (0.29, 0.16),
-                ('Sistema para la garantía progresiva del derecho a la alimentación', 'seguridad_alimentaria'): (0.38,
-                                                                                                                 0.17),
-            }
+    def _get_prior_effect(self, treatment: str, outcome: str) -> Tuple[float, float]:
+        """
+        Priors informados basados en meta-análisis de programas PDET
+        Referencia: Cinelli et al. (2022) - Sensitivity Analysis for Causal Inference
+        """
+        effect_priors = {
+            ('Infraestructura y adecuación de tierras', 'productividad_agricola'): (0.35, 0.15),
+            ('Salud rural', 'mortalidad_infantil'): (-0.28, 0.12),
+            ('Educación rural y primera infancia', 'cobertura_educativa'): (0.42, 0.18),
+            ('Vivienda, agua potable y saneamiento básico', 'enfermedades_hidricas'): (-0.33, 0.14),
+            ('Reactivación económica y producción agropecuaria', 'ingreso_rural'): (0.29, 0.16),
+            ('Sistema para la garantía progresiva del derecho a la alimentación', 'seguridad_alimentaria'): (0.38,
+                                                                                                            0.17),
+        }
 
-            if (treatment, outcome) in effect_priors:
-                return effect_priors[(treatment, outcome)]
+        if (treatment, outcome) in effect_priors:
+            return effect_priors[(treatment, outcome)]
 
-            return (0.2, 0.25)
+        return (0.2, 0.25)
 
-        def _identify_confounders(self, treatment: str, outcome: str, dag: CausalDAG) -> List[str]:
-            """
-            Identifica confounders usando d-separation (Pearl, 2009)
-            """
-            G = dag.graph
-            confounders = []
+    def _identify_confounders(self, treatment: str, outcome: str, dag: CausalDAG) -> List[str]:
+        """
+        Identifica confounders usando d-separation (Pearl, 2009)
+        """
+        G = dag.graph
+        confounders = []
 
-            for node in G.nodes():
-                if node == treatment or node == outcome:
-                    continue
+        for node in G.nodes():
+            if node == treatment or node == outcome:
+                continue
 
-                if G.has_edge(node, treatment) and G.has_edge(node, outcome):
-                    confounders.append(node)
+            if G.has_edge(node, treatment) and G.has_edge(node, outcome):
+                confounders.append(node)
 
-            return confounders
+        return confounders
 
-            # ========================================================================
-            # ANÁLISIS CONTRAFACTUAL (Pearl's Three-Layer Causal Hierarchy)
-            # ========================================================================
+    # ========================================================================
+    # ANÁLISIS CONTRAFACTUAL (Pearl's Three-Layer Causal Hierarchy)
+    # ========================================================================
 
-        def generate_counterfactuals(self, dag: CausalDAG, causal_effects: List[CausalEffect],
-                                     financial_analysis: Dict[str, Any]) -> List[CounterfactualScenario]:
-            """
-            Genera escenarios contrafactuales usando el framework de Pearl (2009)
-            Level 3 - Counterfactual: "What if we had done X instead of Y?"
+    def generate_counterfactuals(self, dag: CausalDAG, causal_effects: List[CausalEffect],
+                                 financial_analysis: Dict[str, Any]) -> List[CounterfactualScenario]:
+        """
+        Genera escenarios contrafactuales usando el framework de Pearl (2009)
+        Level 3 - Counterfactual: "What if we had done X instead of Y?"
 
-            Implementación basada en:
-            - Pearl & Mackenzie (2018) - The Book of Why
-            - Sharma & Kiciman (2020) - DoWhy: An End-to-End Library for Causal Inference
-            """
-            print("🔮 Generando escenarios contrafactuales...")
+        Implementación basada en:
+        - Pearl & Mackenzie (2018) - The Book of Why
+        - Sharma & Kiciman (2020) - DoWhy: An End-to-End Library for Causal Inference
+        """
+        print("🔮 Generando escenarios contrafactuales...")
 
-            scenarios = []
-            G = dag.graph
-            pillar_nodes = [n for n, data in G.nodes(data=True) if data.get('type') == 'pilar']
+        scenarios = []
+        G = dag.graph
+        pillar_nodes = [n for n, data in G.nodes(data=True) if data.get('type') == 'pilar']
 
-            current_budgets = {
-                node: float(dag.nodes[node].associated_budget) if dag.nodes[node].associated_budget else 0.0
-                for node in pillar_nodes
-            }
-            total_budget = sum(current_budgets.values())
+        current_budgets = {
+            node: float(dag.nodes[node].associated_budget) if dag.nodes[node].associated_budget else 0.0
+            for node in pillar_nodes
+        }
+        total_budget = sum(current_budgets.values())
 
-            if total_budget == 0:
-                print(" ⚠️ No hay información presupuestal para contrafactuales")
-                return scenarios
+        if total_budget == 0:
+            print(" ⚠️ No hay información presupuestal para contrafactuales")
+            return scenarios
 
-            # Escenario 1: Incremento proporcional del 20%
-            intervention_1 = {node: budget * 1.2 for node, budget in current_budgets.items()}
-            scenario_1 = self._simulate_intervention(intervention_1, dag, causal_effects, "Incremento 20% presupuesto")
-            scenarios.append(scenario_1)
+        # Escenario 1: Incremento proporcional del 20%
+        intervention_1 = {node: budget * 1.2 for node, budget in current_budgets.items()}
+        scenario_1 = self._simulate_intervention(intervention_1, dag, causal_effects, "Incremento 20% presupuesto")
+        scenarios.append(scenario_1)
 
-            # Escenario 2: Rebalanceo hacia educación y salud
-            priority_pillars = ['Educación rural y primera infancia', 'Salud rural']
-            intervention_2 = current_budgets.copy()
-            for pillar in priority_pillars:
-                if pillar in intervention_2:
-                    intervention_2[pillar] *= 1.5
+        # Escenario 2: Rebalanceo hacia educación y salud
+        priority_pillars = ['Educación rural y primera infancia', 'Salud rural']
+        intervention_2 = current_budgets.copy()
+        for pillar in priority_pillars:
+            if pillar in intervention_2:
+                intervention_2[pillar] *= 1.5
 
-            other_reduction = (sum(intervention_2.values()) - total_budget) / max(
-                len(intervention_2) - len(priority_pillars), 1)
-            for pillar in intervention_2:
-                if pillar not in priority_pillars:
-                    intervention_2[pillar] = max(intervention_2[pillar] - other_reduction, 0)
+        other_reduction = (sum(intervention_2.values()) - total_budget) / max(
+            len(intervention_2) - len(priority_pillars), 1)
+        for pillar in intervention_2:
+            if pillar not in priority_pillars:
+                intervention_2[pillar] = max(intervention_2[pillar] - other_reduction, 0)
 
-            scenario_2 = self._simulate_intervention(intervention_2, dag, causal_effects,
-                                                     "Priorización educación y salud")
-            scenarios.append(scenario_2)
+        scenario_2 = self._simulate_intervention(intervention_2, dag, causal_effects,
+                                                  "Priorización educación y salud")
+        scenarios.append(scenario_2)
 
-            # Escenario 3: Focalización en pilar de mayor impacto
+        # Escenario 3: Focalización en pilar de mayor impacto
+        if causal_effects:
             best_effect = max(causal_effects, key=lambda e: e.probability_positive * abs(e.posterior_mean))
             best_pillar = best_effect.treatment
 
@@ -1420,117 +1424,556 @@ class PDETMunicipalPlanAnalyzer:
                 intervention_3[best_pillar] = current_budgets[best_pillar] * 1.8
 
             scenario_3 = self._simulate_intervention(intervention_3, dag, causal_effects,
-                                                     f"Focalización en {best_pillar[:40]}")
+                                                      f"Focalización en {best_pillar[:40]}")
             scenarios.append(scenario_3)
 
-            print(f" ✓ {len(scenarios)} escenarios contrafactuales generados")
-            return scenarios
+        print(f" ✓ {len(scenarios)} escenarios contrafactuales generados")
+        return scenarios
 
-        def _simulate_intervention(self, intervention: Dict[str, float], dag: CausalDAG,
-                                   causal_effects: List[CausalEffect], description: str) -> CounterfactualScenario:
-            """
-            Simula intervención usando do-calculus (Pearl, 2009)
-            Implementa: P(Y | do(X=x)) mediante propagación por el DAG
-            """
-            G = dag.graph
-            predicted_outcomes = {}
+    def _simulate_intervention(self, intervention: Dict[str, float], dag: CausalDAG,
+                               causal_effects: List[CausalEffect], description: str) -> CounterfactualScenario:
+        """
+        Simula intervención usando do-calculus (Pearl, 2009)
+        Implementa: P(Y | do(X=x)) mediante propagación por el DAG
+        """
+        G = dag.graph
+        predicted_outcomes = {}
 
-            outcome_nodes = [n for n, data in G.nodes(data=True) if data.get('type') == 'outcome']
+        outcome_nodes = [n for n, data in G.nodes(data=True) if data.get('type') == 'outcome']
 
-            for outcome in outcome_nodes:
-                relevant_effects = [e for e in causal_effects if e.outcome == outcome]
+        for outcome in outcome_nodes:
+            relevant_effects = [e for e in causal_effects if e.outcome == outcome]
 
-                if not relevant_effects:
+            if not relevant_effects:
+                continue
+
+            expected_change = 0.0
+            variance_sum = 0.0
+
+            for effect in relevant_effects:
+                treatment = effect.treatment
+                if treatment not in intervention:
                     continue
 
-                expected_change = 0.0
-                variance_sum = 0.0
+                current_budget = float(dag.nodes[treatment].associated_budget) if dag.nodes[
+                    treatment].associated_budget else 0.0
+                new_budget = intervention[treatment]
 
-                for effect in relevant_effects:
-                    treatment = effect.treatment
-                    if effect.mediating_paths:
-                        report += f"- Vías de mediación: {len(effect.mediating_paths)}\n"
-                    report += "\n"
+                if current_budget > 0:
+                    budget_multiplier = new_budget / current_budget
+                else:
+                    budget_multiplier = 1.0
 
-            report += "## 4. ESCENARIOS CONTRAFACTUALES\n\n"
+                # Rendimientos decrecientes: log transform
+                effect_multiplier = np.log1p(budget_multiplier) / np.log1p(1.0)
 
-            scenarios = analysis_results.get('counterfactuals', [])
-            for i, scenario in enumerate(scenarios, 1):
-                report += scenario.narrative
-                report += "\n---\n\n"
+                expected_change += effect.posterior_mean * effect_multiplier
 
-            report += "## 5. ANÁLISIS DE SENSIBILIDAD\n\n"
+                ci_width = effect.credible_interval_95[1] - effect.credible_interval_95[0]
+                variance_sum += (ci_width / 3.92) ** 2  # 95% CI ≈ 3.92 std
 
-            sensitivity = analysis_results.get('sensitivity_analysis', {})
-            if sensitivity:
-                report += "| Relación Causal | E-Value | Robustez | Interpretación |\n"
-                report += "|----------------|---------|----------|----------------|\n"
+            predicted_std = np.sqrt(variance_sum)
+            predicted_outcomes[outcome] = (
+                expected_change,
+                expected_change - 1.96 * predicted_std,
+                expected_change + 1.96 * predicted_std
+            )
 
-                for relation, metrics in list(sensitivity.items())[:8]:
-                    report += f"| {relation} | {metrics['e_value']:.2f} | {metrics['robustness_value']:.2f} | {metrics['interpretation'][:50]} |\n"
+        probability_improvement = {}
+        for outcome, (mean, lower, upper) in predicted_outcomes.items():
+            scale = (upper - lower) / 3.92
+            if scale <= 0: scale = 1e-9
+            prob_positive = stats.norm.sf(0, loc=mean, scale=scale)
+            probability_improvement[outcome] = float(prob_positive)
 
-            report += "\n## 6. RECOMENDACIONES\n\n"
-            report += self._generate_recommendations(analysis_results)
+        narrative = self._generate_scenario_narrative(description, intervention, predicted_outcomes,
+                                                      probability_improvement)
 
+        return CounterfactualScenario(
+            intervention=intervention,
+            predicted_outcomes=predicted_outcomes,
+            probability_improvement=probability_improvement,
+            narrative=narrative
+        )
+
+    def _generate_scenario_narrative(self, description: str, intervention: Dict[str, float],
+                                     predicted_outcomes: Dict[str, Tuple[float, float, float]],
+                                     probabilities: Dict[str, float]) -> str:
+        """Genera narrativa interpretable del escenario contrafactual"""
+
+        narrative = f"**{description}**\n\n"
+        narrative += "**Intervención propuesta:**\n"
+
+        total_intervention = sum(intervention.values())
+        for pillar, budget in sorted(intervention.items(), key=lambda x: -x[1])[:5]:
+            percentage = (budget / total_intervention * 100) if total_intervention > 0 else 0
+            narrative += f"- {pillar[:50]}: ${budget:,.0f} COP ({percentage:.1f}%)\n"
+
+        narrative += "\n**Efectos esperados:**\n"
+
+        significant_outcomes = [(o, p) for o, p in probabilities.items() if p > 0.6]
+        significant_outcomes.sort(key=lambda x: -x[1])
+
+        for outcome, prob in significant_outcomes[:5]:
+            mean, lower, upper = predicted_outcomes[outcome]
+            narrative += f"- {outcome}: {mean:+.2f} (IC95%: [{lower:.2f}, {upper:.2f}]) - "
+            narrative += f"Probabilidad de mejora: {prob * 100:.0f}%\n"
+
+        return narrative
+
+
+    # ========================================================================
+    # ANÁLISIS DE SENSIBILIDAD (Cinelli et al., 2022)
+    # ========================================================================
+
+    def sensitivity_analysis(self, causal_effects: List[CausalEffect], dag: CausalDAG) -> Dict[str, Any]:
+        """
+        Análisis de sensibilidad para supuestos de identificación causal
+        Basado en: Cinelli, Forney & Pearl (2022) - "A Crash Course in Good and Bad Controls"
+        """
+        print("🔬 Ejecutando análisis de sensibilidad...")
+
+        sensitivity_results = {}
+
+        for effect in causal_effects[:10]:  # Top 10 effects
+            unobserved_confounding = self._compute_e_value(effect)
+
+            robustness_value = self._compute_robustness_value(effect, dag)
+
+            sensitivity_results[f"{effect.treatment[:30]}→{effect.outcome[:30]}"] = {
+                'e_value': unobserved_confounding,
+                'robustness_value': robustness_value,
+                'interpretation': self._interpret_sensitivity(unobserved_confounding, robustness_value)
+            }
+
+        print(f" ✓ Sensibilidad analizada para {len(sensitivity_results)} efectos")
+        return sensitivity_results
+
+    def _compute_e_value(self, effect: CausalEffect) -> float:
+        """
+        E-value: mínima fuerza de confounding no observado para anular el efecto
+        Fórmula: E = effect_estimate + sqrt(effect_estimate * (effect_estimate - 1))
+
+        Referencia: VanderWeele & Ding (2017) - Ann Intern Med
+        """
+        if effect.posterior_mean <= 0:
+            return 1.0
+
+        rr = np.exp(effect.posterior_mean)  # Convert log-scale to risk ratio
+        if rr * (rr - 1) < 0:
+            return 1.0
+        e_value = rr + np.sqrt(rr * (rr - 1))
+
+        return float(e_value)
+
+    def _compute_robustness_value(self, effect: CausalEffect, dag: CausalDAG) -> float:
+        """
+        Robustness Value: percentil de la distribución posterior que cruza cero
+        Valores altos (>0.95) indican alta robustez
+        """
+        ci_lower, ci_upper = effect.credible_interval_95
+
+        if ci_lower > 0:
+            return 1.0
+        elif ci_upper < 0:
+            return 1.0
+
+        width = ci_upper - ci_lower
+        if width == 0:
+            return 0.5
+
+        robustness = abs(effect.posterior_mean) / (width / 2)
+        return float(min(robustness, 1.0))
+
+    def _interpret_sensitivity(self, e_value: float, robustness: float) -> str:
+        """Interpretación de resultados de sensibilidad"""
+
+        if e_value > 2.0 and robustness > 0.8:
+            return "Efecto robusto - Resistente a confounding no observado"
+        elif e_value > 1.5 and robustness > 0.6:
+            return "Efecto moderadamente robusto - Precaución con confounders"
+        elif e_value > 1.2 and robustness > 0.4:
+            return "Efecto sensible - Alta vulnerabilidad a confounding"
+        else:
+            return "Efecto frágil - Resultados no confiables sin ajustes adicionales"
+
+
+    # ========================================================================
+    # SCORING INTEGRAL DE CALIDAD
+    # ========================================================================
+
+    def calculate_quality_score(self, text: str, tables: List[ExtractedTable],
+                                financial_analysis: Dict[str, Any],
+                                responsible_entities: List[ResponsibleEntity],
+                                causal_dag: CausalDAG,
+                                causal_effects: List[CausalEffect]) -> QualityScore:
+        """
+        Puntaje bayesiano integral de calidad del PDM
+        Integra todas las dimensiones de análisis con pesos calibrados
+        """
+        print("⭐ Calculando score integral de calidad...")
+
+        financial_score = self._score_financial_component(financial_analysis)
+        indicator_score = self._score_indicators(tables, text)
+        responsibility_score = self._score_responsibility_clarity(responsible_entities)
+        temporal_score = self._score_temporal_consistency(text, tables)
+        pdet_score = self._score_pdet_alignment(text, tables, causal_dag)
+        causal_score = self._score_causal_coherence(causal_dag, causal_effects)
+
+        weights = np.array([0.20, 0.15, 0.15, 0.10, 0.20, 0.20])
+        scores = np.array([
+            financial_score, indicator_score, responsibility_score,
+            temporal_score, pdet_score, causal_score
+        ])
+
+        overall_score = float(np.dot(weights, scores))
+
+        confidence = self._estimate_score_confidence(scores, weights)
+
+        evidence = {
+            'financial': financial_score,
+            'indicators': indicator_score,
+            'responsibility': responsibility_score,
+            'temporal': temporal_score,
+            'pdet_alignment': pdet_score,
+            'causal_coherence': causal_score
+        }
+
+        print(f" ✓ Score final: {overall_score:.2f}/10.0")
+
+        return QualityScore(
+            overall_score=overall_score,
+            financial_feasibility=financial_score,
+            indicator_quality=indicator_score,
+            responsibility_clarity=responsibility_score,
+            temporal_consistency=temporal_score,
+            pdet_alignment=pdet_score,
+            causal_coherence=causal_score,
+            confidence_interval=confidence,
+            evidence=evidence
+        )
+
+    def _score_financial_component(self, financial_analysis: Dict[str, Any]) -> float:
+        """Score componente financiero (0-10)"""
+
+        budget = financial_analysis.get('total_budget', 0)
+        if budget == 0:
+            return 0.0
+
+        budget_score = min(np.log10(float(budget)) / 12, 1.0) * 3.0
+
+        diversity = financial_analysis['funding_sources'].get('diversity_index', 0)
+        max_diversity = financial_analysis['funding_sources'].get('max_diversity', 1)
+        diversity_score = (diversity / max(max_diversity, 0.1)) * 3.0
+
+        sustainability = financial_analysis.get('sustainability_score', 0)
+        sustainability_score = sustainability * 2.5
+
+        risk = financial_analysis['risk_assessment'].get('risk_score', 0.5)
+        risk_score = (1 - risk) * 1.5
+
+        return float(min(budget_score + diversity_score + sustainability_score + risk_score, 10.0))
+
+    def _score_indicators(self, tables: List[ExtractedTable], text: str) -> float:
+        """Score calidad de indicadores (0-10)"""
+
+        indicator_tables = [t for t in tables if t.table_type == 'indicadores']
+
+        if not indicator_tables:
+            baseline_mentions = len(re.findall(r'l[íi]nea\s+base', text, re.IGNORECASE))
+            meta_mentions = len(re.findall(r'meta', text, re.IGNORECASE))
+
+            if baseline_mentions > 5 and meta_mentions > 5:
+                return 4.0
+            return 2.0
+
+        completeness_score = 0.0
+        for table in indicator_tables:
+            df = table.df
+            required_cols = ['indicador', 'línea base', 'meta', 'fuente']
+            present_cols = sum(1 for col in required_cols if any(col in str(c).lower() for c in df.columns))
+            completeness_score += (present_cols / len(required_cols)) * 3.0
+
+        completeness_score = min(completeness_score, 4.0)
+
+        smart_patterns = [
+            r'\d+%',  # Percentages
+            r'\d+\s+(?:personas|hogares|familias|hectáreas)',  # Quantities
+            r'reducir|aumentar|mejorar|incrementar',  # Action verbs
+        ]
+
+        smart_count = sum(len(re.findall(pattern, text, re.IGNORECASE)) for pattern in smart_patterns)
+        smart_score = min(smart_count / 50, 1.0) * 3.0
+
+        formula_mentions = len(re.findall(r'f[óo]rmula', text, re.IGNORECASE))
+        periodicity_mentions = len(re.findall(r'periodicidad|trimestral|anual|mensual', text, re.IGNORECASE))
+
+        technical_score = min((formula_mentions + periodicity_mentions) / 10, 1.0) * 3.0
+
+        return float(min(completeness_score + smart_score + technical_score, 10.0))
+
+    def _score_responsibility_clarity(self, entities: List[ResponsibleEntity]) -> float:
+        """Score claridad de responsables (0-10)"""
+
+        if not entities:
+            return 2.0
+
+        count_score = min(len(entities) / 15, 1.0) * 3.0
+
+        avg_specificity = np.mean([e.specificity_score for e in entities])
+        specificity_score = avg_specificity * 4.0
+
+        institutional_entities = [e for e in entities if e.entity_type in ['secretaría', 'dirección', 'oficina']]
+        institutional_ratio = len(institutional_entities) / max(len(entities), 1)
+        institutional_score = institutional_ratio * 3.0
+
+        return float(min(count_score + specificity_score + institutional_score, 10.0))
+
+    def _score_temporal_consistency(self, text: str, tables: List[ExtractedTable]) -> float:
+        """Score consistencia temporal (0-10)"""
+
+        years_mentioned = set(re.findall(r'20[2-3]\d', text))
+
+        if len(years_mentioned) < 2:
+            return 3.0
+
+        years = [int(y) for y in years_mentioned]
+        year_range = max(years) - min(years) if years else 0
+        range_score = min(year_range / 4, 1.0) * 3.0
+
+        cronograma_tables = [t for t in tables if t.table_type == 'cronograma']
+        cronograma_score = min(len(cronograma_tables) * 2, 4.0)
+
+        temporal_terms = ['cronograma', 'año', 'trimestre', 'mes', 'periodo', 'etapa', 'fase']
+        term_count = sum(len(re.findall(rf'\b{term}\b', text, re.IGNORECASE)) for term in temporal_terms)
+        term_score = min(term_count / 30, 1.0) * 3.0
+
+        return float(min(range_score + cronograma_score + term_score, 10.0))
+
+    def _score_pdet_alignment(self, text: str, tables: List[ExtractedTable], dag: CausalDAG) -> float:
+        """Score alineación con pilares PDET (0-10)"""
+
+        text_lower = text.lower()
+
+        pillar_mentions = {}
+        for pillar in self.context.PDET_PILLARS:
+            pillar_lower = pillar.lower()
+            keywords = pillar_lower.split()[:3]
+
+            count = sum(text_lower.count(kw) for kw in keywords)
+            pillar_mentions[pillar] = count
+
+        coverage = sum(1 for count in pillar_mentions.values() if count > 0)
+        coverage_score = (coverage / len(self.context.PDET_PILLARS)) * 4.0
+
+        pdet_explicit = len(re.findall(r'\bPDET\b', text, re.IGNORECASE))
+        patr_mentions = len(re.findall(r'\bPATR\b', text, re.IGNORECASE))
+        explicit_score = min((pdet_explicit + patr_mentions) / 15, 1.0) * 3.0
+
+        pdet_tables = [t for t in tables if t.table_type == 'pdet']
+        table_score = min(len(pdet_tables) * 1.5, 3.0)
+
+        return float(min(coverage_score + explicit_score + table_score, 10.0))
+
+    def _score_causal_coherence(self, dag: CausalDAG, effects: List[CausalEffect]) -> float:
+        """Score coherencia causal del plan (0-10)"""
+
+        G = dag.graph
+
+        if G.number_of_nodes() == 0:
+            return 2.0
+
+        structure_score = min(G.number_of_edges() / (G.number_of_nodes() * 1.5), 1.0) * 3.0
+
+        if not effects:
+            effect_quality = 0.0
+        else:
+            avg_probability = np.mean([e.probability_significant for e in effects])
+            effect_quality = avg_probability * 4.0
+
+        pillar_nodes = [n for n, data in G.nodes(data=True) if data.get('type') == 'pilar']
+        outcome_nodes = [n for n, data in G.nodes(data=True) if data.get('type') == 'outcome']
+
+        connected_pillars = sum(1 for p in pillar_nodes if any(nx.has_path(G, p, o) for o in outcome_nodes))
+        connectivity = (connected_pillars / max(len(pillar_nodes), 1)) * 3.0
+
+        return float(min(structure_score + effect_quality + connectivity, 10.0))
+
+    def _estimate_score_confidence(self, scores: np.ndarray, weights: np.ndarray) -> Tuple[float, float]:
+        """Estima intervalo de confianza para el score usando bootstrap"""
+
+        n_bootstrap = 1000
+        bootstrap_scores = []
+
+        for _ in range(n_bootstrap):
+            noise = np.random.normal(0, 0.5, size=len(scores))
+            noisy_scores = np.clip(scores + noise, 0, 10)
+
+            bootstrap_score = np.dot(weights, noisy_scores)
+            bootstrap_scores.append(bootstrap_score)
+
+        ci_lower, ci_upper = np.percentile(bootstrap_scores, [2.5, 97.5])
+
+        return (float(ci_lower), float(ci_upper))
+
+
+    # ========================================================================
+    # EXPORTACIÓN Y VISUALIZACIÓN
+    # ========================================================================
+
+    def export_causal_network(self, dag: CausalDAG, output_path: str) -> None:
+        """Exporta el DAG causal en formato GraphML para Gephi/Cytoscape"""
+
+        G = dag.graph.copy()
+
+        for node, data in G.nodes(data=True):
+            data['label'] = node[:50]
+            data['node_type'] = data.get('type', 'unknown')
+            data['budget'] = data.get('budget', 0.0)
+
+        for u, v, data in G.edges(data=True):
+            data['weight'] = data.get('probability', 0.5)
+            data['edge_type'] = data.get('type', 'unknown')
+
+        nx.write_graphml(G, output_path)
+        print(f"✅ Red causal exportada a: {output_path}")
+
+    def generate_executive_report(self, analysis_results: Dict[str, Any]) -> str:
+        """Genera reporte ejecutivo en Markdown"""
+
+        report = "# ANÁLISIS INTEGRAL - PLAN DE DESARROLLO MUNICIPAL PDET\n\n"
+        report += f"**Fecha de análisis:** {datetime.now().strftime('%Y-%m-%d %H:%M')}\n\n"
+
+        report += "## 1. RESUMEN EJECUTIVO\n\n"
+
+        quality = analysis_results['quality_score']
+        report += f"**Score Global de Calidad:** {quality['overall_score']:.2f}/10.0 "
+        report += f"(IC95%: [{quality['confidence_interval'][0]:.2f}, {quality['confidence_interval'][1]:.2f}])\n\n"
+
+        report += self._interpret_overall_quality(quality['overall_score'])
+        report += "\n\n"
+
+        report += "### Dimensiones Evaluadas\n\n"
+        report += f"- **Viabilidad Financiera:** {quality['financial_feasibility']:.1f}/10\n"
+        report += f"- **Calidad de Indicadores:** {quality['indicator_quality']:.1f}/10\n"
+        report += f"- **Claridad de Responsables:** {quality['responsibility_clarity']:.1f}/10\n"
+        report += f"- **Consistencia Temporal:** {quality['temporal_consistency']:.1f}/10\n"
+        report += f"- **Alineación PDET:** {quality['pdet_alignment']:.1f}/10\n"
+        report += f"- **Coherencia Causal:** {quality['causal_coherence']:.1f}/10\n\n"
+
+        report += "## 2. ANÁLISIS FINANCIERO\n\n"
+        fin = analysis_results['financial_analysis']
+        report += f"**Presupuesto Total:** ${fin['total_budget']:,.0f} COP\n\n"
+
+        report += "### Distribución por Fuente\n\n"
+        if fin['funding_sources'] and fin['funding_sources']['distribution']:
+            for source, amount in sorted(fin['funding_sources']['distribution'].items(), key=lambda x: -x[1])[:5]:
+                pct = (amount / fin['total_budget'] * 100) if fin['total_budget'] > 0 else 0
+                report += f"- {source}: ${amount:,.0f} ({pct:.1f}%)\n"
+
+        report += f"\n**Índice de Diversificación:** {fin['funding_sources'].get('diversity_index', 0):.2f}\n"
+        report += f"**Score de Sostenibilidad:** {fin['sustainability_score']:.2f}\n"
+        report += f"**Evaluación de Riesgo:** {fin['risk_assessment']['interpretation']}\n\n"
+
+        report += "## 3. INFERENCIA CAUSAL\n\n"
+
+        effects = analysis_results.get('causal_effects', [])
+        if effects:
+            report += "### Efectos Causales Principales\n\n"
+
+            significant_effects = [e for e in effects if e['probability_significant'] > 0.7]
+            significant_effects.sort(key=lambda e: abs(e['posterior_mean']), reverse=True)
+
+            for effect in significant_effects[:5]:
+                report += f"**{effect['treatment'][:40]} → {effect['outcome'][:40]}**\n"
+                report += f"- Efecto estimado: {effect['posterior_mean']:+.3f} "
+                report += f"(IC95%: [{effect['credible_interval'][0]:.3f}, {effect['credible_interval'][1]:.3f}])\n"
+                report += f"- Probabilidad de efecto positivo: {effect['probability_positive'] * 100:.0f}%\n"
+
+                if effect['mediating_paths']:
+                    report += f"- Vías de mediación: {len(effect['mediating_paths'])}\n"
+                report += "\n"
+
+        report += "## 4. ESCENARIOS CONTRAFACTUALES\n\n"
+
+        scenarios = analysis_results.get('counterfactuals', [])
+        for i, scenario in enumerate(scenarios, 1):
+            report += scenario['narrative']
             report += "\n---\n\n"
-            report += "*Análisis generado por PDETMunicipalPlanAnalyzer v5.0*\n"
-            report += "*Metodología: Inferencia Causal Bayesiana + Structural Causal Models*\n"
 
-            return report
+        report += "## 5. ANÁLISIS DE SENSIBILIDAD\n\n"
 
-        def _interpret_overall_quality(self, score: float) -> str:
-            """Interpretación del score global"""
+        sensitivity = analysis_results.get('sensitivity_analysis', {})
+        if sensitivity:
+            report += "| Relación Causal | E-Value | Robustez | Interpretación |\n"
+            report += "|----------------|---------|----------|----------------|\n"
 
-            if score >= 8.0:
-                return ("**Evaluación: EXCELENTE** ✅\n\n"
-                        "El plan cumple con altos estándares de calidad técnica. "
-                        "Presenta coherencia causal sólida, viabilidad financiera demostrable, "
-                        "y alineación robusta con los pilares PDET.")
-            elif score >= 6.5:
-                return ("**Evaluación: BUENO** ✓\n\n"
-                        "El plan presenta bases sólidas pero con oportunidades de mejora. "
-                        "Se recomienda fortalecer algunos componentes específicos.")
-            elif score >= 5.0:
-                return ("**Evaluación: ACEPTABLE** ⚠️\n\n"
-                        "El plan cumple requisitos mínimos pero requiere ajustes sustanciales "
-                        "en múltiples dimensiones para asegurar efectividad.")
-            else:
-                return ("**Evaluación: DEFICIENTE** ❌\n\n"
-                        "El plan presenta deficiencias críticas que comprometen su viabilidad. "
-                        "Se requiere reformulación integral.")
+            for relation, metrics in list(sensitivity.items())[:8]:
+                report += f"| {relation} | {metrics['e_value']:.2f} | {metrics['robustness_value']:.2f} | {metrics['interpretation'][:50]} |\n"
 
-        def _generate_recommendations(self, analysis_results: Dict[str, Any]) -> str:
-            """Genera recomendaciones específicas basadas en el análisis"""
+        report += "\n## 6. RECOMENDACIONES\n\n"
+        report += self._generate_recommendations(analysis_results)
 
-            recommendations = []
-            quality = analysis_results['quality_score']
+        report += "\n---\n\n"
+        report += "*Análisis generado por PDETMunicipalPlanAnalyzer v5.0*\n"
+        report += "*Metodología: Inferencia Causal Bayesiana + Structural Causal Models*\n"
 
-            # Recomendaciones financieras
-            if quality.financial_feasibility < 6.0:
-                fin = analysis_results['financial_analysis']
-                if fin['funding_sources']['dependency_risk'] > 0.6:
-                    recommendations.append(
-                        "**Diversificación de fuentes:** Reducir dependencia excesiva de fuentes únicas. "
-                        "Explorar alternativas como cooperación internacional, APP, o gestión de recursos propios."
-                    )
+        return report
 
-                if fin['sustainability_score'] < 0.5:
-                    recommendations.append(
-                        "**Sostenibilidad fiscal:** Fortalecer componente de recursos propios. "
-                        "Desarrollar estrategias de generación de ingresos municipales."
-                    )
+    def _interpret_overall_quality(self, score: float) -> str:
+        """Interpretación del score global"""
 
-            # Recomendaciones de indicadores
-            if quality.indicator_quality < 6.0:
+        if score >= 8.0:
+            return ("**Evaluación: EXCELENTE** ✅\n\n"
+                    "El plan cumple con altos estándares de calidad técnica. "
+                    "Presenta coherencia causal sólida, viabilidad financiera demostrable, "
+                    "y alineación robusta con los pilares PDET.")
+        elif score >= 6.5:
+            return ("**Evaluación: BUENO** ✓\n\n"
+                    "El plan presenta bases sólidas pero con oportunidades de mejora. "
+                    "Se recomienda fortalecer algunos componentes específicos.")
+        elif score >= 5.0:
+            return ("**Evaluación: ACEPTABLE** ⚠️\n\n"
+                    "El plan cumple requisitos mínimos pero requiere ajustes sustanciales "
+                    "en múltiples dimensiones para asegurar efectividad.")
+        else:
+            return ("**Evaluación: DEFICIENTE** ❌\n\n"
+                    "El plan presenta deficiencias críticas que comprometen su viabilidad. "
+                    "Se requiere reformulación integral.")
+
+    def _generate_recommendations(self, analysis_results: Dict[str, Any]) -> str:
+        """Genera recomendaciones específicas basadas en el análisis"""
+
+        recommendations = []
+        quality = analysis_results['quality_score']
+
+        # Recomendaciones financieras
+        if quality['financial_feasibility'] < 6.0:
+            fin = analysis_results['financial_analysis']
+            if fin['funding_sources'].get('dependency_risk', 0) > 0.6:
                 recommendations.append(
-                    "**Fortalecimiento de indicadores:** Definir indicadores SMART completos "
-                    "(específicos, medibles, alcanzables, relevantes, temporales) con líneas base, "
-                    "metas cuantificadas, fórmulas de cálculo y fuentes verificables."
+                    "**Diversificación de fuentes:** Reducir dependencia excesiva de fuentes únicas. "
+                    "Explorar alternativas como cooperación internacional, APP, o gestión de recursos propios."
                 )
 
-            # Recomendaciones causales
-            effects = analysis_results.get('causal_effects', [])
-            weak_effects = [e for e in effects if e.probability_significant < 0.5]
+            if fin['sustainability_score'] < 0.5:
+                recommendations.append(
+                    "**Sostenibilidad fiscal:** Fortalecer componente de recursos propios. "
+                    "Desarrollar estrategias de generación de ingresos municipales."
+                )
+
+        # Recomendaciones de indicadores
+        if quality['indicator_quality'] < 6.0:
+            recommendations.append(
+                "**Fortalecimiento de indicadores:** Definir indicadores SMART completos "
+                "(específicos, medibles, alcanzables, relevantes, temporales) con líneas base, "
+                "metas cuantificadas, fórmulas de cálculo y fuentes verificables."
+            )
+
+        # Recomendaciones causales
+        effects = analysis_results.get('causal_effects', [])
+        if effects:
+            weak_effects = [e for e in effects if e['probability_significant'] < 0.5]
 
             if len(weak_effects) > len(effects) * 0.5:
                 recommendations.append(
@@ -1538,800 +1981,355 @@ class PDETMunicipalPlanAnalyzer:
                     "Explicitar teorías de cambio y mecanismos causales subyacentes."
                 )
 
-            # Recomendaciones PDET
-            if quality.pdet_alignment < 6.0:
-                recommendations.append(
-                    "**Alineación PDET:** Articular explícitamente con los 8 pilares del Pacto Estructurante. "
-                    "Referenciar iniciativas PATR y asegurar coherencia con transformación territorial."
-                )
-
-            # Recomendaciones de responsabilidad
-            if quality.responsibility_clarity < 6.0:
-                recommendations.append(
-                    "**Claridad institucional:** Especificar responsables concretos para cada programa. "
-                    "Evitar asignaciones genéricas como 'todas las secretarías' o 'alcaldía municipal'."
-                )
-
-            # Recomendaciones de mejores escenarios
-            scenarios = analysis_results.get('counterfactuals', [])
-            if scenarios:
-                best_scenario = max(scenarios,
-                                    key=lambda s: sum(s.probability_improvement.values()))
-
-                recommendations.append(
-                    f"**Optimización presupuestal:** Considerar escenario '{best_scenario.narrative.split('**')[1]}' "
-                    "que maximiza probabilidad de impacto en outcomes clave."
-                )
-
-            if not recommendations:
-                return "El plan presenta solidez en todas las dimensiones evaluadas. Continuar con implementación según lo planificado.\n"
-
-            result = ""
-            for i, rec in enumerate(recommendations, 1):
-                result += f"{i}. {rec}\n\n"
-
-            return result
-
-            # ========================================================================
-            # PIPELINE PRINCIPAL
-            # ========================================================================
-
-        async def analyze_municipal_plan(self, pdf_path: str, output_dir: Optional[str] = None) -> Dict[str, Any]:
-            """
-            Pipeline completo de análisis
-
-            Args:
-                pdf_path: Ruta al PDF del Plan de Desarrollo Municipal
-                output_dir: Directorio para guardar outputs (opcional)
-
-            Returns:
-                Diccionario con todos los resultados del análisis
-            """
-
-            print("\n" + "=" * 70)
-            print("ANÁLISIS INTEGRAL - PLAN DE DESARROLLO MUNICIPAL PDET")
-            print("=" * 70 + "\n")
-
-            start_time = datetime.now()
-
-            # 1. Extracción de texto
-            print("📄 Extrayendo texto del PDF...")
-            full_text = self._extract_full_text(pdf_path)
-            print(f" ✓ {len(full_text)} caracteres extraídos\n")
-
-            # 2. Extracción de tablas
-            tables = await self.extract_tables(pdf_path)
-
-            # 3. Análisis financiero
-            financial_analysis = self.analyze_financial_feasibility(tables, full_text)
-
-            # 4. Identificación de responsables
-            responsible_entities = self.identify_responsible_entities(full_text, tables)
-
-            # 5. Construcción de DAG causal
-            causal_dag = self.construct_causal_dag(full_text, tables, financial_analysis)
-
-            # 6. Estimación de efectos causales
-            causal_effects = self.estimate_causal_effects(causal_dag, full_text, financial_analysis)
-
-            # 7. Generación de contrafactuales
-            counterfactuals = self.generate_counterfactuals(causal_dag, causal_effects, financial_analysis)
-
-            # 8. Análisis de sensibilidad
-            sensitivity_analysis = self.sensitivity_analysis(causal_effects, causal_dag)
-
-            # 9. Score integral de calidad
-            quality_score = self.calculate_quality_score(
-                full_text, tables, financial_analysis, responsible_entities,
-                causal_dag, causal_effects
+        # Recomendaciones PDET
+        if quality['pdet_alignment'] < 6.0:
+            recommendations.append(
+                "**Alineación PDET:** Articular explícitamente con los 8 pilares del Pacto Estructurante. "
+                "Referenciar iniciativas PATR y asegurar coherencia con transformación territorial."
             )
 
-            # 10. Compilación de resultados
-            results = {
-                'metadata': {
-                    'pdf_path': pdf_path,
-                    'analysis_date': datetime.now().isoformat(),
-                    'processing_time_seconds': (datetime.now() - start_time).total_seconds(),
-                    'analyzer_version': '5.0'
-                },
-                'extraction': {
-                    'text_length': len(full_text),
-                    'tables_extracted': len(tables),
-                    'table_types': {t.table_type: sum(1 for x in tables if x.table_type == t.table_type)
-                                    for t in tables if t.table_type}
-                },
-                'financial_analysis': financial_analysis,
-                'responsible_entities': [self._entity_to_dict(e) for e in responsible_entities[:20]],
-                'causal_dag': {
-                    'nodes': len(causal_dag.nodes),
-                    'edges': len(causal_dag.edges),
-                    'pillar_nodes': [n for n, node in causal_dag.nodes.items() if node.node_type == 'pilar'],
-                    'outcome_nodes': [n for n, node in causal_dag.nodes.items() if node.node_type == 'outcome']
-                },
-                'causal_effects': [self._effect_to_dict(e) for e in causal_effects[:15]],
-                'counterfactuals': [self._scenario_to_dict(s) for s in counterfactuals],
-                'sensitivity_analysis': sensitivity_analysis,
-                'quality_score': self._quality_to_dict(quality_score)
-            }
-
-            # 11. Exportación de resultados
-            if output_dir:
-                output_path = Path(output_dir)
-                output_path.mkdir(parents=True, exist_ok=True)
-
-                # Exportar DAG
-                dag_path = output_path / "causal_network.graphml"
-                self.export_causal_network(causal_dag, str(dag_path))
-
-                # Exportar reporte
-                report = self.generate_executive_report(results)
-                report_path = output_path / "executive_report.md"
-                report_path.write_text(report, encoding='utf-8')
-                print(f"✅ Reporte ejecutivo guardado en: {report_path}")
-
-                # Exportar JSON
-                import json
-                json_path = output_path / "analysis_results.json"
-                with open(json_path, 'w', encoding='utf-8') as f:
-                    json.dump(results, f, ensure_ascii=False, indent=2, default=str)
-                print(f"✅ Resultados JSON guardados en: {json_path}")
-
-            elapsed = (datetime.now() - start_time).total_seconds()
-            print(f"\n⏱️  Análisis completado en {elapsed:.1f} segundos")
-            print("=" * 70 + "\n")
-
-            return results
-
-        def _extract_full_text(self, pdf_path: str) -> str:
-            """Extrae texto completo del PDF usando múltiples métodos"""
-
-            text_parts = []
-
-            # Método 1: PyMuPDF (rápido y eficiente)
-            try:
-                with fitz.open(pdf_path) as doc:
-                    for page in doc:
-                        text_parts.append(page.get_text())
-            except Exception as e:
-                print(f" ⚠️ PyMuPDF falló: {str(e)[:50]}")
-
-            # Método 2: pdfplumber (mejor para tablas complejas)
-            try:
-                with pdfplumber.open(pdf_path) as pdf:
-                    for page in pdf.pages[:100]:  # Límite de 100 páginas
-                        text = page.extract_text()
-                        if text:
-                            text_parts.append(text)
-            except Exception as e:
-                print(f" ⚠️ pdfplumber falló: {str(e)[:50]}")
-
-            full_text = '\n\n'.join(text_parts)
-
-            # Limpieza básica
-            full_text = re.sub(r'\n{3,}', '\n\n', full_text)
-            full_text = re.sub(r' {2,}', ' ', full_text)
-
-            return full_text
-
-        def _entity_to_dict(self, entity: ResponsibleEntity) -> Dict[str, Any]:
-            """Convierte ResponsibleEntity a diccionario"""
-            return {
-                'name': entity.name,
-                'type': entity.entity_type,
-                'specificity_score': entity.specificity_score,
-                'mentions': entity.mentioned_count,
-                'programs': entity.associated_programs,
-                'budget': float(entity.budget_allocated) if entity.budget_allocated else None
-            }
-
-        def _effect_to_dict(self, effect: CausalEffect) -> Dict[str, Any]:
-            """Convierte CausalEffect a diccionario"""
-            return {
-                'treatment': effect.treatment,
-                'outcome': effect.outcome,
-                'effect_type': effect.effect_type,
-                'point_estimate': effect.point_estimate,
-                'posterior_mean': effect.posterior_mean,
-                'credible_interval': effect.credible_interval_95,
-                'probability_positive': effect.probability_positive,
-                'probability_significant': effect.probability_significant,
-                'mediating_paths': effect.mediating_paths,
-                'confounders_adjusted': effect.confounders_adjusted
-            }
-
-        def _scenario_to_dict(self, scenario: CounterfactualScenario) -> Dict[str, Any]:
-            """Convierte CounterfactualScenario a diccionario"""
-            return {
-                'intervention': scenario.intervention,
-                'predicted_outcomes': scenario.predicted_outcomes,
-                'probability_improvement': scenario.probability_improvement,
-                'narrative': scenario.narrative
-            }
-
-        def _quality_to_dict(self, quality: QualityScore) -> Dict[str, Any]:
-            """Convierte QualityScore a diccionario"""
-            return {
-                'overall_score': quality.overall_score,
-                'financial_feasibility': quality.financial_feasibility,
-                'indicator_quality': quality.indicator_quality,
-                'responsibility_clarity': quality.responsibility_clarity,
-                'temporal_consistency': quality.temporal_consistency,
-                'pdet_alignment': quality.pdet_alignment,
-                'causal_coherence': quality.causal_coherence,
-                'confidence_interval': quality.confidence_interval,
-                'evidence': quality.evidence
-            }
-
-        # ============================================================================
-        # UTILIDADES Y HELPERS
-        # ============================================================================
-
-        class PDETAnalysisException(Exception):
-            """Excepción personalizada para errores de análisis"""
-            pass
-
-        def validate_pdf_path(pdf_path: str) -> Path:
-            """Valida que el path del PDF exista y sea válido"""
-
-            path = Path(pdf_path)
-
-            if not path.exists():
-                raise PDETAnalysisException(f"Archivo no encontrado: {pdf_path}")
-
-            if not path.is_file():
-                raise PDETAnalysisException(f"La ruta no es un archivo: {pdf_path}")
-
-            if path.suffix.lower() != '.pdf':
-                raise PDETAnalysisException(f"El archivo debe ser PDF, encontrado: {path.suffix}")
-
-            return path
-
-        def setup_logging(log_level: str = 'INFO') -> None:
-            """Configura logging para el análisis"""
-
-            import logging
-
-            logging.basicConfig(
-                level=getattr(logging, log_level.upper()),
-                format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                handlers=[
-                    logging.StreamHandler(),
-                    logging.FileHandler('pdet_analysis.log', encoding='utf-8')
-                ]
+        # Recomendaciones de responsabilidad
+        if quality['responsibility_clarity'] < 6.0:
+            recommendations.append(
+                "**Claridad institucional:** Especificar responsables concretos para cada programa. "
+                "Evitar asignaciones genéricas como 'todas las secretarías' o 'alcaldía municipal'."
             )
 
-        # ============================================================================
-        # EJEMPLO DE USO
-        # ============================================================================
+        # Recomendaciones de mejores escenarios
+        scenarios = analysis_results.get('counterfactuals', [])
+        if scenarios:
+            best_scenario = max(scenarios,
+                                key=lambda s: sum(s['probability_improvement'].values()))
 
-        async def main_example():
-            """
-            Ejemplo de uso del analizador
-
-            REQUISITOS PREVIOS:
-            1. Instalar dependencias: pip install -r requirements.txt
-            2. Descargar modelo SpaCy: python -m spacy download es_dep_news_trf
-            3. Tener GPU disponible (opcional pero recomendado)
-            """
-
-            # Configurar logging
-            setup_logging('INFO')
-
-            # Inicializar analizador
-            analyzer = PDETMunicipalPlanAnalyzer(
-                use_gpu=True,
-                language='es',
-                confidence_threshold=0.7
+            recommendations.append(
+                f"**Optimización presupuestal:** Considerar escenario '{best_scenario['narrative'].split('**')[1]}' "
+                "que maximiza probabilidad de impacto en outcomes clave."
             )
 
-            # Ruta al PDF del Plan de Desarrollo Municipal
-            pdf_path = "path/to/plan_desarrollo_municipal.pdf"
+        if not recommendations:
+            return "El plan presenta solidez en todas las dimensiones evaluadas. Continuar con implementación según lo planificado.\n"
 
-            try:
-                # Validar archivo
-                validate_pdf_path(pdf_path)
+        result = ""
+        for i, rec in enumerate(recommendations, 1):
+            result += f"{i}. {rec}\n\n"
 
-                # Ejecutar análisis completo
-                results = await analyzer.analyze_municipal_plan(
-                    pdf_path=pdf_path,
-                    output_dir="outputs/analisis_pdm"
-                )
+        return result
 
-                # Acceder a resultados específicos
-                print(f"\n📊 RESULTADOS PRINCIPALES:")
-                print(f"   Score de Calidad: {results['quality_score']['overall_score']:.2f}/10")
-                print(f"   Presupuesto Total: ${results['financial_analysis']['total_budget']:,.0f}")
-                print(f"   Efectos Causales Identificados: {len(results['causal_effects'])}")
-                print(f"   Escenarios Contrafactuales: {len(results['counterfactuals'])}")
+    # ========================================================================
+    # PIPELINE PRINCIPAL
+    # ========================================================================
 
-            except PDETAnalysisException as e:
-                print(f"❌ Error de análisis: {e}")
-            except Exception as e:
-                print(f"❌ Error inesperado: {e}")
-                raise
+    async def analyze_municipal_plan(self, pdf_path: str, output_dir: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Pipeline completo de análisis
 
-        if __name__ == "__main__":
-            """
-            Ejecución del script
+        Args:
+            pdf_path: Ruta al PDF del Plan de Desarrollo Municipal
+            output_dir: Directorio para guardar outputs (opcional)
 
-            USO:
-                python pdet_analyzer_v5.py
+        Returns:
+            Diccionario con todos los resultados del análisis
+        """
 
-            ARQUITECTURA:
-                1. Extracción multi-método (Camelot + Tabula + pdfplumber)
-                2. NLP avanzado (SpaCy + Transformers)
-                3. Inferencia causal bayesiana (PyMC)
-                4. DAG learning con d-separation
-                5. Análisis contrafactual (do-calculus)
-                6. Sensibilidad (E-values + Robustness)
+        print("\n" + "=" * 70)
+        print("ANÁLISIS INTEGRAL - PLAN DE DESARROLLO MUNICIPAL PDET")
+        print("=" * 70 + "\n")
 
-            REFERENCIAS TEÓRICAS:
-                - Pearl, J. (2009). Causality: Models, Reasoning and Inference
-                - Sharma, A. & Kiciman, E. (2020). DoWhy: An End-to-End Library for Causal Inference
-                - Cinelli, C., Forney, A. & Pearl, J. (2022). A Crash Course in Good and Bad Controls
-                - VanderWeele, T.J. & Ding, P. (2017). Sensitivity Analysis in Observational Research
-                - Gelman, A. et al. (2013). Bayesian Data Analysis, 3rd Edition
+        start_time = datetime.now()
 
-            CALIBRACIÓN:
-                - Priors informados desde literatura PDET (ART, DNP)
-                - Pesos dimensionales calibrados con expertos (n=15)
-                - E-values basados en OR de estudios quasi-experimentales
-                - Rendimientos decrecientes: elasticidad 0.7 (Banco Mundial, 2021)
-            """
+        # 1. Extracción de texto
+        print("📄 Extrayendo texto del PDF...")
+        full_text = self._extract_full_text(pdf_path)
+        print(f" ✓ {len(full_text)} caracteres extraídos\n")
 
-            # Suprimir warnings de PyMC
-            warnings.filterwarnings('ignore', category=FutureWarning)
-            warnings.filterwarnings('ignore', category=UserWarning)
+        # 2. Extracción de tablas
+        tables = await self.extract_tables(pdf_path)
 
-            # Ejecutar pipeline
-            asyncio.run(main_example())
-            treatment not in intervention:
-            continue
+        # 3. Análisis financiero
+        financial_analysis = self.analyze_financial_feasibility(tables, full_text)
 
-        current_budget = float(dag.nodes[treatment].associated_budget) if dag.nodes[
-            treatment].associated_budget else 0.0
-        new_budget = intervention[treatment]
+        # 4. Identificación de responsables
+        responsible_entities = self.identify_responsible_entities(full_text, tables)
 
-        if current_budget > 0:
-            budget_multiplier = new_budget / current_budget
+        # 5. Construcción de DAG causal
+        causal_dag = self.construct_causal_dag(full_text, tables, financial_analysis)
 
-            # Rendimientos decrecientes: log transform
-            effect_multiplier = np.log1p(budget_multiplier) / np.log1p(1.0)
+        # 6. Estimación de efectos causales
+        causal_effects = self.estimate_causal_effects(causal_dag, full_text, financial_analysis)
 
-            expected_change += effect.posterior_mean * effect_multiplier
+        # 7. Generación de contrafactuales
+        counterfactuals = self.generate_counterfactuals(causal_dag, causal_effects, financial_analysis)
 
-            ci_width = effect.credible_interval_95[1] - effect.credible_interval_95[0]
-            variance_sum += (ci_width / 3.92) ** 2  # 95% CI ≈ 3.92 std
+        # 8. Análisis de sensibilidad
+        sensitivity_analysis = self.sensitivity_analysis(causal_effects, causal_dag)
 
-    predicted_std = np.sqrt(variance_sum)
-    predicted_outcomes[outcome] = (
-        expected_change,
-        expected_change - 1.96 * predicted_std,
-        expected_change + 1.96 * predicted_std
-    )
+        # 9. Score integral de calidad
+        quality_score = self.calculate_quality_score(
+            full_text, tables, financial_analysis, responsible_entities,
+            causal_dag, causal_effects
+        )
 
-
-probability_improvement = {}
-for outcome, (mean, lower, upper) in predicted_outcomes.items():
-    prob_positive = stats.norm.sf(0, loc=mean, scale=(upper - lower) / 3.92)
-    probability_improvement[outcome] = float(prob_positive)
-
-narrative = self._generate_scenario_narrative(description, intervention, predicted_outcomes, probability_improvement)
-
-return CounterfactualScenario(
-    intervention=intervention,
-    predicted_outcomes=predicted_outcomes,
-    probability_improvement=probability_improvement,
-    narrative=narrative
-)
-
-
-def _generate_scenario_narrative(self, description: str, intervention: Dict[str, float],
-                                 predicted_outcomes: Dict[str, Tuple[float, float, float]],
-                                 probabilities: Dict[str, float]) -> str:
-    """Genera narrativa interpretable del escenario contrafactual"""
-
-    narrative = f"**{description}**\n\n"
-    narrative += "**Intervención propuesta:**\n"
-
-    total_intervention = sum(intervention.values())
-    for pillar, budget in sorted(intervention.items(), key=lambda x: -x[1])[:5]:
-        percentage = (budget / total_intervention * 100) if total_intervention > 0 else 0
-        narrative += f"- {pillar[:50]}: ${budget:,.0f} COP ({percentage:.1f}%)\n"
-
-    narrative += "\n**Efectos esperados:**\n"
-
-    significant_outcomes = [(o, p) for o, p in probabilities.items() if p > 0.6]
-    significant_outcomes.sort(key=lambda x: -x[1])
-
-    for outcome, prob in significant_outcomes[:5]:
-        mean, lower, upper = predicted_outcomes[outcome]
-        narrative += f"- {outcome}: {mean:+.2f} (IC95%: [{lower:.2f}, {upper:.2f}]) - "
-        narrative += f"Probabilidad de mejora: {prob * 100:.0f}%\n"
-
-    return narrative
-
-
-# ========================================================================
-# ANÁLISIS DE SENSIBILIDAD (Cinelli et al., 2022)
-# ========================================================================
-
-def sensitivity_analysis(self, causal_effects: List[CausalEffect], dag: CausalDAG) -> Dict[str, Any]:
-    """
-    Análisis de sensibilidad para supuestos de identificación causal
-    Basado en: Cinelli, Forney & Pearl (2022) - "A Crash Course in Good and Bad Controls"
-    """
-    print("🔬 Ejecutando análisis de sensibilidad...")
-
-    sensitivity_results = {}
-
-    for effect in causal_effects[:10]:  # Top 10 effects
-        unobserved_confounding = self._compute_e_value(effect)
-
-        robustness_value = self._compute_robustness_value(effect, dag)
-
-        sensitivity_results[f"{effect.treatment[:30]}→{effect.outcome[:30]}"] = {
-            'e_value': unobserved_confounding,
-            'robustness_value': robustness_value,
-            'interpretation': self._interpret_sensitivity(unobserved_confounding, robustness_value)
+        # 10. Compilación de resultados
+        results = {
+            'metadata': {
+                'pdf_path': pdf_path,
+                'analysis_date': datetime.now().isoformat(),
+                'processing_time_seconds': (datetime.now() - start_time).total_seconds(),
+                'analyzer_version': '5.0'
+            },
+            'extraction': {
+                'text_length': len(full_text),
+                'tables_extracted': len(tables),
+                'table_types': {t.table_type: sum(1 for x in tables if x.table_type == t.table_type)
+                                for t in tables if t.table_type}
+            },
+            'financial_analysis': financial_analysis,
+            'responsible_entities': [self._entity_to_dict(e) for e in responsible_entities[:20]],
+            'causal_dag': {
+                'nodes': len(causal_dag.nodes),
+                'edges': len(causal_dag.edges),
+                'pillar_nodes': [n for n, node in causal_dag.nodes.items() if node.node_type == 'pilar'],
+                'outcome_nodes': [n for n, node in causal_dag.nodes.items() if node.node_type == 'outcome']
+            },
+            'causal_effects': [self._effect_to_dict(e) for e in causal_effects[:15]],
+            'counterfactuals': [self._scenario_to_dict(s) for s in counterfactuals],
+            'sensitivity_analysis': sensitivity_analysis,
+            'quality_score': self._quality_to_dict(quality_score)
         }
 
-    print(f" ✓ Sensibilidad analizada para {len(sensitivity_results)} efectos")
-    return sensitivity_results
+        # 11. Exportación de resultados
+        if output_dir:
+            output_path = Path(output_dir)
+            output_path.mkdir(parents=True, exist_ok=True)
+
+            # Exportar DAG
+            dag_path = output_path / "causal_network.graphml"
+            self.export_causal_network(causal_dag, str(dag_path))
+
+            # Exportar reporte
+            report = self.generate_executive_report(results)
+            report_path = output_path / "executive_report.md"
+            report_path.write_text(report, encoding='utf-8')
+            print(f"✅ Reporte ejecutivo guardado en: {report_path}")
+
+            # Exportar JSON
+            import json
+            json_path = output_path / "analysis_results.json"
+            with open(json_path, 'w', encoding='utf-8') as f:
+                json.dump(results, f, ensure_ascii=False, indent=2, default=str)
+            print(f"✅ Resultados JSON guardados en: {json_path}")
+
+        elapsed = (datetime.now() - start_time).total_seconds()
+        print(f"\n⏱️ Análisis completado en {elapsed:.1f} segundos")
+        print("=" * 70 + "\n")
+
+        return results
+
+    def _extract_full_text(self, pdf_path: str) -> str:
+        """Extrae texto completo del PDF usando múltiples métodos"""
+
+        text_parts = []
+
+        # Método 1: PyMuPDF (rápido y eficiente)
+        try:
+            with fitz.open(pdf_path) as doc:
+                for page in doc:
+                    text_parts.append(page.get_text())
+        except Exception as e:
+            print(f" ⚠️ PyMuPDF falló: {str(e)[:50]}")
+
+        # Método 2: pdfplumber (mejor para tablas complejas)
+        try:
+            with pdfplumber.open(pdf_path) as pdf:
+                for page in pdf.pages[:100]:  # Límite de 100 páginas
+                    text = page.extract_text()
+                    if text:
+                        text_parts.append(text)
+        except Exception as e:
+            print(f" ⚠️ pdfplumber falló: {str(e)[:50]}")
+
+        full_text = '\n\n'.join(text_parts)
+
+        # Limpieza básica
+        full_text = re.sub(r'\n{3,}', '\n\n', full_text)
+        full_text = re.sub(r' {2,}', ' ', full_text)
+
+        return full_text
+
+    def _entity_to_dict(self, entity: ResponsibleEntity) -> Dict[str, Any]:
+        """Convierte ResponsibleEntity a diccionario"""
+        return {
+            'name': entity.name,
+            'type': entity.entity_type,
+            'specificity_score': entity.specificity_score,
+            'mentions': entity.mentioned_count,
+            'programs': entity.associated_programs,
+            'budget': float(entity.budget_allocated) if entity.budget_allocated else None
+        }
+
+    def _effect_to_dict(self, effect: CausalEffect) -> Dict[str, Any]:
+        """Convierte CausalEffect a diccionario"""
+        return {
+            'treatment': effect.treatment,
+            'outcome': effect.outcome,
+            'effect_type': effect.effect_type,
+            'point_estimate': effect.point_estimate,
+            'posterior_mean': effect.posterior_mean,
+            'credible_interval': effect.credible_interval_95,
+            'probability_positive': effect.probability_positive,
+            'probability_significant': effect.probability_significant,
+            'mediating_paths': effect.mediating_paths,
+            'confounders_adjusted': effect.confounders_adjusted
+        }
+
+    def _scenario_to_dict(self, scenario: CounterfactualScenario) -> Dict[str, Any]:
+        """Convierte CounterfactualScenario a diccionario"""
+        return {
+            'intervention': scenario.intervention,
+            'predicted_outcomes': scenario.predicted_outcomes,
+            'probability_improvement': scenario.probability_improvement,
+            'narrative': scenario.narrative
+        }
+
+    def _quality_to_dict(self, quality: QualityScore) -> Dict[str, Any]:
+        """Convierte QualityScore a diccionario"""
+        return {
+            'overall_score': quality.overall_score,
+            'financial_feasibility': quality.financial_feasibility,
+            'indicator_quality': quality.indicator_quality,
+            'responsibility_clarity': quality.responsibility_clarity,
+            'temporal_consistency': quality.temporal_consistency,
+            'pdet_alignment': quality.pdet_alignment,
+            'causal_coherence': quality.causal_coherence,
+            'confidence_interval': quality.confidence_interval,
+            'evidence': quality.evidence
+        }
 
 
-def _compute_e_value(self, effect: CausalEffect) -> float:
-    """
-    E-value: mínima fuerza de confounding no observado para anular el efecto
-    Fórmula: E = effect_estimate + sqrt(effect_estimate * (effect_estimate - 1))
+# ============================================================================
+# UTILIDADES Y HELPERS
+# ============================================================================
 
-    Referencia: VanderWeele & Ding (2017) - Ann Intern Med
-    """
-    if effect.posterior_mean <= 0:
-        return 1.0
-
-    rr = np.exp(effect.posterior_mean)  # Convert log-scale to risk ratio
-    e_value = rr + np.sqrt(rr * (rr - 1))
-
-    return float(e_value)
+class PDETAnalysisException(Exception):
+    """Excepción personalizada para errores de análisis"""
+    pass
 
 
-def _compute_robustness_value(self, effect: CausalEffect, dag: CausalDAG) -> float:
-    """
-    Robustness Value: percentil de la distribución posterior que cruza cero
-    Valores altos (>0.95) indican alta robustez
-    """
-    ci_lower, ci_upper = effect.credible_interval_95
+def validate_pdf_path(pdf_path: str) -> Path:
+    """Valida que el path del PDF exista y sea válido"""
 
-    if ci_lower > 0:
-        return 1.0
-    elif ci_upper < 0:
-        return 1.0
+    path = Path(pdf_path)
 
-    width = ci_upper - ci_lower
-    if width == 0:
-        return 0.5
+    if not path.exists():
+        raise PDETAnalysisException(f"Archivo no encontrado: {pdf_path}")
 
-    robustness = abs(effect.posterior_mean) / (width / 2)
-    return float(min(robustness, 1.0))
+    if not path.is_file():
+        raise PDETAnalysisException(f"La ruta no es un archivo: {pdf_path}")
+
+    if path.suffix.lower() != '.pdf':
+        raise PDETAnalysisException(f"El archivo debe ser PDF, encontrado: {path.suffix}")
+
+    return path
 
 
-def _interpret_sensitivity(self, e_value: float, robustness: float) -> str:
-    """Interpretación de resultados de sensibilidad"""
+def setup_logging(log_level: str = 'INFO') -> None:
+    """Configura logging para el análisis"""
 
-    if e_value > 2.0 and robustness > 0.8:
-        return "Efecto robusto - Resistente a confounding no observado"
-    elif e_value > 1.5 and robustness > 0.6:
-        return "Efecto moderadamente robusto - Precaución con confounders"
-    elif e_value > 1.2 and robustness > 0.4:
-        return "Efecto sensible - Alta vulnerabilidad a confounding"
-    else:
-        return "Efecto frágil - Resultados no confiables sin ajustes adicionales"
+    import logging
 
-
-# ========================================================================
-# SCORING INTEGRAL DE CALIDAD
-# ========================================================================
-
-def calculate_quality_score(self, text: str, tables: List[ExtractedTable],
-                            financial_analysis: Dict[str, Any],
-                            responsible_entities: List[ResponsibleEntity],
-                            causal_dag: CausalDAG,
-                            causal_effects: List[CausalEffect]) -> QualityScore:
-    """
-    Puntaje bayesiano integral de calidad del PDM
-    Integra todas las dimensiones de análisis con pesos calibrados
-    """
-    print("⭐ Calculando score integral de calidad...")
-
-    financial_score = self._score_financial_component(financial_analysis)
-
-    indicator_score = self._score_indicators(tables, text)
-
-    responsibility_score = self._score_responsibility_clarity(responsible_entities)
-
-    temporal_score = self._score_temporal_consistency(text, tables)
-
-    pdet_score = self._score_pdet_alignment(text, tables, causal_dag)
-
-    causal_score = self._score_causal_coherence(causal_dag, causal_effects)
-
-    weights = np.array([0.20, 0.15, 0.15, 0.10, 0.20, 0.20])
-    scores = np.array([
-        financial_score, indicator_score, responsibility_score,
-        temporal_score, pdet_score, causal_score
-    ])
-
-    overall_score = float(np.dot(weights, scores))
-
-    confidence = self._estimate_score_confidence(scores, weights)
-
-    evidence = {
-        'financial': financial_score,
-        'indicators': indicator_score,
-        'responsibility': responsibility_score,
-        'temporal': temporal_score,
-        'pdet_alignment': pdet_score,
-        'causal_coherence': causal_score
-    }
-
-    print(f" ✓ Score final: {overall_score:.2f}/10.0")
-
-    return QualityScore(
-        overall_score=overall_score,
-        financial_feasibility=financial_score,
-        indicator_quality=indicator_score,
-        responsibility_clarity=responsibility_score,
-        temporal_consistency=temporal_score,
-        pdet_alignment=pdet_score,
-        causal_coherence=causal_score,
-        confidence_interval=confidence,
-        evidence=evidence
+    logging.basicConfig(
+        level=getattr(logging, log_level.upper()),
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.StreamHandler(),
+            logging.FileHandler('pdet_analysis.log', encoding='utf-8')
+        ]
     )
 
 
-def _score_financial_component(self, financial_analysis: Dict[str, Any]) -> float:
-    """Score componente financiero (0-10)"""
-
-    budget = financial_analysis.get('total_budget', 0)
-    if budget == 0:
-        return 0.0
-
-    budget_score = min(np.log10(float(budget)) / 12, 1.0) * 3.0
-
-    diversity = financial_analysis['funding_sources'].get('diversity_index', 0)
-    max_diversity = financial_analysis['funding_sources'].get('max_diversity', 1)
-    diversity_score = (diversity / max(max_diversity, 0.1)) * 3.0
-
-    sustainability = financial_analysis.get('sustainability_score', 0)
-    sustainability_score = sustainability * 2.5
-
-    risk = financial_analysis['risk_assessment'].get('risk_score', 0.5)
-    risk_score = (1 - risk) * 1.5
-
-    return float(min(budget_score + diversity_score + sustainability_score + risk_score, 10.0))
-
-
-def _score_indicators(self, tables: List[ExtractedTable], text: str) -> float:
-    """Score calidad de indicadores (0-10)"""
-
-    indicator_tables = [t for t in tables if t.table_type == 'indicadores']
-
-    if not indicator_tables:
-        baseline_mentions = len(re.findall(r'l[íi]nea\s+base', text, re.IGNORECASE))
-        meta_mentions = len(re.findall(r'meta', text, re.IGNORECASE))
-
-        if baseline_mentions > 5 and meta_mentions > 5:
-            return 4.0
-        return 2.0
-
-    completeness_score = 0.0
-    for table in indicator_tables:
-        df = table.df
-        required_cols = ['indicador', 'línea base', 'meta', 'fuente']
-        present_cols = sum(1 for col in required_cols if any(col in str(c).lower() for c in df.columns))
-        completeness_score += (present_cols / len(required_cols)) * 3.0
-
-    completeness_score = min(completeness_score, 4.0)
-
-    smart_patterns = [
-        r'\d+%',  # Percentages
-        r'\d+\s+(?:personas|hogares|familias|hectáreas)',  # Quantities
-        r'reducir|aumentar|mejorar|incrementar',  # Action verbs
-    ]
-
-    smart_count = sum(len(re.findall(pattern, text, re.IGNORECASE)) for pattern in smart_patterns)
-    smart_score = min(smart_count / 50, 1.0) * 3.0
-
-    formula_mentions = len(re.findall(r'f[óo]rmula', text, re.IGNORECASE))
-    periodicity_mentions = len(re.findall(r'periodicidad|trimestral|anual|mensual', text, re.IGNORECASE))
-
-    technical_score = min((formula_mentions + periodicity_mentions) / 10, 1.0) * 3.0
-
-    return float(min(completeness_score + smart_score + technical_score, 10.0))
-
-
-def _score_responsibility_clarity(self, entities: List[ResponsibleEntity]) -> float:
-    """Score claridad de responsables (0-10)"""
-
-    if not entities:
-        return 2.0
-
-    count_score = min(len(entities) / 15, 1.0) * 3.0
-
-    avg_specificity = np.mean([e.specificity_score for e in entities])
-    specificity_score = avg_specificity * 4.0
-
-    institutional_entities = [e for e in entities if e.entity_type in ['secretaría', 'dirección', 'oficina']]
-    institutional_ratio = len(institutional_entities) / max(len(entities), 1)
-    institutional_score = institutional_ratio * 3.0
-
-    return float(min(count_score + specificity_score + institutional_score, 10.0))
-
-
-def _score_temporal_consistency(self, text: str, tables: List[ExtractedTable]) -> float:
-    """Score consistencia temporal (0-10)"""
-
-    years_mentioned = set(re.findall(r'20[2-3]\d', text))
-
-    if len(years_mentioned) < 2:
-        return 3.0
-
-    year_range = max(years_mentioned) - min(years_mentioned) if years_mentioned else 0
-    range_score = min(year_range / 4, 1.0) * 3.0
-
-    cronograma_tables = [t for t in tables if t.table_type == 'cronograma']
-    cronograma_score = min(len(cronograma_tables) * 2, 4.0)
-
-    temporal_terms = ['cronograma', 'año', 'trimestre', 'mes', 'periodo', 'etapa', 'fase']
-    term_count = sum(len(re.findall(rf'\b{term}\b', text, re.IGNORECASE)) for term in temporal_terms)
-    term_score = min(term_count / 30, 1.0) * 3.0
-
-    return float(min(range_score + cronograma_score + term_score, 10.0))
-
-
-def _score_pdet_alignment(self, text: str, tables: List[ExtractedTable], dag: CausalDAG) -> float:
-    """Score alineación con pilares PDET (0-10)"""
-
-    text_lower = text.lower()
-
-    pillar_mentions = {}
-    for pillar in self.context.PDET_PILLARS:
-        pillar_lower = pillar.lower()
-        keywords = pillar_lower.split()[:3]
-
-        count = sum(text_lower.count(kw) for kw in keywords)
-        pillar_mentions[pillar] = count
-
-    coverage = sum(1 for count in pillar_mentions.values() if count > 0)
-    coverage_score = (coverage / len(self.context.PDET_PILLARS)) * 4.0
-
-    pdet_explicit = len(re.findall(r'\bPDET\b', text, re.IGNORECASE))
-    patr_mentions = len(re.findall(r'\bPATR\b', text, re.IGNORECASE))
-    explicit_score = min((pdet_explicit + patr_mentions) / 15, 1.0) * 3.0
-
-    pdet_tables = [t for t in tables if t.table_type == 'pdet']
-    table_score = min(len(pdet_tables) * 1.5, 3.0)
-
-    return float(min(coverage_score + explicit_score + table_score, 10.0))
-
-
-def _score_causal_coherence(self, dag: CausalDAG, effects: List[CausalEffect]) -> float:
-    """Score coherencia causal del plan (0-10)"""
-
-    G = dag.graph
-
-    if G.number_of_nodes() == 0:
-        return 2.0
-
-    structure_score = min(G.number_of_edges() / (G.number_of_nodes() * 1.5), 1.0) * 3.0
-
-    if not effects:
-        effect_quality = 0.0
-    else:
-        avg_probability = np.mean([e.probability_significant for e in effects])
-        effect_quality = avg_probability * 4.0
-
-    pillar_nodes = [n for n, data in G.nodes(data=True) if data.get('type') == 'pilar']
-    outcome_nodes = [n for n, data in G.nodes(data=True) if data.get('type') == 'outcome']
-
-    connected_pillars = sum(1 for p in pillar_nodes if any(nx.has_path(G, p, o) for o in outcome_nodes))
-    connectivity = (connected_pillars / max(len(pillar_nodes), 1)) * 3.0
-
-    return float(min(structure_score + effect_quality + connectivity, 10.0))
-
-
-def _estimate_score_confidence(self, scores: np.ndarray, weights: np.ndarray) -> Tuple[float, float]:
-    """Estima intervalo de confianza para el score usando bootstrap"""
-
-    n_bootstrap = 1000
-    bootstrap_scores = []
-
-    for _ in range(n_bootstrap):
-        noise = np.random.normal(0, 0.5, size=len(scores))
-        noisy_scores = np.clip(scores + noise, 0, 10)
-
-        bootstrap_score = np.dot(weights, noisy_scores)
-        bootstrap_scores.append(bootstrap_score)
-
-    ci_lower, ci_upper = np.percentile(bootstrap_scores, [2.5, 97.5])
-
-    return (float(ci_lower), float(ci_upper))
-
-
-# ========================================================================
-# EXPORTACIÓN Y VISUALIZACIÓN
-# ========================================================================
-
-def export_causal_network(self, dag: CausalDAG, output_path: str) -> None:
-    """Exporta el DAG causal en formato GraphML para Gephi/Cytoscape"""
-
-    G = dag.graph.copy()
-
-    for node, data in G.nodes(data=True):
-        data['label'] = node[:50]
-        data['node_type'] = data.get('type', 'unknown')
-        data['budget'] = data.get('budget', 0.0)
-
-    for u, v, data in G.edges(data=True):
-        data['weight'] = data.get('probability', 0.5)
-        data['edge_type'] = data.get('type', 'unknown')
-
-    nx.write_graphml(G, output_path)
-    print(f"✅ Red causal exportada a: {output_path}")
-
-
-def generate_executive_report(self, analysis_results: Dict[str, Any]) -> str:
-    """Genera reporte ejecutivo en Markdown"""
-
-    report = "# ANÁLISIS INTEGRAL - PLAN DE DESARROLLO MUNICIPAL PDET\n\n"
-    report += f"**Fecha de análisis:** {datetime.now().strftime('%Y-%m-%d %H:%M')}\n\n"
-
-    report += "## 1. RESUMEN EJECUTIVO\n\n"
-
-    quality = analysis_results['quality_score']
-    report += f"**Score Global de Calidad:** {quality.overall_score:.2f}/10.0 "
-    report += f"(IC95%: [{quality.confidence_interval[0]:.2f}, {quality.confidence_interval[1]:.2f}])\n\n"
-
-    report += self._interpret_overall_quality(quality.overall_score)
-    report += "\n\n"
-
-    report += "### Dimensiones Evaluadas\n\n"
-    report += f"- **Viabilidad Financiera:** {quality.financial_feasibility:.1f}/10\n"
-    report += f"- **Calidad de Indicadores:** {quality.indicator_quality:.1f}/10\n"
-    report += f"- **Claridad de Responsables:** {quality.responsibility_clarity:.1f}/10\n"
-    report += f"- **Consistencia Temporal:** {quality.temporal_consistency:.1f}/10\n"
-    report += f"- **Alineación PDET:** {quality.pdet_alignment:.1f}/10\n"
-    report += f"- **Coherencia Causal:** {quality.causal_coherence:.1f}/10\n\n"
-
-    report += "## 2. ANÁLISIS FINANCIERO\n\n"
-    fin = analysis_results['financial_analysis']
-    report += f"**Presupuesto Total:** ${fin['total_budget']:,.0f} COP\n\n"
-
-    report += "### Distribución por Fuente\n\n"
-    for source, amount in sorted(fin['funding_sources']['distribution'].items(), key=lambda x: -x[1])[:5]:
-        pct = (amount / fin['total_budget'] * 100) if fin['total_budget'] > 0 else 0
-        report += f"- {source}: ${amount:,.0f} ({pct:.1f}%)\n"
-
-    report += f"\n**Índice de Diversificación:** {fin['funding_sources']['diversity_index']:.2f}\n"
-    report += f"**Score de Sostenibilidad:** {fin['sustainability_score']:.2f}\n"
-    report += f"**Evaluación de Riesgo:** {fin['risk_assessment']['interpretation']}\n\n"
-
-    report += "## 3. INFERENCIA CAUSAL\n\n"
-
-    effects = analysis_results.get('causal_effects', [])
-    if effects:
-        report += "### Efectos Causales Principales\n\n"
-
-        significant_effects = [e for e in effects if e.probability_significant > 0.7]
-        significant_effects.sort(key=lambda e: abs(e.posterior_mean), reverse=True)
-
-        for effect in significant_effects[:5]:
-            report += f"**{effect.treatment[:40]} → {effect.outcome[:40]}**\n"
-            report += f"- Efecto estimado: {effect.posterior_mean:+.3f} "
-            report += f"(IC95%: [{effect.credible_interval_95[0]:.3f}, {effect.credible_interval_95[1]:.3f}])\n"
-            report += f"- Probabilidad de efecto positivo: {effect.probability_positive * 100:.0f}%\n"
-
-            if effect.mediating_paths:
-                report += f"- Vías de mediación: {len(effect.mediating_paths)}\n"
-            report += "\n"
+# ============================================================================
+# EJEMPLO DE USO
+# ============================================================================
+
+async def main_example():
+    """
+    Ejemplo de uso del analizador
+
+    REQUISITOS PREVIOS:
+    1. Instalar dependencias: pip install -r requirements.txt
+    2. Descargar modelo SpaCy: python -m spacy download es_dep_news_trf
+    3. Tener GPU disponible (opcional pero recomendado)
+    """
+
+    # Configurar logging
+    setup_logging('INFO')
+
+    # Inicializar analizador
+    analyzer = PDETMunicipalPlanAnalyzer(
+        use_gpu=True,
+        language='es',
+        confidence_threshold=0.7
+    )
+
+    # Ruta al PDF del Plan de Desarrollo Municipal
+    pdf_path = "path/to/plan_desarrollo_municipal.pdf"
+
+    try:
+        # Validar archivo
+        validate_pdf_path(pdf_path)
+
+        # Ejecutar análisis completo
+        results = await analyzer.analyze_municipal_plan(
+            pdf_path=pdf_path,
+            output_dir="outputs/analisis_pdm"
+        )
+
+        # Acceder a resultados específicos
+        print(f"\n📊 RESULTADOS PRINCIPALES:")
+        print(f" Score de Calidad: {results['quality_score']['overall_score']:.2f}/10")
+        print(f" Presupuesto Total: ${results['financial_analysis']['total_budget']:,.0f}")
+        print(f" Efectos Causales Identificados: {len(results['causal_effects'])}")
+        print(f" Escenarios Contrafactuales: {len(results['counterfactuals'])}")
+
+    except PDETAnalysisException as e:
+        print(f"❌ Error de análisis: {e}")
+    except Exception as e:
+        print(f"❌ Error inesperado: {e}")
+        raise
+
+
+if __name__ == "__main__":
+    """
+    Ejecución del script
+
+    USO:
+    python pdet_analyzer_v5.py
+
+    ARQUITECTURA:
+    1. Extracción multi-método (Camelot + Tabula + pdfplumber)
+    2. NLP avanzado (SpaCy + Transformers)
+    3. Inferencia causal bayesiana (PyMC)
+    4. DAG learning con d-separation
+    5. Análisis contrafactual (do-calculus)
+    6. Sensibilidad (E-values + Robustness)
+
+    REFERENCIAS TEÓRICAS:
+    - Pearl, J. (2009). Causality: Models, Reasoning and Inference
+    - Sharma, A. & Kiciman, E. (2020). DoWhy: An End-to-End Library for Causal Inference
+    - Cinelli, C., Forney, A. & Pearl, J. (2022). A Crash Course in Good and Bad Controls
+    - VanderWeele, T.J. & Ding, P. (2017). Sensitivity Analysis in Observational Research
+    - Gelman, A. et al. (2013). Bayesian Data Analysis, 3rd Edition
+
+    CALIBRACIÓN:
+    - Priors informados desde literatura PDET (ART, DNP)
+    - Pesos dimensionales calibrados con expertos (n=15)
+    - E-values basados en OR de estudios quasi-experimentales
+    - Rendimientos decrecientes: elasticidad 0.7 (Banco Mundial, 2021)
+    """
+
+    # Suprimir warnings de PyMC
+    warnings.filterwarnings('ignore', category=FutureWarning)
+    warnings.filterwarnings('ignore', category=UserWarning)
+
+    # Ejecutar pipeline
+    asyncio.run(main_example())

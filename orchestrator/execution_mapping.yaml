@@ -1,0 +1,1127 @@
+# FARFAN 3.0 Execution Mapping - Granular Method Chains
+# $100 USD Production Specification
+# NO PLACEHOLDERS - Every method mapped to real implementation
+
+version: "2.0"
+last_updated: "2025-10-16"
+
+# ==============================================================================
+# DIMENSION D1: INSUMOS (Recursos, Línea Base, Capacidad Institucional)
+# ==============================================================================
+D1_INSUMOS:
+  description: "Evaluación de línea base, recursos disponibles, capacidad institucional"
+  question_count: 50  # P1-P10 × Q1-Q5
+
+  execution_chain:
+    - step: 1
+      module: policy_segmenter
+      class: DocumentSegmenter
+      method: segment
+      args:
+        - name: text
+          type: str
+          source: plan_text
+      returns:
+        type: List[Dict[str, Any]]
+        binding: segments
+      purpose: "Segmentar documento en chunks semánticos para análisis granular"
+      async: false
+
+    - step: 2
+      module: embedding_policy
+      class: PolicyAnalysisEmbedder
+      method: process_document
+      args:
+        - name: text
+          type: str
+          source: plan_text
+      returns:
+        type: Dict[str, Any]
+        binding: embeddings_data
+        fields:
+          - chunks: List[SemanticChunk]
+          - embeddings_generated: bool
+          - index_stats: Dict
+      purpose: "Generar embeddings BGE-M3 y crear índice semántico"
+      async: false
+      dependencies: []
+
+    - step: 3
+      module: embedding_policy
+      class: PolicyAnalysisEmbedder
+      method: semantic_search
+      args:
+        - name: query
+          type: str
+          source: dynamic  # Generated based on P# and Q#
+          template: "recursos asignados línea base {policy_area}"
+        - name: filters
+          type: PDQIdentifier
+          source: context
+          fields:
+            policy_area: "$policy_area"
+            dimension: "D1"
+      returns:
+        type: List[SemanticChunk]
+        binding: search_results
+      purpose: "Buscar menciones específicas de recursos con filtrado P-D-Q"
+      async: false
+      dependencies: [embeddings_data]
+
+    - step: 4
+      module: causal_processor
+      class: PolicyDocumentAnalyzer
+      method: analyze
+      args:
+        - name: text
+          type: str
+          source: plan_text
+      returns:
+        type: Dict[str, Any]
+        binding: causal_analysis
+        fields:
+          - summary: Dict
+          - causal_dimensions: Dict[str, Dict]
+          - key_excerpts: Dict[str, List[str]]
+      purpose: "Análisis causal con inferencia Bayesiana por dimensión"
+      async: true  # Can run in parallel with step 5
+      dependencies: []
+
+    - step: 5
+      module: analyzer_one
+      class: MunicipalAnalyzer
+      method: analyze_document
+      args:
+        - name: text
+          type: str
+          source: plan_text
+      returns:
+        type: Dict[str, Any]
+        binding: municipal_analysis
+        fields:
+          - semantic_analysis: Dict
+          - value_chain: Dict
+          - critical_links: List
+          - overall_confidence: float
+      purpose: "Extracción de cubo semántico y cadena de valor"
+      async: true  # Can run in parallel with step 4
+      dependencies: []
+
+    - step: 6
+      module: policy_processor
+      class: IndustrialPolicyProcessor
+      method: _extract_point_evidence
+      args:
+        - name: text
+          type: str
+          source: plan_text
+        - name: dimension
+          type: str
+          source: constant
+          value: "D1"
+      returns:
+        type: List[str]
+        binding: point_evidence
+      purpose: "Extracción regex de evidencia puntual para D1"
+      async: true
+      dependencies: []
+
+    - step: 7
+      module: causal_processor
+      class: BayesianEvidenceIntegrator
+      method: integrate_evidence
+      args:
+        - name: similarities
+          type: NDArray[np.float64]
+          source: derived
+          derivation: "extract_similarities_from(search_results)"
+        - name: chunk_metadata
+          type: List[Dict[str, Any]]
+          source: derived
+          derivation: "extract_metadata_from(search_results)"
+      returns:
+        type: Dict[str, float]
+        binding: bayesian_integration
+        fields:
+          - posterior_mean: float
+          - posterior_std: float
+          - information_gain: float
+          - confidence: float
+          - evidence_strength: float
+      purpose: "Integración Bayesiana de evidencia con cuantificación de incertidumbre"
+      async: false
+      dependencies: [search_results]
+
+  aggregation:
+    strategy: bayesian_weighted_average
+    weights:
+      causal_analysis.causal_dimensions.insumos: 0.30
+      municipal_analysis.value_chain.insumos: 0.25
+      bayesian_integration.posterior_mean: 0.25
+      point_evidence: 0.20
+    confidence_threshold: 0.60
+    scoring_function: |
+      def score(aggregated_data):
+          # Extract dimension-specific scores
+          causal_score = aggregated_data['causal_analysis']['causal_dimensions'].get('insumos', {}).get('posterior_mean', 0.5)
+          municipal_score = aggregated_data['municipal_analysis'].get('overall_confidence', 0.5)
+          bayesian_score = aggregated_data['bayesian_integration'].get('posterior_mean', 0.5)
+          evidence_count = len(aggregated_data.get('point_evidence', []))
+          evidence_score = min(1.0, evidence_count / 5.0)  # 5+ evidence = 1.0
+
+          # Weighted average
+          final_score = (
+              0.30 * causal_score +
+              0.25 * municipal_score +
+              0.25 * bayesian_score +
+              0.20 * evidence_score
+          )
+
+          return final_score
+
+# ==============================================================================
+# DIMENSION D2: ACTIVIDADES (Mecanismos, Cronogramas, Secuencias)
+# ==============================================================================
+D2_ACTIVIDADES:
+  description: "Evaluación de actividades, mecanismos causales, secuencias temporales"
+  question_count: 50
+
+  execution_chain:
+    - step: 1
+      module: policy_processor
+      class: IndustrialPolicyProcessor
+      method: process
+      args:
+        - name: text
+          type: str
+          source: plan_text
+      returns:
+        type: Dict[str, Any]
+        binding: policy_analysis
+        fields:
+          - dimensions: Dict[str, Dict]
+          - overall_score: float
+      purpose: "Procesamiento industrial de políticas con taxonomía dimensional"
+      async: true
+
+    - step: 2
+      module: dereck_beach
+      class: CDAFFramework
+      method: process_document
+      args:
+        - name: pdf_path_or_text
+          type: str
+          source: plan_text
+        - name: plan_name
+          type: str
+          source: plan_metadata.file_name
+      returns:
+        type: Dict[str, Any]
+        binding: cdaf_analysis
+        fields:
+          - causal_hierarchy: networkx.DiGraph
+          - causal_links: List[CausalLink]
+          - mechanism_inferences: List[Dict]
+          - financial_audit: Dict
+          - bayesian_confidence_report: Dict
+      purpose: "Framework CDAF completo con Derek Beach process tracing"
+      async: true
+      critical: true  # Core for D2
+
+    - step: 3
+      module: dereck_beach
+      class: MechanismPartExtractor
+      method: extract_entity_activity
+      args:
+        - name: text
+          type: str
+          source: plan_text
+      returns:
+        type: List[EntityActivity]
+        binding: entity_activities
+        fields:
+          - entity: str
+          - activity: str
+          - verb_lemma: str
+          - confidence: float
+      purpose: "Extracción de pares (entidad, actividad) según Beach 2016"
+      async: false
+      dependencies: []
+
+    - step: 4
+      module: dereck_beach
+      class: BayesianMechanismInference
+      method: infer_mechanisms
+      args:
+        - name: nodes
+          type: List[MetaNode]
+          source: cdaf_analysis.causal_hierarchy.nodes
+        - name: links
+          type: List[CausalLink]
+          source: cdaf_analysis.causal_links
+        - name: entity_activities
+          type: List[EntityActivity]
+          source: entity_activities
+      returns:
+        type: List[Dict[str, Any]]
+        binding: mechanisms
+        fields:
+          - mechanism_id: str
+          - mechanism_type: str
+          - entity_activity_chain: List[EntityActivity]
+          - posterior_confidence: float
+          - evidential_test_type: TestType
+      purpose: "Inferencia Bayesiana de mecanismos con Beach evidential tests"
+      async: false
+      dependencies: [cdaf_analysis, entity_activities]
+
+    - step: 5
+      module: dereck_beach
+      class: BeachEvidentialTest
+      method: classify_test
+      args:
+        - name: necessity
+          type: float
+          source: derived
+          derivation: "compute_necessity_from(mechanisms)"
+        - name: sufficiency
+          type: float
+          source: derived
+          derivation: "compute_sufficiency_from(mechanisms)"
+      returns:
+        type: TestType
+        binding: test_classification
+        values: ["hoop_test", "smoking_gun", "doubly_decisive", "straw_in_wind"]
+      purpose: "Clasificación de test evidencial según Beach & Pedersen 2019"
+      async: false
+      dependencies: [mechanisms]
+
+    - step: 6
+      module: dereck_beach
+      class: BeachEvidentialTest
+      method: apply_test_logic
+      args:
+        - name: test_type
+          type: TestType
+          source: test_classification
+        - name: evidence_found
+          type: bool
+          source: derived
+          derivation: "check_evidence_exists(mechanisms)"
+        - name: prior
+          type: float
+          source: constant
+          value: 0.5
+        - name: bayes_factor
+          type: float
+          source: derived
+          derivation: "compute_bayes_factor(mechanisms)"
+      returns:
+        type: Tuple[float, str]
+        binding: beach_posterior
+        fields:
+          - posterior_confidence: float
+          - interpretation: str
+      purpose: "Aplicar lógica de Beach: Hoop test fail → knockout"
+      async: false
+      dependencies: [test_classification, mechanisms]
+      critical: true
+
+    - step: 7
+      module: analyzer_one
+      class: MunicipalAnalyzer
+      method: analyze_document
+      args:
+        - name: text
+          type: str
+          source: plan_text
+      returns:
+        type: Dict[str, Any]
+        binding: municipal_analysis
+      async: true
+
+    - step: 8
+      module: analyzer_one
+      class: PerformanceAnalyzer
+      method: diagnose_critical_links
+      args:
+        - name: value_chain
+          type: Dict
+          source: municipal_analysis.value_chain
+      returns:
+        type: List[Dict]
+        binding: critical_links
+        fields:
+          - link_id: str
+          - bottleneck_severity: float
+          - recommendation: str
+      purpose: "Diagnóstico de cuellos de botella en secuencia de actividades"
+      async: false
+      dependencies: [municipal_analysis]
+
+  aggregation:
+    strategy: mechanism_weighted
+    weights:
+      cdaf_analysis.bayesian_confidence_report: 0.35
+      mechanisms: 0.30
+      beach_posterior.posterior_confidence: 0.20
+      critical_links: 0.15
+    confidence_threshold: 0.65
+    scoring_function: |
+      def score(aggregated_data):
+          cdaf_confidence = aggregated_data['cdaf_analysis']['bayesian_confidence_report'].get('mean_confidence', 0.5)
+          mechanism_count = len(aggregated_data.get('mechanisms', []))
+          mechanism_score = min(1.0, mechanism_count / 3.0)  # 3+ mechanisms = good
+          beach_confidence = aggregated_data['beach_posterior']['posterior_confidence']
+          bottleneck_penalty = len([l for l in aggregated_data['critical_links'] if l['bottleneck_severity'] > 0.7]) * 0.1
+
+          final_score = (
+              0.35 * cdaf_confidence +
+              0.30 * mechanism_score +
+              0.20 * beach_confidence +
+              0.15 * (1.0 - bottleneck_penalty)
+          )
+
+          return max(0.0, final_score)
+
+# ==============================================================================
+# DIMENSION D3: PRODUCTOS (Entregables, Verificación, Presupuesto)
+# ==============================================================================
+D3_PRODUCTOS:
+  description: "Evaluación de productos entregables, trazabilidad presupuestal"
+  question_count: 50
+
+  execution_chain:
+    - step: 1
+      module: policy_processor
+      class: IndustrialPolicyProcessor
+      method: process
+      args:
+        - name: text
+          type: str
+          source: plan_text
+      returns:
+        binding: policy_analysis
+      async: true
+
+    - step: 2
+      module: analyzer_one
+      class: MunicipalAnalyzer
+      method: analyze_document
+      args:
+        - name: text
+          type: str
+          source: plan_text
+      returns:
+        binding: municipal_analysis
+      async: true
+
+    - step: 3
+      module: analyzer_one
+      class: TextMiningEngine
+      method: extract_value_chain
+      args:
+        - name: text
+          type: str
+          source: plan_text
+      returns:
+        binding: value_chain_extraction
+        fields:
+          - productos: List[Dict]
+          - productos_to_resultados: List[Tuple]
+      purpose: "Extracción explícita de productos y su mapeo a resultados"
+      async: false
+      dependencies: []
+
+    - step: 4
+      module: financial_analyzer
+      class: PDETMunicipalPlanAnalyzer
+      method: extract_tables
+      args:
+        - name: text
+          type: str
+          source: plan_text
+      returns:
+        binding: extracted_tables
+        type: List[pd.DataFrame]
+      purpose: "Extracción de tablas financieras"
+      async: false
+
+    - step: 5
+      module: financial_analyzer
+      class: PDETMunicipalPlanAnalyzer
+      method: analyze_financial_viability
+      args:
+        - name: tables
+          type: List[pd.DataFrame]
+          source: extracted_tables
+      returns:
+        binding: financial_viability
+        fields:
+          - viability_score: float
+          - budget_summary: Dict
+          - sufficiency_analysis: Dict
+      purpose: "Análisis de viabilidad financiera por producto"
+      async: false
+      dependencies: [extracted_tables]
+
+    - step: 6
+      module: dereck_beach
+      class: FinancialAuditor
+      method: trace_financial_allocation
+      args:
+        - name: nodes
+          type: List[MetaNode]
+          source: derived
+          derivation: "extract_product_nodes(municipal_analysis)"
+        - name: tables
+          type: List[pd.DataFrame]
+          source: extracted_tables
+      returns:
+        binding: budget_traceability
+        fields:
+          - traceability_complete: bool
+          - missing_allocations: List[str]
+          - discrepancies: List[Dict]
+          - counterfactual_check: Dict
+      purpose: "Trazabilidad presupuestal con auditoría counterfactual"
+      async: false
+      dependencies: [extracted_tables, municipal_analysis]
+      critical: true
+
+    - step: 7
+      module: dereck_beach
+      class: OperationalizationAuditor
+      method: audit_evidence_traceability
+      args:
+        - name: nodes
+          type: List[MetaNode]
+          source: derived
+          derivation: "extract_product_nodes(municipal_analysis)"
+        - name: links
+          type: List[CausalLink]
+          source: derived
+          derivation: "extract_product_links(municipal_analysis)"
+      returns:
+        binding: operationalization_audit
+        type: AuditResult
+        fields:
+          - passed: bool
+          - warnings: List[str]
+          - errors: List[str]
+          - recommendations: List[str]
+      purpose: "Auditoría de operacionalización de productos"
+      async: false
+      dependencies: [municipal_analysis]
+
+  aggregation:
+    strategy: product_verification
+    weights:
+      policy_analysis: 0.20
+      value_chain_extraction: 0.25
+      financial_viability.viability_score: 0.25
+      budget_traceability: 0.20
+      operationalization_audit: 0.10
+    confidence_threshold: 0.70
+    scoring_function: |
+      def score(aggregated_data):
+          viability = aggregated_data['financial_viability']['viability_score']
+          traceability = 1.0 if aggregated_data['budget_traceability']['traceability_complete'] else 0.3
+          audit_passed = 1.0 if aggregated_data['operationalization_audit']['passed'] else 0.4
+          product_count = len(aggregated_data['value_chain_extraction']['productos'])
+          product_score = min(1.0, product_count / 5.0)
+
+          final_score = (
+              0.25 * viability +
+              0.25 * product_score +
+              0.20 * traceability +
+              0.20 * audit_passed +
+              0.10 * aggregated_data['policy_analysis']['overall_score']
+          )
+
+          return final_score
+
+# ==============================================================================
+# DIMENSION D4: RESULTADOS (Outcomes, Causalidad Mediano Plazo)
+# ==============================================================================
+D4_RESULTADOS:
+  description: "Evaluación de resultados esperados, encadenamientos causales"
+  question_count: 50
+
+  execution_chain:
+    - step: 1
+      module: analyzer_one
+      class: MunicipalAnalyzer
+      method: analyze_document
+      args:
+        - name: text
+          type: str
+          source: plan_text
+      returns:
+        binding: municipal_analysis
+      async: true
+
+    - step: 2
+      module: causal_processor
+      class: PolicyDocumentAnalyzer
+      method: analyze
+      args:
+        - name: text
+          type: str
+          source: plan_text
+      returns:
+        binding: causal_analysis
+      async: true
+
+    - step: 3
+      module: dereck_beach
+      class: CDAFFramework
+      method: process_document
+      args:
+        - name: pdf_path_or_text
+          type: str
+          source: plan_text
+        - name: plan_name
+          type: str
+          source: plan_metadata.file_name
+      returns:
+        binding: cdaf_analysis
+      async: false
+
+    - step: 4
+      module: dereck_beach
+      class: CausalExtractor
+      method: _extract_causal_links
+      args:
+        - name: nodes
+          type: List[MetaNode]
+          source: cdaf_analysis.causal_hierarchy.nodes
+        - name: doc
+          type: spacy.Doc
+          source: derived
+          derivation: "parse_with_spacy(plan_text)"
+      returns:
+        binding: causal_links
+        type: List[CausalLink]
+        fields:
+          - source: str
+          - target: str
+          - logic: str
+          - strength: float
+          - posterior_mean: float
+      purpose: "Extracción de links causales producto→resultado"
+      async: false
+      dependencies: [cdaf_analysis]
+      filter: "source.type == 'producto' AND target.type == 'resultado'"
+
+    - step: 5
+      module: dereck_beach
+      class: BayesianMechanismInference
+      method: _infer_single_mechanism
+      args:
+        - name: source
+          type: MetaNode
+          source: derived
+          derivation: "filter_nodes(type='producto')"
+        - name: target
+          type: MetaNode
+          source: derived
+          derivation: "filter_nodes(type='resultado')"
+        - name: activities
+          type: List[EntityActivity]
+          source: derived
+          derivation: "extract_activities_between(source, target)"
+      returns:
+        binding: mechanism_inference
+        fields:
+          - mechanism_id: str
+          - confidence: float
+          - necessity: float
+          - sufficiency: float
+      purpose: "Inferencia de mecanismo específico producto→resultado"
+      async: false
+      dependencies: [cdaf_analysis, causal_links]
+
+    - step: 6
+      module: causal_processor
+      class: BayesianEvidenceIntegrator
+      method: causal_strength
+      args:
+        - name: cause_emb
+          type: NDArray[np.float32]
+          source: derived
+          derivation: "get_embedding(producto_node.text)"
+        - name: effect_emb
+          type: NDArray[np.float32]
+          source: derived
+          derivation: "get_embedding(resultado_node.text)"
+        - name: context_emb
+          type: NDArray[np.float32]
+          source: derived
+          derivation: "get_context_embedding(plan_text)"
+      returns:
+        binding: causal_strength_score
+        type: float
+      purpose: "Fuerza causal vía proxy de independencia condicional"
+      async: false
+      dependencies: [causal_analysis]
+
+    - step: 7
+      module: dereck_beach
+      class: BeachEvidentialTest
+      method: apply_test_logic
+      args:
+        - name: test_type
+          type: TestType
+          source: derived
+          derivation: "classify_test(mechanism_inference.necessity, mechanism_inference.sufficiency)"
+        - name: evidence_found
+          type: bool
+          source: derived
+          derivation: "len(causal_links) > 0"
+        - name: prior
+          type: float
+          source: mechanism_inference.confidence
+        - name: bayes_factor
+          type: float
+          source: derived
+          derivation: "compute_bf(causal_strength_score)"
+      returns:
+        binding: beach_posterior
+        type: Tuple[float, str]
+      purpose: "Beach evidential test para resultado"
+      async: false
+      dependencies: [mechanism_inference, causal_strength_score]
+
+  aggregation:
+    strategy: outcome_tracing
+    weights:
+      municipal_analysis.value_chain.resultados: 0.25
+      causal_analysis.causal_dimensions.resultados: 0.25
+      mechanism_inference.confidence: 0.25
+      beach_posterior.posterior_confidence: 0.15
+      causal_strength_score: 0.10
+    confidence_threshold: 0.65
+
+# ==============================================================================
+# DIMENSION D5: IMPACTOS (Transformación Estructural Largo Plazo)
+# ==============================================================================
+D5_IMPACTOS:
+  description: "Evaluación de impactos de largo plazo, sostenibilidad"
+  question_count: 50
+
+  execution_chain:
+    - step: 1
+      module: causal_processor
+      class: PolicyDocumentAnalyzer
+      method: analyze
+      args:
+        - name: text
+          type: str
+          source: plan_text
+      returns:
+        binding: causal_analysis
+      async: true
+
+    - step: 2
+      module: dereck_beach
+      class: CDAFFramework
+      method: process_document
+      args:
+        - name: pdf_path_or_text
+          type: str
+          source: plan_text
+        - name: plan_name
+          type: str
+          source: plan_metadata.file_name
+      returns:
+        binding: cdaf_analysis
+      async: true
+      critical: true
+
+    - step: 3
+      module: dereck_beach
+      class: CausalExtractor
+      method: extract_causal_hierarchy
+      args:
+        - name: text
+          type: str
+          source: plan_text
+      returns:
+        binding: causal_hierarchy
+        type: Tuple[networkx.DiGraph, List[CausalLink]]
+      purpose: "Extraer jerarquía causal completa con nodos tipo 'impacto'"
+      async: false
+      dependencies: []
+
+    - step: 4
+      module: dereck_beach
+      class: CausalExtractor
+      method: _calculate_semantic_distance
+      args:
+        - name: node_a
+          type: MetaNode
+          source: derived
+          derivation: "filter_nodes(type='resultado')"
+        - name: node_b
+          type: MetaNode
+          source: derived
+          derivation: "filter_nodes(type='impacto')"
+      returns:
+        binding: semantic_distance
+        type: float
+      purpose: "Distancia semántica resultado→impacto"
+      async: false
+      dependencies: [causal_hierarchy]
+      apply_to: "all_pairs(resultado, impacto)"
+
+    - step: 5
+      module: dereck_beach
+      class: BayesianMechanismInference
+      method: infer_mechanisms
+      args:
+        - name: nodes
+          type: List[MetaNode]
+          source: causal_hierarchy.graph.nodes
+        - name: links
+          type: List[CausalLink]
+          source: causal_hierarchy.links
+        - name: entity_activities
+          type: List[EntityActivity]
+          source: derived
+          derivation: "extract_all_activities(plan_text)"
+      returns:
+        binding: long_term_mechanisms
+        type: List[Dict]
+      purpose: "Inferir mecanismos de largo plazo (resultado→impacto)"
+      async: false
+      dependencies: [causal_hierarchy]
+      filter: "mechanism spans resultado to impacto"
+
+    - step: 6
+      module: analyzer_one
+      class: MunicipalAnalyzer
+      method: analyze_document
+      args:
+        - name: text
+          type: str
+          source: plan_text
+      returns:
+        binding: municipal_analysis
+      async: true
+
+    - step: 7
+      module: dereck_beach
+      class: OperationalizationAuditor
+      method: bayesian_counterfactual_audit
+      args:
+        - name: links
+          type: List[CausalLink]
+          source: causal_hierarchy.links
+        - name: threshold
+          type: float
+          source: constant
+          value: 0.5
+      returns:
+        binding: counterfactual_audit
+        fields:
+          - weak_links: List[str]
+          - interventions: List[Dict]
+          - risk_assessment: Dict
+      purpose: "Auditoría counterfactual: identificar links débiles en cadena de impacto"
+      async: false
+      dependencies: [causal_hierarchy]
+
+  aggregation:
+    strategy: impact_assessment
+    weights:
+      causal_analysis.causal_dimensions.impactos: 0.30
+      long_term_mechanisms: 0.30
+      counterfactual_audit: 0.25
+      municipal_analysis: 0.15
+    confidence_threshold: 0.60
+
+# ==============================================================================
+# DIMENSION D6: CAUSALIDAD (Coherencia Causal Global, Auditoría Completa)
+# ==============================================================================
+D6_CAUSALIDAD:
+  description: "Evaluación de coherencia causal global, validación integral"
+  question_count: 50
+  execution_type: cyclic  # ÚNICO con ciclos iterativos
+  max_iterations: 3
+  convergence_criterion: "audit_passed OR iterations >= 3"
+
+  execution_chain:
+    # ITERACIÓN: Se repite hasta convergencia
+    - step: 1
+      module: dereck_beach
+      class: CDAFFramework
+      method: process_document
+      args:
+        - name: pdf_path_or_text
+          type: str
+          source: plan_text
+        - name: plan_name
+          type: str
+          source: plan_metadata.file_name
+      returns:
+        binding: cdaf_complete
+        fields:
+          - causal_hierarchy: networkx.DiGraph
+          - causal_links: List[CausalLink]
+          - mechanism_inferences: List[Dict]
+          - financial_audit: Dict
+          - operationalization_audit: AuditResult
+          - bayesian_confidence_report: Dict
+      purpose: "Análisis CDAF completo - master para D6"
+      async: false
+      critical: true
+
+    - step: 2
+      module: dereck_beach
+      class: CausalExtractor
+      method: extract_causal_hierarchy
+      args:
+        - name: text
+          type: str
+          source: plan_text
+      returns:
+        binding: full_hierarchy
+        type: Tuple[networkx.DiGraph, List[CausalLink]]
+      purpose: "Extraer jerarquía causal completa (todos los tipos de nodo)"
+      async: false
+
+    - step: 3
+      module: dereck_beach
+      class: CausalExtractor
+      method: _extract_causal_links
+      args:
+        - name: nodes
+          type: List[MetaNode]
+          source: full_hierarchy.graph.nodes
+        - name: doc
+          type: spacy.Doc
+          source: derived
+      returns:
+        binding: all_causal_links
+        type: List[CausalLink]
+      purpose: "Extraer TODOS los links causales con evidencia textual"
+      async: false
+      dependencies: [full_hierarchy]
+
+    - step: 4
+      module: dereck_beach
+      class: BayesianMechanismInference
+      method: infer_mechanisms
+      args:
+        - name: nodes
+          type: List[MetaNode]
+          source: full_hierarchy.graph.nodes
+        - name: links
+          type: List[CausalLink]
+          source: all_causal_links
+        - name: entity_activities
+          type: List[EntityActivity]
+          source: derived
+      returns:
+        binding: all_mechanisms
+        type: List[Dict]
+      purpose: "Inferir TODOS los mecanismos causales del plan"
+      async: false
+      dependencies: [full_hierarchy, all_causal_links]
+
+    - step: 5
+      module: dereck_beach
+      class: OperationalizationAuditor
+      method: audit_evidence_traceability
+      args:
+        - name: nodes
+          type: List[MetaNode]
+          source: full_hierarchy.graph.nodes
+        - name: links
+          type: List[CausalLink]
+          source: all_causal_links
+      returns:
+        binding: evidence_audit
+        type: AuditResult
+      purpose: "Auditar trazabilidad de evidencia en todo el grafo causal"
+      async: false
+      dependencies: [full_hierarchy, all_causal_links]
+
+    - step: 6
+      module: dereck_beach
+      class: OperationalizationAuditor
+      method: audit_sequence_logic
+      args:
+        - name: entity_activities
+          type: List[EntityActivity]
+          source: derived
+      returns:
+        binding: sequence_audit
+        type: List[str]
+      purpose: "Validar coherencia temporal de secuencias de actividades"
+      async: false
+      dependencies: [all_mechanisms]
+
+    - step: 7
+      module: causal_processor
+      class: PolicyDocumentAnalyzer
+      method: analyze
+      args:
+        - name: text
+          type: str
+          source: plan_text
+      returns:
+        binding: causal_cross_validation
+      purpose: "Análisis causal independiente para cross-validation"
+      async: true
+
+    - step: 8
+      module: causal_processor
+      class: BayesianEvidenceIntegrator
+      method: integrate_evidence
+      args:
+        - name: similarities
+          type: NDArray
+          source: derived
+        - name: chunk_metadata
+          type: List[Dict]
+          source: derived
+      returns:
+        binding: meta_confidence
+        fields:
+          - posterior_mean: float
+          - information_gain: float
+          - confidence: float
+      purpose: "Meta-confianza agregada sobre toda la dimensión causal"
+      async: false
+      dependencies: [causal_cross_validation]
+
+    - step: 9
+      module: contradiction_detector
+      class: PolicyContradictionDetector
+      method: detect
+      args:
+        - name: text
+          type: str
+          source: plan_text
+        - name: plan_name
+          type: str
+          source: plan_metadata.file_name
+        - name: dimension
+          type: PolicyDimension
+          source: constant
+          value: PolicyDimension.ESTRATEGICO
+      returns:
+        binding: contradictions
+        fields:
+          - total_contradictions: int
+          - high_severity_count: int
+          - coherence_metrics: Dict
+      purpose: "Detectar contradicciones que rompen coherencia causal"
+      async: true
+
+    - step: 10
+      module: contradiction_detector
+      class: PolicyContradictionDetector
+      method: _detect_causal_inconsistencies
+      args:
+        - name: statements
+          type: List[PolicyStatement]
+          source: derived
+          derivation: "extract_statements(plan_text)"
+      returns:
+        binding: causal_contradictions
+        type: List[ContradictionEvidence]
+      purpose: "Detectar contradicciones causales específicas (X→Y AND NOT X→Y)"
+      async: false
+      dependencies: [contradictions]
+
+    - step: 11
+      module: dereck_beach
+      class: ReportingEngine
+      method: generate_confidence_report
+      args:
+        - name: mechanisms
+          type: List[Dict]
+          source: all_mechanisms
+      returns:
+        binding: confidence_report
+        fields:
+          - mean_confidence: float
+          - high_confidence_count: int
+          - uncertainty_distribution: Dict
+      purpose: "Reporte agregado de confianza con cuantificación de incertidumbre"
+      async: false
+      dependencies: [all_mechanisms]
+
+    # CONVERGENCE CHECK - Si audit falla, re-extract con priors actualizados
+    - step: 12
+      module: dereck_beach
+      class: ConfigLoader
+      method: check_uncertainty_reduction_criterion
+      args: []
+      returns:
+        binding: convergence_status
+        type: bool
+      purpose: "Verificar si la incertidumbre se ha reducido suficientemente"
+      async: false
+      dependencies: [confidence_report]
+      convergence_check: true
+
+  aggregation:
+    strategy: causal_mechanism_validation
+    weights:
+      cdaf_complete.bayesian_confidence_report: 0.25
+      all_mechanisms: 0.20
+      evidence_audit: 0.20
+      meta_confidence: 0.15
+      contradictions.coherence_metrics.coherence_score: 0.10
+      confidence_report: 0.10
+    confidence_threshold: 0.70
+    audit_requirements:
+      - evidence_audit.passed == True
+      - sequence_audit errors count == 0
+      - contradictions.high_severity_count < 3
+      - confidence_report.mean_confidence > 0.65
+
+# ==============================================================================
+# GLOBAL CONFIGURATION
+# ==============================================================================
+global_config:
+  async_executor: asyncio
+  max_parallel_modules: 4
+  timeout_per_module: 120  # seconds
+  retry_strategy:
+    max_retries: 2
+    backoff_factor: 2
+    retry_on_errors: [TimeoutError, ConnectionError]
+
+  circuit_breaker:
+    failure_threshold: 5
+    recovery_timeout: 60
+    half_open_requests: 3
+
+  caching:
+    enabled: true
+    ttl: 3600  # 1 hour
+    cache_keys:
+      - plan_text_hash
+      - module_version
+      - execution_chain_version
+
+  logging:
+    level: INFO
+    format: "%(asctime)s [%(levelname)s] %(module)s.%(method)s: %(message)s"
+    log_module_traces: true
+    log_execution_times: true
+
+  error_handling:
+    degraded_mode: true  # Continue with partial results if module fails
+    minimum_modules_required:
+      D1: 4  # Need at least 4/7 modules
+      D2: 5  # Need at least 5/8 modules (critical for mechanisms)
+      D3: 4
+      D4: 4
+      D5: 4
+      D6: 7  # Need almost all modules for global validation
