@@ -5,7 +5,7 @@ Integrates Router, Choreographer, Circuit Breaker, and Report Assembly
 import logging
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Tuple
 from collections import defaultdict
 from datetime import datetime
 
@@ -28,7 +28,7 @@ class FARFANOrchestrator:
     Main orchestrator for FARFAN 3.0 policy analysis system.
 
     Coordinates:
-    - Question routing (300 questions → 8 modules)
+    - Question routing (300 questions → components)
     - Module execution with dependency management
     - Fault tolerance and graceful degradation
     - Multi-level report generation (MICRO/MESO/MACRO)
@@ -45,8 +45,10 @@ class FARFANOrchestrator:
         self.execution_stats = {
             "total_plans_processed": 0,
             "total_questions_answered": 0,
+            "total_components_executed": 0,
             "total_execution_time": 0.0,
-            "module_performance": defaultdict(lambda: {"calls": 0, "successes": 0, "failures": 0})
+            "module_performance": defaultdict(lambda: {"calls": 0, "successes": 0, "failures": 0}),
+            "component_performance": defaultdict(lambda: {"calls": 0, "successes": 0, "failures": 0})
         }
 
         logger.info("FARFAN Orchestrator initialized successfully")
@@ -75,9 +77,9 @@ class FARFANOrchestrator:
 
         output_dir.mkdir(exist_ok=True, parents=True)
 
-        logger.info(f"="*80)
+        logger.info(f"=" * 80)
         logger.info(f"Starting analysis for plan: {plan_name}")
-        logger.info(f"="*80)
+        logger.info(f"=" * 80)
 
         # Step 1: Load and preprocess plan
         logger.info("Step 1: Loading plan document")
@@ -158,9 +160,9 @@ class FARFANOrchestrator:
 
         results = []
         for i, plan_path in enumerate(plan_files, 1):
-            logger.info(f"\n{'='*80}")
+            logger.info(f"\n{'=' * 80}")
             logger.info(f"Processing plan {i}/{len(plan_files)}: {plan_path.name}")
-            logger.info(f"{'='*80}\n")
+            logger.info(f"{'=' * 80}\n")
 
             try:
                 result = self.analyze_single_plan(
@@ -189,11 +191,10 @@ class FARFANOrchestrator:
 
         return results
 
-    def _load_plan(self, plan_path: Path) -> tuple[str, Dict[str, Any]]:
+    def _load_plan(self, plan_path: Path) -> Tuple[str, Dict[str, Any]]:
         """
         Load and preprocess a plan document.
 
-        REAL IMPLEMENTATION - NO PLACEHOLDERS
         Uses PyMuPDF for PDF extraction
 
         Args:
@@ -214,7 +215,7 @@ class FARFANOrchestrator:
 
         try:
             if plan_path.suffix.lower() == ".pdf":
-                # REAL PDF extraction using PyMuPDF (fitz)
+                # PDF extraction using PyMuPDF (fitz)
                 try:
                     import fitz  # PyMuPDF
 
@@ -300,8 +301,8 @@ class FARFANOrchestrator:
         Process all 300 questions for a plan.
 
         Strategy:
-        - Questions are grouped by module requirements
-        - Modules run once and results are cached
+        - Questions are grouped by component requirements
+        - Components run once and results are cached
         - Circuit breaker protects against repeated failures
         """
         logger.info("Processing 300 questions...")
@@ -311,21 +312,24 @@ class FARFANOrchestrator:
         # Get all questions
         all_questions = list(self.router.questions.values())
 
-        # Group questions by their required module set (optimization)
-        question_groups = self._group_questions_by_modules(all_questions)
+        # Group questions by their required component set (optimization)
+        question_groups = self._group_questions_by_components(all_questions)
 
-        logger.info(f"Optimized into {len(question_groups)} module execution groups")
+        logger.info(f"Optimized into {len(question_groups)} component execution groups")
 
-        for group_id, (modules, questions) in enumerate(question_groups.items(), 1):
+        for group_id, (components, questions) in enumerate(question_groups.items(), 1):
             logger.info(f"Processing group {group_id}/{len(question_groups)}: "
-                        f"{len(questions)} questions using modules {modules}")
+                        f"{len(questions)} questions using components {components}")
 
-            # Execute modules once for this group
-            execution_results = self._execute_modules_with_fallback(
-                list(modules),
+            # Execute components once for this group
+            execution_results = self._execute_components_with_fallback(
+                list(components),
                 plan_text,
                 plan_metadata
             )
+
+            # Update component execution count
+            self.execution_stats["total_components_executed"] += len(execution_results)
 
             # Generate answers for all questions in this group
             for question in questions:
@@ -346,125 +350,161 @@ class FARFANOrchestrator:
 
         return all_answers
 
-    def _group_questions_by_modules(
+    def _group_questions_by_components(
             self,
             questions: List[Question]
     ) -> Dict[frozenset, List[Question]]:
         """
-        Group questions that require the same set of modules.
+        Group questions that require the same set of components.
 
-        This optimization allows us to run each module combination only once
+        This optimization allows us to run each component combination only once
         instead of 300 times.
         """
         groups = defaultdict(list)
 
         for question in questions:
-            modules = frozenset(question.required_modules)
-            groups[modules].append(question)
+            # Extract dimension and question number
+            parts = question.canonical_id.split("-")
+            if len(parts) >= 3:
+                dimension = parts[1]
+                question_num = parts[2]
+                dimension_question = f"{dimension}-{question_num}"
+
+                # Get component mapping for this question
+                if hasattr(self.choreographer,
+                           'component_mapping') and dimension_question in self.choreographer.component_mapping:
+                    component_info = self.choreographer.component_mapping[dimension_question]
+                    components = component_info["components"]
+
+                    # Convert to frozenset for grouping
+                    component_set = frozenset(f"{module}.{method}" for module, method in components)
+                    groups[component_set].append(question)
+                else:
+                    # Fallback to module-based grouping
+                    modules = frozenset(question.required_modules)
+                    groups[modules].append(question)
 
         return groups
 
-    def _execute_modules_with_fallback(
+    def _execute_components_with_fallback(
             self,
-            modules: List[str],
+            components: List[str],
             plan_text: str,
             plan_metadata: Dict[str, Any]
     ) -> Dict[str, ExecutionResult]:
         """
-        Execute modules with circuit breaker protection and fallbacks.
+        Execute components with circuit breaker protection and fallbacks.
 
-        REAL IMPLEMENTATION - NO PLACEHOLDERS
-        Uses ModuleAdapterRegistry to execute actual module methods
+        Uses ModuleAdapterRegistry to execute actual component methods
 
         Args:
-            modules: List of module names to execute
+            components: List of component names (module.method) to execute
             plan_text: Full plan text
             plan_metadata: Plan metadata
 
         Returns:
-            Dict mapping module_name to ExecutionResult
+            Dict mapping component_name to ExecutionResult
         """
         results = {}
 
-        # Import REAL module adapter registry
+        # Group components by module
+        module_components = defaultdict(list)
+        for component in components:
+            if "." in component:
+                module_name, method_name = component.split(".", 1)
+                module_components[module_name].append(method_name)
+
+        # Import module adapter registry
         from .module_adapters import ModuleAdapterRegistry
         registry = ModuleAdapterRegistry()
 
-        # Map module names to their primary method
-        method_mapping = {
-            "policy_processor": "process",
-            "analyzer_one": "analyze_document",
-            "contradiction_detector": "detect",
-            "dereck_beach": "process_document",
-            "embedding_policy": "process_document",
-            "financial_analyzer": "analyze",
-            "causal_processor": "analyze",
-            "policy_segmenter": "segment"
-        }
-
-        for module_name in modules:
+        for module_name, method_names in module_components.items():
             # Check circuit breaker
             if not self.circuit_breaker.is_available(module_name):
                 logger.warning(f"Circuit breaker OPEN for {module_name}, using fallback")
 
-                # Use fallback
+                # Use fallback for all methods
                 fallback_func = create_module_specific_fallback(module_name)
                 fallback_result = fallback_func()
 
-                results[module_name] = ExecutionResult(
-                    module_name=module_name,
-                    status="completed",
-                    output=fallback_result,
-                    evidence_extracted={"status": "degraded"}
-                )
+                for method_name in method_names:
+                    component_key = f"{module_name}.{method_name}"
+                    results[component_key] = ExecutionResult(
+                        module_name=module_name,
+                        component_name=component_key,
+                        method_name=method_name,
+                        status="completed",
+                        output=fallback_result,
+                        evidence_extracted={"status": "degraded"}
+                    )
                 continue
 
             # Execute with circuit breaker
             try:
                 def execute():
-                    """REAL module execution - NO PLACEHOLDER"""
-                    method_name = method_mapping.get(module_name, "process")
+                    """Execute module through adapter registry"""
+                    module_results = {}
 
-                    # Execute REAL module through adapter registry
-                    module_result = registry.execute_module_method(
-                        module_name=module_name,
-                        method_name=method_name,
-                        args=[plan_text],
-                        kwargs={"plan_metadata": plan_metadata}
-                    )
+                    for method_name in method_names:
+                        # Prepare arguments based on module
+                        args = [plan_text]
+                        kwargs = {"plan_metadata": plan_metadata}
 
-                    # Convert ModuleResult to dict format expected by circuit breaker
-                    return {
-                        "module": module_name,
-                        "class": module_result.class_name,
-                        "method": module_result.method_name,
-                        "status": module_result.status,
-                        "data": module_result.data,
-                        "evidence": module_result.evidence,
-                        "confidence": module_result.confidence,
-                        "execution_time": module_result.execution_time,
-                        "errors": module_result.errors
-                    }
+                        # Execute module through adapter registry
+                        module_result = registry.execute_module_method(
+                            module_name=module_name,
+                            method_name=method_name,
+                            args=args,
+                            kwargs=kwargs
+                        )
 
-                result = self.circuit_breaker.call(
+                        # Convert ModuleResult to dict format
+                        component_key = f"{module_name}.{method_name}"
+                        module_results[component_key] = {
+                            "module": module_name,
+                            "component": component_key,
+                            "method": method_name,
+                            "class": module_result.class_name,
+                            "status": module_result.status,
+                            "data": module_result.data,
+                            "evidence": module_result.evidence,
+                            "confidence": module_result.confidence,
+                            "execution_time": module_result.execution_time,
+                            "errors": module_result.errors
+                        }
+
+                    return module_results
+
+                module_results = self.circuit_breaker.call(
                     module_name,
                     execute,
                     fallback=create_module_specific_fallback(module_name)
                 )
 
                 # Convert to ExecutionResult
-                results[module_name] = ExecutionResult(
-                    module_name=module_name,
-                    status="completed" if result.get("status") == "success" else "failed",
-                    output=result.get("data", {}),
-                    execution_time=result.get("execution_time", 0.0),
-                    evidence_extracted=self._extract_evidence(result),
-                    error=result.get("errors", [None])[0] if result.get("errors") else None
-                )
+                for component_key, result in module_results.items():
+                    results[component_key] = ExecutionResult(
+                        module_name=result.get("module", module_name),
+                        component_name=result.get("component", component_key),
+                        method_name=result.get("method", "unknown"),
+                        status="completed" if result.get("status") == "success" else "failed",
+                        output=result.get("data", {}),
+                        execution_time=result.get("execution_time", 0.0),
+                        evidence_extracted=self._extract_evidence(result),
+                        confidence=result.get("confidence", 0.0),
+                        error=result.get("errors", [None])[0] if result.get("errors") else None
+                    )
 
-                # Update stats
+                    # Update stats
+                    self.execution_stats["component_performance"][component_key]["calls"] += 1
+                    if result.get("status") == "success":
+                        self.execution_stats["component_performance"][component_key]["successes"] += 1
+                    else:
+                        self.execution_stats["component_performance"][component_key]["failures"] += 1
+
+                # Update module stats
                 self.execution_stats["module_performance"][module_name]["calls"] += 1
-                if result.get("status") == "success":
+                if any(r.get("status") == "success" for r in module_results.values()):
                     self.execution_stats["module_performance"][module_name]["successes"] += 1
                 else:
                     self.execution_stats["module_performance"][module_name]["failures"] += 1
@@ -475,28 +515,34 @@ class FARFANOrchestrator:
                 self.execution_stats["module_performance"][module_name]["calls"] += 1
                 self.execution_stats["module_performance"][module_name]["failures"] += 1
 
-                # Use fallback
+                # Use fallback for all methods
                 fallback_func = create_module_specific_fallback(module_name)
                 fallback_result = fallback_func()
 
-                results[module_name] = ExecutionResult(
-                    module_name=module_name,
-                    status="failed",
-                    output=fallback_result,
-                    error=str(e)
-                )
+                for method_name in method_names:
+                    component_key = f"{module_name}.{method_name}"
+                    results[component_key] = ExecutionResult(
+                        module_name=module_name,
+                        component_name=component_key,
+                        method_name=method_name,
+                        status="failed",
+                        output=fallback_result,
+                        error=str(e)
+                    )
+
+                    self.execution_stats["component_performance"][component_key]["calls"] += 1
+                    self.execution_stats["component_performance"][component_key]["failures"] += 1
 
         return results
 
-    def _extract_evidence(self, module_output: Dict[str, Any]) -> Dict[str, Any]:
+    def _extract_evidence(self, component_output: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Extract structured evidence from REAL module output.
+        Extract structured evidence from component output.
 
-        REAL IMPLEMENTATION - NO PLACEHOLDERS
-        Maps module-specific output to canonical evidence format
+        Maps component-specific output to canonical evidence format
 
         Args:
-            module_output: Dict with keys: module, class, method, status, data, evidence, confidence
+            component_output: Dict with keys: module, component, method, status, data, evidence, confidence
 
         Returns:
             Structured evidence dict with quantitative claims, causal links, contradictions
@@ -506,13 +552,15 @@ class FARFANOrchestrator:
             "causal_links": [],
             "contradictions": [],
             "confidence_scores": {},
-            "raw_output": module_output.get("data", {})
+            "raw_output": component_output.get("data", {})
         }
 
-        module_name = module_output.get("module", "")
-        module_data = module_output.get("data", {})
-        module_evidence = module_output.get("evidence", [])
-        confidence = module_output.get("confidence", 0.0)
+        module_name = component_output.get("module", "")
+        component_name = component_output.get("component", "")
+        method_name = component_output.get("method", "")
+        module_data = component_output.get("data", {})
+        module_evidence = component_output.get("evidence", [])
+        confidence = component_output.get("confidence", 0.0)
 
         # Extract evidence from ModuleResult.evidence field (standardized across adapters)
         if isinstance(module_evidence, list):
@@ -537,7 +585,8 @@ class FARFANOrchestrator:
         # Module-specific evidence extraction from data field
         if module_name == "contradiction_detector":
             evidence["contradictions"] = module_data.get("contradictions", [])
-            evidence["confidence_scores"]["coherence"] = module_data.get("coherence_score", confidence)
+            evidence["confidence_scores"]["coherence"] = module_data.get("coherence_metrics", {}).get("coherence_score",
+                                                                                                      confidence)
 
         elif module_name == "causal_processor":
             evidence["causal_links"] = module_data.get("causal_dimensions", {})
@@ -588,6 +637,10 @@ class FARFANOrchestrator:
                 "avg_segment_length": sum(len(s.get("text", "")) for s in segments) / len(segments) if segments else 0
             })
             evidence["confidence_scores"]["segmentation_quality"] = confidence
+
+        # Add method-specific evidence if available
+        if method_name:
+            evidence["confidence_scores"][f"{method_name}_confidence"] = confidence
 
         # Add overall confidence from ModuleResult
         evidence["confidence_scores"]["module_confidence"] = confidence
