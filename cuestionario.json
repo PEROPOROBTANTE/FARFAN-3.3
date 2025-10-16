@@ -956,10 +956,6 @@
           "criteria": "< 2 indicadores o sin fuentes"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_lineas_base": {
         "buscar_indicadores_cuantitativos": {
           "patterns": [
@@ -1057,10 +1053,6 @@
           "criteria": "Sin cuantificación de brecha o sin reconocimiento de limitaciones"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_magnitud_problema": {
         "cuantificacion_brecha": {
           "patterns": [
@@ -1142,10 +1134,6 @@
           "criteria": "Sin asignación explícita o sin evaluación de suficiencia"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_asignacion_recursos": {
         "trazabilidad_programatica": {
           "patterns": [
@@ -1219,10 +1207,6 @@
           "criteria": "< 2 capacidades descritas"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "competencias_municipales"
-      ],
       "verificacion_capacidades": {
         "talento_humano": {
           "patterns": [
@@ -1317,10 +1301,6 @@
           "criteria": "Sin análisis de coherencia o restricciones"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration",
-        "dereck_beach"
-      ],
       "verificacion_coherencia": {
         "objetivos_vs_recursos": {
           "patterns": [
@@ -1400,10 +1380,6 @@
           "criteria": "Solo narrativa genérica sin estructura"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_formalizacion": {
         "estructura_tabular": {
           "patterns": [
@@ -1502,10 +1478,6 @@
           "criteria": "Actividades genéricas sin especificidad"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_especificidad": {
         "instrumento": {
           "patterns": [
@@ -1575,10 +1547,6 @@
           "criteria": "Actividades desconectadas del diagnóstico causal"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_atencion_causa_raiz": {
         "problema_priorizado": {
           "patterns": [
@@ -1648,9 +1616,6 @@
           "criteria": "No se identifican riesgos"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach"
-      ],
       "verificacion_riesgos": {
         "desplazamiento_efectos": {
           "patterns": [
@@ -1726,9 +1691,6 @@
           "criteria": "Listado de actividades inconexas"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_teoria_intervencion": {
         "complementariedades": {
           "patterns": [
@@ -1802,10 +1764,6 @@
           "criteria": "Productos sin indicadores o solo con metas cualitativas"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration",
-        "dereck_beach"
-      ],
       "verificacion_productos": {
         "formula_indicador": {
           "patterns": [
@@ -1881,10 +1839,6 @@
           "criteria": "Metas absolutas sin relación con el tamaño del problema"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_proporcionalidad": {
         "cobertura_vs_brecha": {
           "patterns": [
@@ -1952,10 +1906,6 @@
           "criteria": "Sin trazabilidad identificable"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration",
-        "dereck_beach"
-      ],
       "verificacion_trazabilidad": {
         "presupuestal": {
           "patterns": [
@@ -2023,10 +1973,6 @@
           "criteria": "Contradicción evidente o 'salto de fe' entre actividad y producto"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_factibilidad": {
         "capacidad_productiva": {
           "patterns": [
@@ -2091,9 +2037,6 @@
           "criteria": "Salto lógico entre productos y resultados"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_puentes_causales": {
         "productos_a_resultados": {
           "patterns": [
@@ -2163,10 +2106,6 @@
           "criteria": "Resultados cualitativos o sin métricas"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration",
-        "dereck_beach"
-      ],
       "verificacion_resultados": {
         "metrica_outcome": {
           "patterns": [
@@ -2242,9 +2181,6 @@
           "criteria": "Resultados presentados como una lista de deseos, sin lógica causal"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_encadenamiento": {
         "productos_a_resultados": {
           "patterns": [
@@ -2312,10 +2248,6 @@
           "criteria": "Metas sin ninguna justificación de su ambición"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_ambicion": {
         "recursos_vs_meta": {
           "patterns": [
@@ -2378,9 +2310,6 @@
           "criteria": "Resultados desconectados de los problemas diagnosticados"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_atencion_diagnostico": {
         "resultados_vs_problemas": {
           "patterns": [
@@ -2444,9 +2373,6 @@
           "criteria": "No menciona alineación con marcos superiores"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration"
-      ],
       "verificacion_alineacion": {
         "PND": {
           "patterns": [
@@ -2512,9 +2438,6 @@
           "criteria": "No se proyectan impactos de largo plazo"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_impactos": {
         "definicion_impacto": {
           "patterns": [
@@ -2588,9 +2511,6 @@
           "criteria": "Impactos no medibles o sin proxies propuestos"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach"
-      ],
       "verificacion_integracion": {
         "indicadores_compuestos": {
           "patterns": [
@@ -2657,10 +2577,6 @@
           "criteria": "Impactos intangibles se dejan sin ninguna forma de medición"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_proxies": {
         "uso_proxies": {
           "patterns": [
@@ -2726,10 +2642,6 @@
           "criteria": "Impactos aislados del contexto macro"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_alineacion_sistemica": {
         "marcos_nacionales_globales": {
           "patterns": [
@@ -2798,10 +2710,6 @@
           "criteria": "Ambición desproporcionada sin análisis crítico"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_realismo_impacto": {
         "recursos_adecuados": {
           "patterns": [
@@ -2867,9 +2775,6 @@
           "criteria": "Sin teoría de cambio explícita"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_teoria_cambio": {
         "diagrama_explicito": {
           "patterns": [
@@ -2953,9 +2858,6 @@
           "criteria": "Saltos lógicos inverosímiles evidentes"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_proporcionalidad_enlaces": {
         "enlaces_proporcionales": {
           "patterns": [
@@ -3021,10 +2923,6 @@
           "criteria": "Presenta la teoría de cambio como infalible, sin autocrítica"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_inconsistencias": {
         "identificacion_inconsistencias": {
           "patterns": [
@@ -3092,10 +2990,6 @@
           "criteria": "No se describe un sistema de monitoreo"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_patrones_fallo": {
         "drift": {
           "patterns": [
@@ -3172,10 +3066,6 @@
           "criteria": "Enfoque homogéneo que no considera las diferencias ni el contexto"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_contextualizacion": {
         "grupos_afectados": {
           "patterns": [
@@ -3263,10 +3153,6 @@
           "criteria": "< 2 indicadores o sin fuentes"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_lineas_base": {
         "buscar_indicadores_cuantitativos": {
           "patterns": [
@@ -3363,10 +3249,6 @@
           "criteria": "Sin cuantificación de la magnitud o sin reconocimiento de limitaciones"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_magnitud_problema": {
         "cuantificacion_brecha": {
           "patterns": [
@@ -3448,10 +3330,6 @@
           "criteria": "Sin asignación explícita o sin evaluación de suficiencia"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_asignacion_recursos": {
         "trazabilidad_programatica": {
           "patterns": [
@@ -3526,10 +3404,6 @@
           "criteria": "< 2 capacidades descritas"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "competencias_municipales"
-      ],
       "verificacion_capacidades": {
         "talento_humano": {
           "patterns": [
@@ -3623,10 +3497,6 @@
           "criteria": "Sin análisis de coherencia o restricciones"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration",
-        "dereck_beach"
-      ],
       "verificacion_coherencia": {
         "objetivos_vs_recursos": {
           "patterns": [
@@ -3706,10 +3576,6 @@
           "criteria": "Solo narrativa genérica sin estructura"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_formalizacion": {
         "estructura_tabular": {
           "patterns": [
@@ -3807,10 +3673,6 @@
           "criteria": "Actividades genéricas sin especificidad"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_especificidad": {
         "instrumento": {
           "patterns": [
@@ -3880,10 +3742,6 @@
           "criteria": "Actividades desconectadas del diagnóstico causal"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_atencion_causa_raiz": {
         "problema_priorizado": {
           "patterns": [
@@ -3952,9 +3810,6 @@
           "criteria": "No se identifican riesgos"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach"
-      ],
       "verificacion_riesgos": {
         "desplazamiento_efectos": {
           "patterns": [
@@ -4029,9 +3884,6 @@
           "criteria": "Listado de actividades inconexas"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_teoria_intervencion": {
         "complementariedades": {
           "patterns": [
@@ -4103,10 +3955,6 @@
           "criteria": "Productos sin indicadores o solo con metas cualitativas"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration",
-        "dereck_beach"
-      ],
       "verificacion_productos": {
         "formula_indicador": {
           "patterns": [
@@ -4180,10 +4028,6 @@
           "criteria": "Metas absolutas sin relación con el tamaño del problema"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_proporcionalidad": {
         "cobertura_vs_brecha": {
           "patterns": [
@@ -4251,10 +4095,6 @@
           "criteria": "Sin trazabilidad identificable"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration",
-        "dereck_beach"
-      ],
       "verificacion_trazabilidad": {
         "presupuestal": {
           "patterns": [
@@ -4322,10 +4162,6 @@
           "criteria": "Contradicción evidente o 'salto de fe' entre actividad y producto"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_factibilidad": {
         "capacidad_productiva": {
           "patterns": [
@@ -4390,9 +4226,6 @@
           "criteria": "Salto lógico entre productos y resultados"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_puentes_causales": {
         "productos_a_resultados": {
           "patterns": [
@@ -4462,10 +4295,6 @@
           "criteria": "Resultados cualitativos o sin métricas"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration",
-        "dereck_beach"
-      ],
       "verificacion_resultados": {
         "metrica_outcome": {
           "patterns": [
@@ -4541,9 +4370,6 @@
           "criteria": "Resultados presentados como una lista de deseos, sin lógica causal"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_encadenamiento": {
         "productos_a_resultados": {
           "patterns": [
@@ -4611,10 +4437,6 @@
           "criteria": "Metas sin ninguna justificación de su ambición"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_ambicion": {
         "recursos_vs_meta": {
           "patterns": [
@@ -4677,9 +4499,6 @@
           "criteria": "Resultados desconectados de los problemas diagnosticados"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_atencion_diagnostico": {
         "resultados_vs_problemas": {
           "patterns": [
@@ -4743,9 +4562,6 @@
           "criteria": "No menciona alineación con marcos superiores"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration"
-      ],
       "verificacion_alineacion": {
         "PND": {
           "patterns": [
@@ -4811,9 +4627,6 @@
           "criteria": "No se proyectan impactos de largo plazo"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_impactos": {
         "definicion_impacto": {
           "patterns": [
@@ -4888,9 +4701,6 @@
           "criteria": "Impactos no medibles o sin proxies propuestos"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach"
-      ],
       "verificacion_integracion": {
         "indicadores_compuestos": {
           "patterns": [
@@ -4957,10 +4767,6 @@
           "criteria": "Impactos intangibles se dejan sin ninguna forma de medición"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_proxies": {
         "uso_proxies": {
           "patterns": [
@@ -5027,10 +4833,6 @@
           "criteria": "Impactos aislados del contexto macro"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_alineacion_sistemica": {
         "marcos_nacionales_globales": {
           "patterns": [
@@ -5099,10 +4901,6 @@
           "criteria": "Ambición desproporcionada sin análisis crítico"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_realismo_impacto": {
         "recursos_adecuados": {
           "patterns": [
@@ -5168,9 +4966,6 @@
           "criteria": "Sin teoría de cambio explícita"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_teoria_cambio": {
         "diagrama_explicito": {
           "patterns": [
@@ -5254,9 +5049,6 @@
           "criteria": "Saltos lógicos inverosímiles evidentes"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_proporcionalidad_enlaces": {
         "enlaces_proporcionales": {
           "patterns": [
@@ -5323,10 +5115,6 @@
           "criteria": "Presenta la teoría de cambio como infalible, sin autocrítica"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_inconsistencias": {
         "identificacion_inconsistencias": {
           "patterns": [
@@ -5394,10 +5182,6 @@
           "criteria": "No se describe un sistema de monitoreo"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_patrones_fallo": {
         "drift": {
           "patterns": [
@@ -5475,10 +5259,6 @@
           "criteria": "Enfoque homogéneo que no considera las diferencias ni el contexto"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_contextualizacion": {
         "grupos_afectados": {
           "patterns": [
@@ -5564,10 +5344,6 @@
           "criteria": "< 2 indicadores o sin fuentes"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_lineas_base": {
         "buscar_indicadores_cuantitativos": {
           "patterns": [
@@ -5665,10 +5441,6 @@
           "criteria": "Sin cuantificación de la magnitud o sin reconocimiento de limitaciones"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_magnitud_problema": {
         "cuantificacion_brecha": {
           "patterns": [
@@ -5750,10 +5522,6 @@
           "criteria": "Sin asignación explícita o sin evaluación de suficiencia"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_asignacion_recursos": {
         "trazabilidad_programatica": {
           "patterns": [
@@ -5828,10 +5596,6 @@
           "criteria": "< 2 capacidades descritas"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "competencias_municipales"
-      ],
       "verificacion_capacidades": {
         "talento_humano": {
           "patterns": [
@@ -5925,10 +5689,6 @@
           "criteria": "Sin análisis de coherencia o restricciones"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration",
-        "dereck_beach"
-      ],
       "verificacion_coherencia": {
         "objetivos_vs_recursos": {
           "patterns": [
@@ -6008,10 +5768,6 @@
           "criteria": "Solo narrativa genérica sin estructura"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_formalizacion": {
         "estructura_tabular": {
           "patterns": [
@@ -6110,10 +5866,6 @@
           "criteria": "Actividades genéricas sin especificidad"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_especificidad": {
         "instrumento": {
           "patterns": [
@@ -6184,10 +5936,6 @@
           "criteria": "Actividades desconectadas del diagnóstico causal"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_atencion_causa_raiz": {
         "problema_priorizado": {
           "patterns": [
@@ -6256,9 +6004,6 @@
           "criteria": "No se identifican riesgos"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach"
-      ],
       "verificacion_riesgos": {
         "desplazamiento_efectos": {
           "patterns": [
@@ -6333,9 +6078,6 @@
           "criteria": "Listado de actividades inconexas"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_teoria_intervencion": {
         "complementariedades": {
           "patterns": [
@@ -6407,10 +6149,6 @@
           "criteria": "Productos sin indicadores o solo con metas cualitativas"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration",
-        "dereck_beach"
-      ],
       "verificacion_productos": {
         "formula_indicador": {
           "patterns": [
@@ -6483,10 +6221,6 @@
           "criteria": "Metas que parecen arbitrarias o insuficientes frente al diagnóstico"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_proporcionalidad": {
         "cobertura_vs_brecha": {
           "patterns": [
@@ -6554,10 +6288,6 @@
           "criteria": "Sin trazabilidad identificable"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration",
-        "dereck_beach"
-      ],
       "verificacion_trazabilidad": {
         "presupuestal": {
           "patterns": [
@@ -6625,10 +6355,6 @@
           "criteria": "Contradicción evidente o 'salto de fe' entre actividad y producto"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_factibilidad": {
         "capacidad_productiva": {
           "patterns": [
@@ -6693,9 +6419,6 @@
           "criteria": "Salto lógico entre productos y resultados"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_puentes_causales": {
         "productos_a_resultados": {
           "patterns": [
@@ -6766,10 +6489,6 @@
           "criteria": "Resultados cualitativos o sin métricas"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration",
-        "dereck_beach"
-      ],
       "verificacion_resultados": {
         "metrica_outcome": {
           "patterns": [
@@ -6845,9 +6564,6 @@
           "criteria": "Resultados presentados como una lista de deseos, sin lógica causal"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_encadenamiento": {
         "productos_a_resultados": {
           "patterns": [
@@ -6915,10 +6631,6 @@
           "criteria": "Metas sin ninguna justificación de su ambición"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_ambicion": {
         "recursos_vs_meta": {
           "patterns": [
@@ -6982,9 +6694,6 @@
           "criteria": "Resultados desconectados de los problemas diagnosticados"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_atencion_diagnostico": {
         "resultados_vs_problemas": {
           "patterns": [
@@ -7049,9 +6758,6 @@
           "criteria": "No menciona alineación con marcos superiores"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration"
-      ],
       "verificacion_alineacion": {
         "PND": {
           "patterns": [
@@ -7117,9 +6823,6 @@
           "criteria": "No se proyectan impactos de largo plazo"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_impactos": {
         "definicion_impacto": {
           "patterns": [
@@ -7194,9 +6897,6 @@
           "criteria": "Impactos no medibles o sin proxies propuestos"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach"
-      ],
       "verificacion_integracion": {
         "indicadores_compuestos": {
           "patterns": [
@@ -7263,10 +6963,6 @@
           "criteria": "Impactos intangibles se dejan sin ninguna forma de medición"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_proxies": {
         "uso_proxies": {
           "patterns": [
@@ -7333,10 +7029,6 @@
           "criteria": "Impactos aislados del contexto macro"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_alineacion_sistemica": {
         "marcos_nacionales_globales": {
           "patterns": [
@@ -7405,10 +7097,6 @@
           "criteria": "Ambición desproporcionada sin análisis crítico"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_realismo_impacto": {
         "recursos_adecuados": {
           "patterns": [
@@ -7474,9 +7162,6 @@
           "criteria": "Sin teoría de cambio explícita"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_teoria_cambio": {
         "diagrama_explicito": {
           "patterns": [
@@ -7560,9 +7245,6 @@
           "criteria": "Saltos lógicos inverosímiles evidentes"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_proporcionalidad_enlaces": {
         "enlaces_proporcionales": {
           "patterns": [
@@ -7629,10 +7311,6 @@
           "criteria": "Presenta la teoría de cambio como infalible, sin autocrítica"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_inconsistencias": {
         "identificacion_inconsistencias": {
           "patterns": [
@@ -7700,10 +7378,6 @@
           "criteria": "No se describe un sistema de monitoreo"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_patrones_fallo": {
         "drift": {
           "patterns": [
@@ -7780,10 +7454,6 @@
           "criteria": "Enfoque homogéneo que no considera las diferencias ni el contexto"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_contextualizacion": {
         "grupos_afectados": {
           "patterns": [
@@ -7870,10 +7540,6 @@
           "criteria": "< 2 indicadores o sin fuentes"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_lineas_base": {
         "buscar_indicadores_cuantitativos": {
           "patterns": [
@@ -7970,10 +7636,6 @@
           "criteria": "Sin cuantificación de la magnitud o sin reconocimiento de limitaciones"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_magnitud_problema": {
         "cuantificacion_brecha": {
           "patterns": [
@@ -8055,10 +7717,6 @@
           "criteria": "Sin asignación explícita o sin evaluación de suficiencia"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_asignacion_recursos": {
         "trazabilidad_programatica": {
           "patterns": [
@@ -8133,10 +7791,6 @@
           "criteria": "< 2 capacidades descritas"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "competencias_municipales"
-      ],
       "verificacion_capacidades": {
         "talento_humano": {
           "patterns": [
@@ -8231,10 +7885,6 @@
           "criteria": "Sin análisis de coherencia o restricciones"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration",
-        "dereck_beach"
-      ],
       "verificacion_coherencia": {
         "objetivos_vs_recursos": {
           "patterns": [
@@ -8314,10 +7964,6 @@
           "criteria": "Solo narrativa genérica sin estructura"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_formalizacion": {
         "estructura_tabular": {
           "patterns": [
@@ -8416,10 +8062,6 @@
           "criteria": "Actividades genéricas sin especificidad"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_especificidad": {
         "instrumento": {
           "patterns": [
@@ -8490,10 +8132,6 @@
           "criteria": "Actividades desconectadas del diagnóstico causal"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_atencion_causa_raiz": {
         "problema_priorizado": {
           "patterns": [
@@ -8562,9 +8200,6 @@
           "criteria": "No se identifican riesgos"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach"
-      ],
       "verificacion_riesgos": {
         "desplazamiento_efectos": {
           "patterns": [
@@ -8639,9 +8274,6 @@
           "criteria": "Listado de actividades inconexas"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_teoria_intervencion": {
         "complementariedades": {
           "patterns": [
@@ -8713,10 +8345,6 @@
           "criteria": "Productos sin indicadores o solo con metas cualitativas"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration",
-        "dereck_beach"
-      ],
       "verificacion_productos": {
         "formula_indicador": {
           "patterns": [
@@ -8789,10 +8417,6 @@
           "criteria": "Metas que parecen arbitrarias o insuficientes frente al diagnóstico"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_proporcionalidad": {
         "cobertura_vs_brecha": {
           "patterns": [
@@ -8860,10 +8484,6 @@
           "criteria": "Sin trazabilidad identificable"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration",
-        "dereck_beach"
-      ],
       "verificacion_trazabilidad": {
         "presupuestal": {
           "patterns": [
@@ -8931,10 +8551,6 @@
           "criteria": "Contradicción evidente o 'salto de fe' entre actividad y producto"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_factibilidad": {
         "capacidad_productiva": {
           "patterns": [
@@ -8999,9 +8615,6 @@
           "criteria": "Salto lógico entre productos y resultados"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_puentes_causales": {
         "productos_a_resultados": {
           "patterns": [
@@ -9072,10 +8685,6 @@
           "criteria": "Resultados cualitativos o sin métricas"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration",
-        "dereck_beach"
-      ],
       "verificacion_resultados": {
         "metrica_outcome": {
           "patterns": [
@@ -9151,9 +8760,6 @@
           "criteria": "Resultados presentados como una lista de deseos, sin lógica causal"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_encadenamiento": {
         "productos_a_resultados": {
           "patterns": [
@@ -9220,10 +8826,6 @@
           "criteria": "Metas sin ninguna justificación de su ambición"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_ambicion": {
         "recursos_vs_meta": {
           "patterns": [
@@ -9287,9 +8889,6 @@
           "criteria": "Resultados desconectados de los problemas diagnosticados"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_atencion_diagnostico": {
         "resultados_vs_problemas": {
           "patterns": [
@@ -9353,9 +8952,6 @@
           "criteria": "No menciona alineación con marcos superiores"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration"
-      ],
       "verificacion_alineacion": {
         "PND": {
           "patterns": [
@@ -9421,9 +9017,6 @@
           "criteria": "No se proyectan impactos de largo plazo"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_impactos": {
         "definicion_impacto": {
           "patterns": [
@@ -9498,9 +9091,6 @@
           "criteria": "Impactos no medibles o sin proxies propuestos"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach"
-      ],
       "verificacion_integracion": {
         "indicadores_compuestos": {
           "patterns": [
@@ -9567,10 +9157,6 @@
           "criteria": "Impactos intangibles se dejan sin ninguna forma de medición"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_proxies": {
         "uso_proxies": {
           "patterns": [
@@ -9637,10 +9223,6 @@
           "criteria": "Impactos aislados del contexto macro"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_alineacion_sistemica": {
         "marcos_nacionales_globales": {
           "patterns": [
@@ -9709,10 +9291,6 @@
           "criteria": "Ambición desproporcionada sin análisis crítico"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_realismo_impacto": {
         "recursos_adecuados": {
           "patterns": [
@@ -9778,9 +9356,6 @@
           "criteria": "Sin teoría de cambio explícita"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_teoria_cambio": {
         "diagrama_explicito": {
           "patterns": [
@@ -9864,9 +9439,6 @@
           "criteria": "Saltos lógicos inverosímiles evidentes"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_proporcionalidad_enlaces": {
         "enlaces_proporcionales": {
           "patterns": [
@@ -9933,10 +9505,6 @@
           "criteria": "Presenta la teoría de cambio como infalible, sin autocrítica"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_inconsistencias": {
         "identificacion_inconsistencias": {
           "patterns": [
@@ -10004,10 +9572,6 @@
           "criteria": "No se describe un sistema de monitoreo"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_patrones_fallo": {
         "drift": {
           "patterns": [
@@ -10085,10 +9649,6 @@
           "criteria": "Enfoque homogéneo que no considera las diferencias ni el contexto"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_contextualizacion": {
         "grupos_afectados": {
           "patterns": [
@@ -10173,10 +9733,6 @@
           "criteria": "< 2 indicadores o sin fuentes"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_lineas_base": {
         "buscar_indicadores_cuantitativos": {
           "patterns": [
@@ -10273,10 +9829,6 @@
           "criteria": "Sin cuantificación de la brecha o sin reconocimiento de limitaciones"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_magnitud_problema": {
         "cuantificacion_brecha": {
           "patterns": [
@@ -10358,10 +9910,6 @@
           "criteria": "Sin asignación explícita o sin evaluación de suficiencia"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_asignacion_recursos": {
         "trazabilidad_programatica": {
           "patterns": [
@@ -10436,10 +9984,6 @@
           "criteria": "< 2 capacidades descritas"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "competencias_municipales"
-      ],
       "verificacion_capacidades": {
         "talento_humano": {
           "patterns": [
@@ -10533,10 +10077,6 @@
           "criteria": "Sin análisis de coherencia o restricciones"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration",
-        "dereck_beach"
-      ],
       "verificacion_coherencia": {
         "objetivos_vs_recursos": {
           "patterns": [
@@ -10616,10 +10156,6 @@
           "criteria": "Solo narrativa genérica sin estructura"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_formalizacion": {
         "estructura_tabular": {
           "patterns": [
@@ -10718,10 +10254,6 @@
           "criteria": "Actividades genéricas sin especificidad"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_especificidad": {
         "instrumento": {
           "patterns": [
@@ -10790,10 +10322,6 @@
           "criteria": "Actividades desconectadas del diagnóstico de daños y necesidades"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_atencion_causa_raiz": {
         "problema_priorizado": {
           "patterns": [
@@ -10862,9 +10390,6 @@
           "criteria": "No se identifican riesgos"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach"
-      ],
       "verificacion_riesgos": {
         "desplazamiento_efectos": {
           "patterns": [
@@ -10939,9 +10464,6 @@
           "criteria": "Listado de actividades inconexas"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_teoria_intervencion": {
         "complementariedades": {
           "patterns": [
@@ -11014,10 +10536,6 @@
           "criteria": "Productos sin indicadores o solo con metas cualitativas"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration",
-        "dereck_beach"
-      ],
       "verificacion_productos": {
         "formula_indicador": {
           "patterns": [
@@ -11090,10 +10608,6 @@
           "criteria": "Metas que parecen arbitrarias o insuficientes frente al diagnóstico"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_proporcionalidad": {
         "cobertura_vs_brecha": {
           "patterns": [
@@ -11161,10 +10675,6 @@
           "criteria": "Sin trazabilidad identificable"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration",
-        "dereck_beach"
-      ],
       "verificacion_trazabilidad": {
         "presupuestal": {
           "patterns": [
@@ -11232,10 +10742,6 @@
           "criteria": "Contradicción evidente o 'salto de fe' entre actividad y producto"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_factibilidad": {
         "capacidad_productiva": {
           "patterns": [
@@ -11300,9 +10806,6 @@
           "criteria": "Salto lógico entre productos y resultados"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_puentes_causales": {
         "productos_a_resultados": {
           "patterns": [
@@ -11373,10 +10876,6 @@
           "criteria": "Resultados cualitativos o sin métricas"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration",
-        "dereck_beach"
-      ],
       "verificacion_resultados": {
         "metrica_outcome": {
           "patterns": [
@@ -11452,9 +10951,6 @@
           "criteria": "Resultados presentados como una lista de deseos, sin lógica causal"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_encadenamiento": {
         "productos_a_resultados": {
           "patterns": [
@@ -11521,10 +11017,6 @@
           "criteria": "Metas sin ninguna justificación de su ambición"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_ambicion": {
         "recursos_vs_meta": {
           "patterns": [
@@ -11588,9 +11080,6 @@
           "criteria": "Resultados desconectados de las necesidades de las víctimas"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_atencion_diagnostico": {
         "resultados_vs_problemas": {
           "patterns": [
@@ -11655,9 +11144,6 @@
           "criteria": "No menciona alineación con marcos superiores"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration"
-      ],
       "verificacion_alineacion": {
         "PND": {
           "patterns": [
@@ -11722,9 +11208,6 @@
           "criteria": "No se proyectan impactos de largo plazo"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_impactos": {
         "definicion_impacto": {
           "patterns": [
@@ -11799,9 +11282,6 @@
           "criteria": "Impactos no medibles o sin proxies propuestos"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach"
-      ],
       "verificacion_integracion": {
         "indicadores_compuestos": {
           "patterns": [
@@ -11868,10 +11348,6 @@
           "criteria": "Impactos intangibles se dejan sin ninguna forma de medición"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_proxies": {
         "uso_proxies": {
           "patterns": [
@@ -11938,10 +11414,6 @@
           "criteria": "Impactos aislados del contexto macro"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_alineacion_sistemica": {
         "marcos_nacionales_globales": {
           "patterns": [
@@ -12010,10 +11482,6 @@
           "criteria": "Ambición desproporcionada sin análisis crítico"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_realismo_impacto": {
         "recursos_adecuados": {
           "patterns": [
@@ -12079,9 +11547,6 @@
           "criteria": "Sin teoría de cambio explícita"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_teoria_cambio": {
         "diagrama_explicito": {
           "patterns": [
@@ -12166,9 +11631,6 @@
           "criteria": "Saltos lógicos inverosímiles evidentes"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_proporcionalidad_enlaces": {
         "enlaces_proporcionales": {
           "patterns": [
@@ -12235,10 +11697,6 @@
           "criteria": "Presenta la teoría de cambio como infalible, sin autocrítica"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_inconsistencias": {
         "identificacion_inconsistencias": {
           "patterns": [
@@ -12306,10 +11764,6 @@
           "criteria": "No se describe un sistema de monitoreo"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_patrones_fallo": {
         "drift": {
           "patterns": [
@@ -12386,10 +11840,6 @@
           "criteria": "Enfoque homogéneo que no considera las diferencias ni el contexto"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_contextualizacion": {
         "grupos_afectados": {
           "patterns": [
@@ -12476,10 +11926,6 @@
           "criteria": "< 2 indicadores o sin fuentes"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_lineas_base": {
         "buscar_indicadores_cuantitativos": {
           "patterns": [
@@ -12577,10 +12023,6 @@
           "criteria": "Sin cuantificación de la magnitud o sin reconocimiento de limitaciones"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_magnitud_problema": {
         "cuantificacion_brecha": {
           "patterns": [
@@ -12662,10 +12104,6 @@
           "criteria": "Sin asignación explícita o sin evaluación de suficiencia"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_asignacion_recursos": {
         "trazabilidad_programatica": {
           "patterns": [
@@ -12740,10 +12178,6 @@
           "criteria": "< 2 capacidades descritas"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "competencias_municipales"
-      ],
       "verificacion_capacidades": {
         "talento_humano": {
           "patterns": [
@@ -12837,10 +12271,6 @@
           "criteria": "Sin análisis de coherencia o restricciones"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration",
-        "dereck_beach"
-      ],
       "verificacion_coherencia": {
         "objetivos_vs_recursos": {
           "patterns": [
@@ -12920,10 +12350,6 @@
           "criteria": "Solo narrativa genérica sin estructura"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_formalizacion": {
         "estructura_tabular": {
           "patterns": [
@@ -13022,10 +12448,6 @@
           "criteria": "Actividades genéricas sin especificidad"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_especificidad": {
         "instrumento": {
           "patterns": [
@@ -13096,10 +12518,6 @@
           "criteria": "Actividades desconectadas del diagnóstico causal"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_atencion_causa_raiz": {
         "problema_priorizado": {
           "patterns": [
@@ -13168,9 +12586,6 @@
           "criteria": "No se identifican riesgos"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach"
-      ],
       "verificacion_riesgos": {
         "desplazamiento_efectos": {
           "patterns": [
@@ -13245,9 +12660,6 @@
           "criteria": "Listado de actividades inconexas"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_teoria_intervencion": {
         "complementariedades": {
           "patterns": [
@@ -13320,10 +12732,6 @@
           "criteria": "Productos sin indicadores o solo con metas cualitativas"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration",
-        "dereck_beach"
-      ],
       "verificacion_productos": {
         "formula_indicador": {
           "patterns": [
@@ -13397,10 +12805,6 @@
           "criteria": "Metas absolutas sin relación con el tamaño del problema"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_proporcionalidad": {
         "cobertura_vs_brecha": {
           "patterns": [
@@ -13468,10 +12872,6 @@
           "criteria": "Sin trazabilidad identificable"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration",
-        "dereck_beach"
-      ],
       "verificacion_trazabilidad": {
         "presupuestal": {
           "patterns": [
@@ -13539,10 +12939,6 @@
           "criteria": "Contradicción evidente o 'salto de fe' entre actividad y producto"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_factibilidad": {
         "capacidad_productiva": {
           "patterns": [
@@ -13607,9 +13003,6 @@
           "criteria": "Salto lógico entre productos y resultados"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_puentes_causales": {
         "productos_a_resultados": {
           "patterns": [
@@ -13680,10 +13073,6 @@
           "criteria": "Resultados cualitativos o sin métricas"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration",
-        "dereck_beach"
-      ],
       "verificacion_resultados": {
         "metrica_outcome": {
           "patterns": [
@@ -13759,9 +13148,6 @@
           "criteria": "Resultados presentados como una lista de deseos, sin lógica causal"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_encadenamiento": {
         "productos_a_resultados": {
           "patterns": [
@@ -13828,10 +13214,6 @@
           "criteria": "Metas sin ninguna justificación de su ambición"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_ambicion": {
         "recursos_vs_meta": {
           "patterns": [
@@ -13895,9 +13277,6 @@
           "criteria": "Resultados desconectados de los problemas diagnosticados"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_atencion_diagnostico": {
         "resultados_vs_problemas": {
           "patterns": [
@@ -13961,9 +13340,6 @@
           "criteria": "No menciona alineación con marcos superiores"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration"
-      ],
       "verificacion_alineacion": {
         "PND": {
           "patterns": [
@@ -14029,9 +13405,6 @@
           "criteria": "No se proyectan impactos de largo plazo"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_impactos": {
         "definicion_impacto": {
           "patterns": [
@@ -14106,9 +13479,6 @@
           "criteria": "Impactos no medibles o sin proxies propuestos"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach"
-      ],
       "verificacion_integracion": {
         "indicadores_compuestos": {
           "patterns": [
@@ -14175,10 +13545,6 @@
           "criteria": "Impactos intangibles se dejan sin ninguna forma de medición"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_proxies": {
         "uso_proxies": {
           "patterns": [
@@ -14245,10 +13611,6 @@
           "criteria": "Impactos aislados del contexto macro"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_alineacion_sistemica": {
         "marcos_nacionales_globales": {
           "patterns": [
@@ -14317,10 +13679,6 @@
           "criteria": "Ambición desproporcionada sin análisis crítico"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_realismo_impacto": {
         "recursos_adecuados": {
           "patterns": [
@@ -14386,9 +13744,6 @@
           "criteria": "Sin teoría de cambio explícita"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_teoria_cambio": {
         "diagrama_explicito": {
           "patterns": [
@@ -14473,9 +13828,6 @@
           "criteria": "Saltos lógicos inverosímiles evidentes"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_proporcionalidad_enlaces": {
         "enlaces_proporcionales": {
           "patterns": [
@@ -14542,10 +13894,6 @@
           "criteria": "Presenta la teoría de cambio como infalible, sin autocrítica"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_inconsistencias": {
         "identificacion_inconsistencias": {
           "patterns": [
@@ -14613,10 +13961,6 @@
           "criteria": "No se describe un sistema de monitoreo"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_patrones_fallo": {
         "drift": {
           "patterns": [
@@ -14693,10 +14037,6 @@
           "criteria": "Enfoque homogéneo que no considera las diferencias ni el contexto"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_contextualizacion": {
         "grupos_afectados": {
           "patterns": [
@@ -14783,10 +14123,6 @@
           "criteria": "< 2 indicadores o sin fuentes"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_lineas_base": {
         "buscar_indicadores_cuantitativos": {
           "patterns": [
@@ -14883,10 +14219,6 @@
           "criteria": "Sin cuantificación de la magnitud o sin reconocimiento de limitaciones"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_magnitud_problema": {
         "cuantificacion_brecha": {
           "patterns": [
@@ -14968,10 +14300,6 @@
           "criteria": "Sin asignación explícita o sin evaluación de suficiencia"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_asignacion_recursos": {
         "trazabilidad_programatica": {
           "patterns": [
@@ -15046,10 +14374,6 @@
           "criteria": "< 2 capacidades descritas"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "competencias_municipales"
-      ],
       "verificacion_capacidades": {
         "talento_humano": {
           "patterns": [
@@ -15143,10 +14467,6 @@
           "criteria": "Sin análisis de coherencia o restricciones"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration",
-        "dereck_beach"
-      ],
       "verificacion_coherencia": {
         "objetivos_vs_recursos": {
           "patterns": [
@@ -15226,10 +14546,6 @@
           "criteria": "Solo narrativa genérica sin estructura"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_formalizacion": {
         "estructura_tabular": {
           "patterns": [
@@ -15328,10 +14644,6 @@
           "criteria": "Actividades genéricas sin especificidad"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_especificidad": {
         "instrumento": {
           "patterns": [
@@ -15401,10 +14713,6 @@
           "criteria": "Actividades desconectadas del diagnóstico causal"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_atencion_causa_raiz": {
         "problema_priorizado": {
           "patterns": [
@@ -15473,9 +14781,6 @@
           "criteria": "No se identifican riesgos"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach"
-      ],
       "verificacion_riesgos": {
         "desplazamiento_efectos": {
           "patterns": [
@@ -15550,9 +14855,6 @@
           "criteria": "Listado de actividades inconexas"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_teoria_intervencion": {
         "complementariedades": {
           "patterns": [
@@ -15624,10 +14926,6 @@
           "criteria": "Productos sin indicadores o solo con metas cualitativas"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration",
-        "dereck_beach"
-      ],
       "verificacion_productos": {
         "formula_indicador": {
           "patterns": [
@@ -15699,10 +14997,6 @@
           "criteria": "Metas que parecen arbitrarias o insuficientes frente al diagnóstico"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_proporcionalidad": {
         "cobertura_vs_brecha": {
           "patterns": [
@@ -15769,10 +15063,6 @@
           "criteria": "Sin trazabilidad identificable"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration",
-        "dereck_beach"
-      ],
       "verificacion_trazabilidad": {
         "presupuestal": {
           "patterns": [
@@ -15840,10 +15130,6 @@
           "criteria": "Contradicción evidente o 'salto de fe' entre actividad y producto"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_factibilidad": {
         "capacidad_productiva": {
           "patterns": [
@@ -15908,9 +15194,6 @@
           "criteria": "Salto lógico entre productos y resultados"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_puentes_causales": {
         "productos_a_resultados": {
           "patterns": [
@@ -15982,10 +15265,6 @@
           "criteria": "Resultados cualitativos o sin métricas"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration",
-        "dereck_beach"
-      ],
       "verificacion_resultados": {
         "metrica_outcome": {
           "patterns": [
@@ -16061,9 +15340,6 @@
           "criteria": "Resultados presentados como una lista de deseos, sin lógica causal"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_encadenamiento": {
         "productos_a_resultados": {
           "patterns": [
@@ -16130,10 +15406,6 @@
           "criteria": "Metas sin ninguna justificación de su ambición"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_ambicion": {
         "recursos_vs_meta": {
           "patterns": [
@@ -16197,9 +15469,6 @@
           "criteria": "Resultados desconectados de los problemas diagnosticados"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_atencion_diagnostico": {
         "resultados_vs_problemas": {
           "patterns": [
@@ -16264,9 +15533,6 @@
           "criteria": "No menciona alineación con marcos superiores"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration"
-      ],
       "verificacion_alineacion": {
         "PND": {
           "patterns": [
@@ -16332,9 +15598,6 @@
           "criteria": "No se proyectan impactos de largo plazo"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_impactos": {
         "definicion_impacto": {
           "patterns": [
@@ -16409,9 +15672,6 @@
           "criteria": "Impactos no medibles o sin proxies propuestos"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach"
-      ],
       "verificacion_integracion": {
         "indicadores_compuestos": {
           "patterns": [
@@ -16478,10 +15738,6 @@
           "criteria": "Impactos intangibles se dejan sin ninguna forma de medición"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_proxies": {
         "uso_proxies": {
           "patterns": [
@@ -16548,10 +15804,6 @@
           "criteria": "Impactos aislados del contexto macro"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_alineacion_sistemica": {
         "marcos_nacionales_globales": {
           "patterns": [
@@ -16620,10 +15872,6 @@
           "criteria": "Ambición desproporcionada sin análisis crítico"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_realismo_impacto": {
         "recursos_adecuados": {
           "patterns": [
@@ -16689,9 +15937,6 @@
           "criteria": "Sin teoría de cambio explícita"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_teoria_cambio": {
         "diagrama_explicito": {
           "patterns": [
@@ -16776,9 +16021,6 @@
           "criteria": "Saltos lógicos inverosímiles evidentes"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_proporcionalidad_enlaces": {
         "enlaces_proporcionales": {
           "patterns": [
@@ -16845,10 +16087,6 @@
           "criteria": "Presenta la teoría de cambio como infalible, sin autocrítica"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_inconsistencias": {
         "identificacion_inconsistencias": {
           "patterns": [
@@ -16916,10 +16154,6 @@
           "criteria": "No se describe un sistema de monitoreo"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_patrones_fallo": {
         "drift": {
           "patterns": [
@@ -16996,10 +16230,6 @@
           "criteria": "Enfoque homogéneo que no considera las diferencias ni el contexto"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_contextualizacion": {
         "grupos_afectados": {
           "patterns": [
@@ -17085,10 +16315,6 @@
           "criteria": "< 2 indicadores o sin fuentes"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_lineas_base": {
         "buscar_indicadores_cuantitativos": {
           "patterns": [
@@ -17185,10 +16411,6 @@
           "criteria": "Sin cuantificación de la magnitud o sin reconocimiento de limitaciones"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_magnitud_problema": {
         "cuantificacion_brecha": {
           "patterns": [
@@ -17270,10 +16492,6 @@
           "criteria": "Sin asignación explícita o sin evaluación de suficiencia"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_asignacion_recursos": {
         "trazabilidad_programatica": {
           "patterns": [
@@ -17348,10 +16566,6 @@
           "criteria": "< 2 capacidades descritas"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "competencias_municipales"
-      ],
       "verificacion_capacidades": {
         "talento_humano": {
           "patterns": [
@@ -17445,10 +16659,6 @@
           "criteria": "Sin análisis de coherencia o restricciones"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration",
-        "dereck_beach"
-      ],
       "verificacion_coherencia": {
         "objetivos_vs_recursos": {
           "patterns": [
@@ -17528,10 +16738,6 @@
           "criteria": "Solo narrativa genérica sin estructura"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_formalizacion": {
         "estructura_tabular": {
           "patterns": [
@@ -17630,10 +16836,6 @@
           "criteria": "Actividades genéricas sin especificidad"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_especificidad": {
         "instrumento": {
           "patterns": [
@@ -17704,10 +16906,6 @@
           "criteria": "Actividades desconectadas del diagnóstico causal"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_atencion_causa_raiz": {
         "problema_priorizado": {
           "patterns": [
@@ -17776,9 +16974,6 @@
           "criteria": "No se identifican riesgos"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach"
-      ],
       "verificacion_riesgos": {
         "desplazamiento_efectos": {
           "patterns": [
@@ -17853,9 +17048,6 @@
           "criteria": "Listado de actividades inconexas"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_teoria_intervencion": {
         "complementariedades": {
           "patterns": [
@@ -17928,10 +17120,6 @@
           "criteria": "Productos sin indicadores o solo con metas cualitativas"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration",
-        "dereck_beach"
-      ],
       "verificacion_productos": {
         "formula_indicador": {
           "patterns": [
@@ -18003,10 +17191,6 @@
           "criteria": "Metas que parecen arbitrarias o insuficientes frente al diagnóstico"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_proporcionalidad": {
         "cobertura_vs_brecha": {
           "patterns": [
@@ -18074,10 +17258,6 @@
           "criteria": "Sin trazabilidad identificable"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration",
-        "dereck_beach"
-      ],
       "verificacion_trazabilidad": {
         "presupuestal": {
           "patterns": [
@@ -18145,10 +17325,6 @@
           "criteria": "Contradicción evidente o 'salto de fe' entre actividad y producto"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_factibilidad": {
         "capacidad_productiva": {
           "patterns": [
@@ -18213,9 +17389,6 @@
           "criteria": "Salto lógico entre productos y resultados"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_puentes_causales": {
         "productos_a_resultados": {
           "patterns": [
@@ -18286,10 +17459,6 @@
           "criteria": "Resultados cualitativos o sin métricas"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration",
-        "dereck_beach"
-      ],
       "verificacion_resultados": {
         "metrica_outcome": {
           "patterns": [
@@ -18365,9 +17534,6 @@
           "criteria": "Resultados presentados como una lista de deseos, sin lógica causal"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_encadenamiento": {
         "productos_a_resultados": {
           "patterns": [
@@ -18434,10 +17600,6 @@
           "criteria": "Metas sin ninguna justificación de su ambición"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_ambicion": {
         "recursos_vs_meta": {
           "patterns": [
@@ -18501,9 +17663,6 @@
           "criteria": "Resultados desconectados de los problemas diagnosticados"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_atencion_diagnostico": {
         "resultados_vs_problemas": {
           "patterns": [
@@ -18568,9 +17727,6 @@
           "criteria": "No menciona alineación con marcos superiores"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration"
-      ],
       "verificacion_alineacion": {
         "PND": {
           "patterns": [
@@ -18635,9 +17791,6 @@
           "criteria": "No se proyectan impactos de largo plazo"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_impactos": {
         "definicion_impacto": {
           "patterns": [
@@ -18712,9 +17865,6 @@
           "criteria": "Impactos no medibles o sin proxies propuestos"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach"
-      ],
       "verificacion_integracion": {
         "indicadores_compuestos": {
           "patterns": [
@@ -18781,10 +17931,6 @@
           "criteria": "Impactos intangibles se dejan sin ninguna forma de medición"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_proxies": {
         "uso_proxies": {
           "patterns": [
@@ -18851,10 +17997,6 @@
           "criteria": "Impactos aislados del contexto macro"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_alineacion_sistemica": {
         "marcos_nacionales_globales": {
           "patterns": [
@@ -18923,10 +18065,6 @@
           "criteria": "Ambición desproporcionada sin análisis crítico"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_realismo_impacto": {
         "recursos_adecuados": {
           "patterns": [
@@ -18992,9 +18130,6 @@
           "criteria": "Sin teoría de cambio explícita"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_teoria_cambio": {
         "diagrama_explicito": {
           "patterns": [
@@ -19079,9 +18214,6 @@
           "criteria": "Saltos lógicos inverosímiles evidentes"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_proporcionalidad_enlaces": {
         "enlaces_proporcionales": {
           "patterns": [
@@ -19148,10 +18280,6 @@
           "criteria": "Presenta la teoría de cambio como infalible, sin autocrítica"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_inconsistencias": {
         "identificacion_inconsistencias": {
           "patterns": [
@@ -19219,10 +18347,6 @@
           "criteria": "No se describe un sistema de monitoreo"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_patrones_fallo": {
         "drift": {
           "patterns": [
@@ -19299,10 +18423,6 @@
           "criteria": "Enfoque homogéneo que no considera las diferencias ni el contexto"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_contextualizacion": {
         "grupos_afectados": {
           "patterns": [
@@ -19388,10 +18508,6 @@
           "criteria": "< 2 indicadores o sin fuentes"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_lineas_base": {
         "buscar_indicadores_cuantitativos": {
           "patterns": [
@@ -19489,10 +18605,6 @@
           "criteria": "Sin cuantificación de la magnitud del problema"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_magnitud_problema": {
         "cuantificacion_brecha": {
           "patterns": [
@@ -19574,10 +18686,6 @@
           "criteria": "Sin asignación explícita para responsabilidades municipales"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_asignacion_recursos": {
         "trazabilidad_programatica": {
           "patterns": [
@@ -19652,10 +18760,6 @@
           "criteria": "< 2 capacidades descritas"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "competencias_municipales"
-      ],
       "verificacion_capacidades": {
         "talento_humano": {
           "patterns": [
@@ -19750,10 +18854,6 @@
           "criteria": "Sin análisis de coherencia o restricciones"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration",
-        "dereck_beach"
-      ],
       "verificacion_coherencia": {
         "objetivos_vs_recursos": {
           "patterns": [
@@ -19833,10 +18933,6 @@
           "criteria": "Solo narrativa genérica sin estructura"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_formalizacion": {
         "estructura_tabular": {
           "patterns": [
@@ -19935,10 +19031,6 @@
           "criteria": "Actividades genéricas sin especificidad"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_especificidad": {
         "instrumento": {
           "patterns": [
@@ -20009,10 +19101,6 @@
           "criteria": "Actividades desconectadas del diagnóstico causal"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_atencion_causa_raiz": {
         "problema_priorizado": {
           "patterns": [
@@ -20081,9 +19169,6 @@
           "criteria": "No se identifican riesgos"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach"
-      ],
       "verificacion_riesgos": {
         "desplazamiento_efectos": {
           "patterns": [
@@ -20158,9 +19243,6 @@
           "criteria": "Listado de actividades inconexas"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_teoria_intervencion": {
         "complementariedades": {
           "patterns": [
@@ -20232,10 +19314,6 @@
           "criteria": "Productos sin indicadores o solo con metas cualitativas"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration",
-        "dereck_beach"
-      ],
       "verificacion_productos": {
         "formula_indicador": {
           "patterns": [
@@ -20307,10 +19385,6 @@
           "criteria": "Metas que parecen arbitrarias o insuficientes frente al diagnóstico"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_proporcionalidad": {
         "cobertura_vs_brecha": {
           "patterns": [
@@ -20378,10 +19452,6 @@
           "criteria": "Sin trazabilidad identificable"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration",
-        "dereck_beach"
-      ],
       "verificacion_trazabilidad": {
         "presupuestal": {
           "patterns": [
@@ -20449,10 +19519,6 @@
           "criteria": "Contradicción evidente o 'salto de fe' entre actividad y producto"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_factibilidad": {
         "capacidad_productiva": {
           "patterns": [
@@ -20517,9 +19583,6 @@
           "criteria": "Salto lógico entre productos y resultados"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_puentes_causales": {
         "productos_a_resultados": {
           "patterns": [
@@ -20590,10 +19653,6 @@
           "criteria": "Resultados cualitativos o sin métricas"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration",
-        "dereck_beach"
-      ],
       "verificacion_resultados": {
         "metrica_outcome": {
           "patterns": [
@@ -20669,9 +19728,6 @@
           "criteria": "Resultados presentados como una lista de deseos, sin lógica causal"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_encadenamiento": {
         "productos_a_resultados": {
           "patterns": [
@@ -20739,10 +19795,6 @@
           "criteria": "Metas sin ninguna justificación de su ambición"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_ambicion": {
         "recursos_vs_meta": {
           "patterns": [
@@ -20806,9 +19858,6 @@
           "criteria": "Resultados desconectados de los problemas diagnosticados"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_atencion_diagnostico": {
         "resultados_vs_problemas": {
           "patterns": [
@@ -20873,9 +19922,6 @@
           "criteria": "No menciona alineación con marcos superiores"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration"
-      ],
       "verificacion_alineacion": {
         "PND": {
           "patterns": [
@@ -20940,9 +19986,6 @@
           "criteria": "No se proyectan impactos de largo plazo"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_impactos": {
         "definicion_impacto": {
           "patterns": [
@@ -21017,9 +20060,6 @@
           "criteria": "Impactos no medibles o sin proxies propuestos"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach"
-      ],
       "verificacion_integracion": {
         "indicadores_compuestos": {
           "patterns": [
@@ -21086,10 +20126,6 @@
           "criteria": "Impactos intangibles se dejan sin ninguna forma de medición"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_proxies": {
         "uso_proxies": {
           "patterns": [
@@ -21156,10 +20192,6 @@
           "criteria": "Impactos aislados del contexto macro"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_alineacion_sistemica": {
         "marcos_nacionales_globales": {
           "patterns": [
@@ -21228,10 +20260,6 @@
           "criteria": "Ambición desproporcionada sin análisis crítico"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_realismo_impacto": {
         "recursos_adecuados": {
           "patterns": [
@@ -21297,9 +20325,6 @@
           "criteria": "Sin teoría de cambio explícita"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_teoria_cambio": {
         "diagrama_explicito": {
           "patterns": [
@@ -21384,9 +20409,6 @@
           "criteria": "Saltos lógicos inverosímiles evidentes"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_proporcionalidad_enlaces": {
         "enlaces_proporcionales": {
           "patterns": [
@@ -21453,10 +20475,6 @@
           "criteria": "Presenta la teoría de cambio como infalible, sin autocrítica"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_inconsistencias": {
         "identificacion_inconsistencias": {
           "patterns": [
@@ -21524,10 +20542,6 @@
           "criteria": "No se describe un sistema de monitoreo"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_patrones_fallo": {
         "drift": {
           "patterns": [
@@ -21605,10 +20619,6 @@
           "criteria": "Enfoque homogéneo que no considera las diferencias ni el contexto"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_contextualizacion": {
         "grupos_afectados": {
           "patterns": [
@@ -21694,10 +20704,6 @@
           "criteria": "< 2 indicadores o sin fuentes"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_lineas_base": {
         "buscar_indicadores_cuantitativos": {
           "patterns": [
@@ -21795,10 +20801,6 @@
           "criteria": "Sin cuantificación de la magnitud o sin reconocimiento de limitaciones"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_magnitud_problema": {
         "cuantificacion_brecha": {
           "patterns": [
@@ -21880,10 +20882,6 @@
           "criteria": "Sin asignación explícita de recursos municipales"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_asignacion_recursos": {
         "trazabilidad_programatica": {
           "patterns": [
@@ -21957,10 +20955,6 @@
           "criteria": "< 2 capacidades descritas"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "competencias_municipales"
-      ],
       "verificacion_capacidades": {
         "talento_humano": {
           "patterns": [
@@ -22054,10 +21048,6 @@
           "criteria": "Sin análisis de coherencia o restricciones"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration",
-        "dereck_beach"
-      ],
       "verificacion_coherencia": {
         "objetivos_vs_recursos": {
           "patterns": [
@@ -22137,10 +21127,6 @@
           "criteria": "Solo narrativa genérica sin estructura"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_formalizacion": {
         "estructura_tabular": {
           "patterns": [
@@ -22240,10 +21226,6 @@
           "criteria": "Actividades genéricas sin especificidad"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_especificidad": {
         "instrumento": {
           "patterns": [
@@ -22314,10 +21296,6 @@
           "criteria": "Actividades desconectadas del diagnóstico causal"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_atencion_causa_raiz": {
         "problema_priorizado": {
           "patterns": [
@@ -22386,9 +21364,6 @@
           "criteria": "No se identifican riesgos"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach"
-      ],
       "verificacion_riesgos": {
         "desplazamiento_efectos": {
           "patterns": [
@@ -22463,9 +21438,6 @@
           "criteria": "Listado de actividades inconexas"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_teoria_intervencion": {
         "complementariedades": {
           "patterns": [
@@ -22538,10 +21510,6 @@
           "criteria": "Productos sin indicadores o solo con metas cualitativas"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration",
-        "dereck_beach"
-      ],
       "verificacion_productos": {
         "formula_indicador": {
           "patterns": [
@@ -22614,10 +21582,6 @@
           "criteria": "Metas que parecen arbitrarias o insuficientes frente al diagnóstico"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_proporcionalidad": {
         "cobertura_vs_brecha": {
           "patterns": [
@@ -22685,10 +21649,6 @@
           "criteria": "Sin trazabilidad identificable"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration",
-        "dereck_beach"
-      ],
       "verificacion_trazabilidad": {
         "presupuestal": {
           "patterns": [
@@ -22756,10 +21716,6 @@
           "criteria": "Contradicción evidente o 'salto de fe' entre actividad y producto"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_factibilidad": {
         "capacidad_productiva": {
           "patterns": [
@@ -22824,9 +21780,6 @@
           "criteria": "Salto lógico entre productos y resultados"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_puentes_causales": {
         "productos_a_resultados": {
           "patterns": [
@@ -22898,10 +21851,6 @@
           "criteria": "Resultados cualitativos o sin métricas"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration",
-        "dereck_beach"
-      ],
       "verificacion_resultados": {
         "metrica_outcome": {
           "patterns": [
@@ -22977,9 +21926,6 @@
           "criteria": "Resultados presentados como una lista de deseos, sin lógica causal"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_encadenamiento": {
         "productos_a_resultados": {
           "patterns": [
@@ -23046,10 +21992,6 @@
           "criteria": "Metas sin ninguna justificación de su ambición"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_ambicion": {
         "recursos_vs_meta": {
           "patterns": [
@@ -23113,9 +22055,6 @@
           "criteria": "Resultados desconectados de los problemas diagnosticados"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_atencion_diagnostico": {
         "resultados_vs_problemas": {
           "patterns": [
@@ -23180,9 +22119,6 @@
           "criteria": "No menciona alineación con marcos superiores"
         }
       },
-      "modulos_responsables": [
-        "dnp_integration"
-      ],
       "verificacion_alineacion": {
         "PND": {
           "patterns": [
@@ -23247,9 +22183,6 @@
           "criteria": "No se proyectan impactos de largo plazo"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_impactos": {
         "definicion_impacto": {
           "patterns": [
@@ -23324,9 +22257,6 @@
           "criteria": "Impactos no medibles o sin proxies propuestos"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach"
-      ],
       "verificacion_integracion": {
         "indicadores_compuestos": {
           "patterns": [
@@ -23393,10 +22323,6 @@
           "criteria": "Impactos intangibles se dejan sin ninguna forma de medición"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "initial_processor_causal_policy"
-      ],
       "verificacion_proxies": {
         "uso_proxies": {
           "patterns": [
@@ -23463,10 +22389,6 @@
           "criteria": "Impactos aislados del contexto macro"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_alineacion_sistemica": {
         "marcos_nacionales_globales": {
           "patterns": [
@@ -23535,10 +22457,6 @@
           "criteria": "Ambición desproporcionada sin análisis crítico"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_realismo_impacto": {
         "recursos_adecuados": {
           "patterns": [
@@ -23604,9 +22522,6 @@
           "criteria": "Sin teoría de cambio explícita"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_teoria_cambio": {
         "diagrama_explicito": {
           "patterns": [
@@ -23691,9 +22606,6 @@
           "criteria": "Saltos lógicos inverosímiles evidentes"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy"
-      ],
       "verificacion_proporcionalidad_enlaces": {
         "enlaces_proporcionales": {
           "patterns": [
@@ -23760,10 +22672,6 @@
           "criteria": "Presenta la teoría de cambio como infalible, sin autocrítica"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_inconsistencias": {
         "identificacion_inconsistencias": {
           "patterns": [
@@ -23831,10 +22739,6 @@
           "criteria": "No se describe un sistema de monitoreo"
         }
       },
-      "modulos_responsables": [
-        "dereck_beach",
-        "dnp_integration"
-      ],
       "verificacion_patrones_fallo": {
         "drift": {
           "patterns": [
@@ -23911,10 +22815,6 @@
           "criteria": "Enfoque homogéneo que no considera las diferencias ni el contexto"
         }
       },
-      "modulos_responsables": [
-        "initial_processor_causal_policy",
-        "dereck_beach"
-      ],
       "verificacion_contextualizacion": {
         "grupos_afectados": {
           "patterns": [
