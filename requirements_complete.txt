@@ -1,0 +1,139 @@
+# ============================================================================
+# FARFAN 3.0 - Complete Dependencies
+# ============================================================================
+# Este archivo incluye TODAS las dependencias necesarias para el sistema
+# Versión: 2.0 Complete
+# Fecha: 2025-10-16
+
+# ----------------------------------------------------------------------------
+# CORE NUMERIC & DATA PROCESSING
+# ----------------------------------------------------------------------------
+numpy>=1.24.0,<2.0.0
+pandas>=2.0.0,<3.0.0
+scipy>=1.10.0,<2.0.0
+scikit-learn>=1.3.0,<2.0.0
+
+# ----------------------------------------------------------------------------
+# NLP & EMBEDDINGS (CRÍTICO - Faltaban en requirements.txt original)
+# ----------------------------------------------------------------------------
+# Sentence transformers para BGE-M3 embeddings
+sentence-transformers>=2.2.0,<3.0.0
+
+# Transformers y modelos de lenguaje
+transformers>=4.30.0,<5.0.0
+tokenizers>=0.13.0
+
+# SpaCy para análisis sintáctico y NER
+spacy>=3.6.0,<4.0.0
+# Para instalar modelo español: python -m spacy download es_core_news_lg
+
+# NLTK para procesamiento adicional
+nltk>=3.8,<4.0.0
+
+# ----------------------------------------------------------------------------
+# DEEP LEARNING BACKEND
+# ----------------------------------------------------------------------------
+# PyTorch (requerido por transformers y sentence-transformers)
+torch>=2.0.0,<3.0.0
+# torch-geometric para grafos causales
+torch-geometric>=2.3.0,<3.0.0
+
+# ----------------------------------------------------------------------------
+# PDF PROCESSING
+# ----------------------------------------------------------------------------
+# PDF básico
+PyPDF2>=3.0.0
+
+# PDF avanzado con imágenes (para Derek Beach Framework)
+PyMuPDF>=1.22.0
+
+# Extracción de tablas (para financiero_viabilidad_tablas.py)
+# La variante [cv] incluye OpenCV para detección de tablas
+camelot-py[cv]>=0.11.0
+
+# Alternativa para tablas (más ligera)
+tabula-py>=2.8.0
+
+# ----------------------------------------------------------------------------
+# DOCUMENT PROCESSING
+# ----------------------------------------------------------------------------
+python-docx>=0.8.11
+openpyxl>=3.1.0
+
+# ----------------------------------------------------------------------------
+# GRAPH & NETWORK ANALYSIS
+# ----------------------------------------------------------------------------
+networkx>=3.1,<4.0.0
+
+# ----------------------------------------------------------------------------
+# STATISTICAL ANALYSIS (Faltaba)
+# ----------------------------------------------------------------------------
+statsmodels>=0.14.0,<1.0.0
+
+# ----------------------------------------------------------------------------
+# DATABASE (Faltaba - mencionado en análisis del repo)
+# ----------------------------------------------------------------------------
+# MongoDB sync
+pymongo>=4.4.0,<5.0.0
+
+# MongoDB async (para operaciones asíncronas)
+motor>=3.2.0,<4.0.0
+
+# ----------------------------------------------------------------------------
+# UTILITIES
+# ----------------------------------------------------------------------------
+# Retry logic
+retry>=0.9.2
+
+# YAML parsing (para execution_mapping.yaml)
+PyYAML>=6.0,<7.0.0
+
+# Environment variables
+python-dotenv>=1.0.0
+
+# Progress bars
+tqdm>=4.65.0
+
+# Logging mejorado
+loguru>=0.7.0
+
+# Validación de datos
+pydantic>=2.0.0,<3.0.0
+
+# ----------------------------------------------------------------------------
+# OPTIONAL - WEB DASHBOARD (cuando se implemente)
+# ----------------------------------------------------------------------------
+# fastapi>=0.100.0
+# uvicorn[standard]>=0.23.0
+# jinja2>=3.1.0
+# python-multipart>=0.0.6
+
+# ----------------------------------------------------------------------------
+# DEVELOPMENT & TESTING (recomendado)
+# ----------------------------------------------------------------------------
+# pytest>=7.4.0
+# pytest-asyncio>=0.21.0
+# pytest-cov>=4.1.0
+# black>=23.7.0
+# pylint>=2.17.0
+# mypy>=1.4.0
+
+# ----------------------------------------------------------------------------
+# NOTAS DE INSTALACIÓN
+# ----------------------------------------------------------------------------
+# 1. Instalar en orden:
+#    pip install --upgrade pip
+#    pip install -r requirements_complete.txt
+#
+# 2. Instalar modelo spaCy:
+#    python -m spacy download es_core_news_lg
+#
+# 3. Si camelot-py falla, instalar dependencias del sistema primero:
+#    Ubuntu/Debian: sudo apt-get install ghostscript python3-tk
+#    macOS: brew install ghostscript tcl-tk
+#
+# 4. Descargar datos de NLTK (si es necesario):
+#    python -c "import nltk; nltk.download('punkt'); nltk.download('stopwords')"
+#
+# 5. Para GPU support con PyTorch:
+#    pip install torch --index-url https://download.pytorch.org/whl/cu118
