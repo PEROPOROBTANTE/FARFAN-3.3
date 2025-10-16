@@ -1,0 +1,46 @@
+{
+  "dereck_beach": {
+    "status": "failed",
+    "reason": "AST not equivalent",
+    "verification": {
+      "original_file": "/home/runner/work/FARFAN-3.0/FARFAN-3.0/dereck_beach",
+      "formatted_file": "/tmp/tmpbchb4wqv/dereck_beach",
+      "original_hash": "04c7621ab35e18e92c5e18a0003950390dbca71ef058779249008ea35b3df136",
+      "formatted_hash": "e9a85faa64d95ffe83a79c224924ef81e08c9b0409294bf831da469beaaeb520",
+      "original_error": null,
+      "formatted_error": null,
+      "ast_equivalent": false
+    }
+  },
+  "emebedding_policy.py": {
+    "status": "passed",
+    "ast_hash": "546bdf34e32772108460cbddfd611038febc2a17e9e813e75b2c183ccf8379a6",
+    "verification_file": "verification/emebedding_policy.py.json"
+  },
+  "contradiction_deteccion.py": {
+    "status": "failed",
+    "reason": "AST not equivalent",
+    "verification": {
+      "original_file": "/home/runner/work/FARFAN-3.0/FARFAN-3.0/contradiction_deteccion.py",
+      "formatted_file": "/tmp/tmp2celp_ng/contradiction_deteccion.py",
+      "original_hash": "b11e0fa9524944a1434976981f705b556070d7c4e9f4ac703a87d8dd011c622f",
+      "formatted_hash": "48d98177349812324d88c60ab3b34ff3f6a63083443278bd4f06ac90df3359a5",
+      "original_error": null,
+      "formatted_error": null,
+      "ast_equivalent": false
+    }
+  },
+  "policy_processor.py": {
+    "status": "failed",
+    "reason": "AST not equivalent",
+    "verification": {
+      "original_file": "/home/runner/work/FARFAN-3.0/FARFAN-3.0/policy_processor.py",
+      "formatted_file": "/tmp/tmpzp_j0yuu/policy_processor.py",
+      "original_hash": "ca596014fa1b6a9ad59779da0d0ae5675566fa36b8f6db23d7349233e45e020f",
+      "formatted_hash": "20eb1c5817bc6b2d421580d88b52aa9b886db08ee088eb12391043b4bfed84fb",
+      "original_error": null,
+      "formatted_error": null,
+      "ast_equivalent": false
+    }
+  }
+}
