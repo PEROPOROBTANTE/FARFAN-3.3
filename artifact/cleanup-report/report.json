@@ -1,0 +1,55 @@
+{
+  "status": "success",
+  "branch": "copilot/chorecleanup-2023-10-01t000000z-safe",
+  "commit": null,
+  "timestamp": "2025-10-16T11:00:00Z",
+  "files_changed": [
+    "policy_processor.py"
+  ],
+  "files_analyzed": [
+    "teoria_cambio.py",
+    "policy_processor.py"
+  ],
+  "protected_files_detected": [],
+  "repository_info": {
+    "project_types": [],
+    "languages": ["Python", "JSON", "Text"],
+    "total_files": 22
+  },
+  "checks": {
+    "python_compile_before": "artifact/cleanup-report/checks/python_compile_before.txt",
+    "python_compile_after": "artifact/cleanup-report/checks/python_compile_after.txt",
+    "target_files_compile": "artifact/cleanup-report/checks/target_files_compile_after.txt"
+  },
+  "linters": {
+    "flake8": "artifact/cleanup-report/linters/flake8.txt"
+  },
+  "format_diffs": "artifact/cleanup-report/format_diffs/",
+  "verification": "artifact/cleanup-report/verification.json",
+  "logs_path": "artifact/cleanup-report/",
+  "changes_summary": {
+    "policy_processor.py": {
+      "issue": "6 blank lines with trailing whitespace (W293)",
+      "lines_affected": [574, 578, 598, 603, 622, 629],
+      "fix_applied": "Removed trailing whitespace from blank lines in docstrings",
+      "verification": "Code token equivalence verified (tokens unchanged, only docstring whitespace affected)"
+    },
+    "teoria_cambio.py": {
+      "issue": "None",
+      "fix_applied": "No changes needed - file already clean"
+    }
+  },
+  "formatters_evaluated": {
+    "black": {
+      "used": false,
+      "reason": "Would add trailing commas (non-whitespace token changes)",
+      "check_output": "artifact/cleanup-report/format_diffs/black_policy_processor.txt"
+    }
+  },
+  "safety_checks": {
+    "ast_equivalence": "Partial - AST hash differs due to docstring whitespace changes, but code tokens identical",
+    "token_equivalence": "Full - Code token sequences are identical",
+    "compilation": "Passed - All target files compile successfully",
+    "protected_paths": "None detected"
+  }
+}

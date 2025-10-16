@@ -1,0 +1,24 @@
+{
+  "policy_processor.py": {
+    "method": "Manual whitespace cleanup (trailing whitespace on blank lines in docstrings)",
+    "lines_changed": 6,
+    "verification_method": "Code token comparison (ignoring string literal whitespace)",
+    "ast_preserving": false,
+    "token_preserving": true,
+    "compilation_verified": true,
+    "lines_fixed": [
+      574,
+      578,
+      598,
+      603,
+      622,
+      629
+    ],
+    "issue_type": "W293: blank line contains whitespace"
+  },
+  "teoria_cambio.py": {
+    "method": "No changes needed",
+    "already_clean": true,
+    "compilation_verified": true
+  }
+}

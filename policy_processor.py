@@ -571,11 +571,11 @@ class IndustrialPolicyProcessor:
     ) -> Tuple[List[str], List[int]]:
         """
         Execute pattern matching across relevant sentences and collect matches with positions.
-        
+
         Args:
             compiled_patterns: List of compiled regex patterns to match
             relevant_sentences: Filtered sentences to search within
-            
+
         Returns:
             Tuple of (matched_strings, match_positions)
         """
@@ -595,12 +595,12 @@ class IndustrialPolicyProcessor:
     ) -> float:
         """
         Calculate confidence score for evidence based on pattern matches and contextual factors.
-        
+
         Args:
             matches: List of matched pattern strings
             text_length: Total length of the document text
             pattern_specificity: Specificity coefficient for pattern weighting
-            
+
         Returns:
             Computed confidence score
         """
@@ -619,14 +619,14 @@ class IndustrialPolicyProcessor:
     ) -> Dict[str, Any]:
         """
         Assemble evidence bundle from matched patterns and computed confidence.
-        
+
         Args:
             dimension: Causal dimension classification
             category: Specific category within dimension
             matches: List of matched pattern strings
             positions: List of match positions in text
             confidence: Computed confidence score
-            
+
         Returns:
             Serialized evidence bundle dictionary
         """
