@@ -43,6 +43,31 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
+# Constants
+SAMPLE_MUNICIPAL_PLAN = "sample_municipal_plan.txt"
+RANDOM_SEED = 42
+
+# Logging setup
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Missing imports for sklearn, nltk, numpy, pandas
+try:
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    from sklearn.ensemble import IsolationForest
+    import numpy as np
+    import pandas as pd
+    from nltk.tokenize import sent_tokenize
+    from nltk.corpus import stopwords
+except ImportError as e:
+    logger.warning(f"Missing dependency: {e}")
+    # Provide fallbacks
+    TfidfVectorizer = None
+    IsolationForest = None
+    np = None
+    pd = None
+    sent_tokenize = None
+    stopwords = None
 
 # ---------------------------------------------------------------------------
 # 6. EXAMPLE USAGE AND UTILITIES
@@ -77,12 +102,12 @@ def example_usage():
     """
 
     # Save sample to file
-    with open("sample_municipal_plan.txt", "w", encoding="utf-8") as f:
+    with open(SAMPLE_MUNICIPAL_PLAN, "w", encoding="utf-8") as f:
         f.write(sample_text)
 
     try:
         # Analyze document
-        results = analyzer.analyze_document("sample_municipal_plan.txt")
+        results = analyzer.analyze_document(SAMPLE_MUNICIPAL_PLAN)
 
         # Print summary
         print("\n" + "=" * 60)
@@ -153,6 +178,9 @@ def example_usage():
 
         return results
 
+    except FileNotFoundError as e:
+        print(f"Error: File not found - {e}")
+        return None
     except Exception as e:
         print(f"Error during analysis: {e}")
         return None
@@ -160,8 +188,8 @@ def example_usage():
         # Clean up
         try:
             import os
-            os.remove("sample_municipal_plan.txt")
-        except:
+            os.remove(SAMPLE_MUNICIPAL_PLAN)
+        except (FileNotFoundError, OSError):
             pass
 
 
@@ -216,7 +244,7 @@ class DocumentProcessor:
                 import nltk
                 nltk.download('punkt')
                 return sent_tokenize(text, language='spanish')
-            except:
+            except Exception:
                 # Fallback to simple splitting
                 return [s.strip() for s in re.split(r'[.!?]+', text) if len(s.strip()) > 10]
 
@@ -587,8 +615,7 @@ def main():
 
     args = parser.parse_args()
 
-    # Initialize analyzer
-    config_manager = ConfigurationManager(args.config)
+    # Initialize analyzer (config_manager unused - removed)
     analyzer = MunicipalAnalyzer()
 
     if args.batch:
