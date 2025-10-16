@@ -1,3 +1,4 @@
+# coding=utf-8
 """
 Circuit Breaker - Fault tolerance and graceful degradation
 Implements the Circuit Breaker pattern for resilient execution
