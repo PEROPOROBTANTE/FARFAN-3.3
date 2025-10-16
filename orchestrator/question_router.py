@@ -59,39 +59,61 @@ class QuestionRouter:
             logger.error(f"Invalid JSON in questionnaire file: {e}")
             raise
 
-        # Extract policy areas, dimensions, and questions
-        policy_areas = data.get("politicas", [])
+        # Extract policy points (Decálogo), dimensions, and base questions
+        policy_points_dict = data.get("puntos_decalogo", {})
         dimensions_data = data.get("dimensiones", {})
+        base_questions_list = data.get("preguntas_base", [])
+        
+        # The 300 questions are organized as 10 blocks of 30 (one per policy point)
+        # Each block has 6 dimensions × 5 questions = 30 questions
+        # Order: P1(D1-D6, Q1-Q5), P2(D1-D6, Q1-Q5), ..., P10(D1-D6, Q1-Q5)
+        policy_points = list(policy_points_dict.keys())  # ['P1', 'P2', ..., 'P10']
+        questions_per_policy = 30  # 6 dimensions × 5 questions
+        
+        logger.info(f"Loading {len(base_questions_list)} questions for {len(policy_points)} policy points")
 
-        # Generate 300 questions (10 policy areas × 6 dimensions × 5 questions)
-        for policy_area in policy_areas:
-            policy_id = policy_area.get("id", "")
-            for dim_code, dim_data in dimensions_data.items():
-                # Get questions for this dimension
-                base_questions = self._extract_base_questions(dim_data, dim_code)
+        # Process each of the 300 questions, matching it to its policy point
+        for idx, q_data in enumerate(base_questions_list):
+            # Determine which policy point this question belongs to
+            policy_idx = idx // questions_per_policy
+            if policy_idx >= len(policy_points):
+                logger.warning(f"Question index {idx} exceeds expected range, skipping")
+                continue
+                
+            policy_id = policy_points[policy_idx]
+            
+            # Extract question metadata
+            dim_code = q_data.get("dimension", "")
+            q_num = q_data.get("numero", 0)
+            
+            # Determine required modules based on dimension and question
+            required_modules, primary_module, supporting_modules = self._determine_modules(dim_code, q_num)
+            
+            # Extract verification patterns from the question
+            verification_patterns = q_data.get("patrones_verificacion", [])
+            
+            # Extract scoring criteria
+            scoring = q_data.get("scoring", {})
+            rubric_levels = {
+                "EXCELENTE": scoring.get("excelente", {}).get("min_score", 0.85),
+                "BUENO": scoring.get("bueno", {}).get("min_score", 0.70),
+                "ACEPTABLE": scoring.get("aceptable", {}).get("min_score", 0.55),
+                "INSUFICIENTE": scoring.get("insuficiente", {}).get("min_score", 0.0)
+            }
 
-                for q_num, q_data in enumerate(base_questions, start=1):
-                    # Determine required modules based on dimension and question
-                    required_modules, primary_module, supporting_modules = self._determine_modules(dim_code, q_num)
+            question = Question(
+                policy_area=policy_id,
+                dimension=dim_code,
+                question_num=q_num,
+                text=q_data.get("texto_template", f"Question {q_num} for {dim_code}"),
+                rubric_levels=rubric_levels,
+                verification_patterns=verification_patterns,
+                required_modules=required_modules,
+                primary_module=primary_module,
+                supporting_modules=supporting_modules
+            )
 
-                    question = Question(
-                        policy_area=policy_id,
-                        dimension=dim_code,
-                        question_num=q_num,
-                        text=q_data["text"],
-                        rubric_levels=q_data.get("rubric", {
-                            "EXCELENTE": 0.85,
-                            "BUENO": 0.70,
-                            "ACEPTABLE": 0.55,
-                            "INSUFICIENTE": 0.0
-                        }),
-                        verification_patterns=q_data.get("patterns", []),
-                        required_modules=required_modules,
-                        primary_module=primary_module,
-                        supporting_modules=supporting_modules
-                    )
-
-                    self.questions[question.canonical_id] = question
+            self.questions[question.canonical_id] = question
 
         logger.info(f"Loaded {len(self.questions)} questions")
 
