@@ -1,0 +1,309 @@
+--- policy_processor.py	2025-10-16 10:56:38.947780+00:00
++++ policy_processor.py	2025-10-16 11:04:23.579787+00:00
+@@ -46,10 +46,11 @@
+ 
+ # ============================================================================
+ # CAUSAL DIMENSION TAXONOMY (DECALOGO Framework)
+ # ============================================================================
+ 
++
+ class CausalDimension(Enum):
+     """Six-dimensional causal framework taxonomy aligned with DECALOGO."""
+ 
+     D1_INSUMOS = "d1_insumos"
+     D2_ACTIVIDADES = "d2_actividades"
+@@ -208,10 +209,11 @@
+ 
+ 
+ # ============================================================================
+ # CONFIGURATION ARCHITECTURE
+ # ============================================================================
++
+ 
+ @dataclass(frozen=True)
+ class ProcessorConfig:
+     """Immutable configuration for policy plan processing."""
+ 
+@@ -256,10 +258,11 @@
+ 
+ # ============================================================================
+ # MATHEMATICAL SCORING ENGINE
+ # ============================================================================
+ 
++
+ class BayesianEvidenceScorer:
+     """
+     Bayesian evidence accumulation with entropy-weighted confidence scoring.
+ 
+     Implements a modified Dempster-Shafer framework for multi-evidence fusion
+@@ -329,10 +332,11 @@
+ 
+ 
+ # ============================================================================
+ # ADVANCED TEXT PROCESSOR
+ # ============================================================================
++
+ 
+ class PolicyTextProcessor:
+     """
+     Industrial-grade text processing with multi-scale segmentation and
+     coherence-preserving normalization for policy document analysis.
+@@ -397,10 +401,11 @@
+ 
+ 
+ # ============================================================================
+ # CORE INDUSTRIAL PROCESSOR
+ # ============================================================================
++
+ 
+ @dataclass
+ class EvidenceBundle:
+     """Structured evidence container with provenance and confidence metadata."""
+ 
+@@ -469,13 +474,17 @@
+                 f"Loaded questionnaire: {len(data.get('questions', []))} questions"
+             )
+             return data
+         except Exception as e:
+             logger.error(f"Failed to load questionnaire: {e}")
+-            raise IOError(f"Questionnaire unavailable: {self.questionnaire_file_path}") from e
+-
+-    def _compile_pattern_registry(self) -> Dict[CausalDimension, Dict[str, List[re.Pattern]]]:
++            raise IOError(
++                f"Questionnaire unavailable: {self.questionnaire_file_path}"
++            ) from e
++
++    def _compile_pattern_registry(
++        self,
++    ) -> Dict[CausalDimension, Dict[str, List[re.Pattern]]]:
+         """Compile all causal patterns into efficient regex objects."""
+         registry = {}
+         for dimension, categories in CAUSAL_PATTERN_TAXONOMY.items():
+             registry[dimension] = {}
+             for category, patterns in categories.items():
+@@ -529,21 +538,21 @@
+ 
+         # Normalize and segment
+         normalized = self.text_processor.normalize_unicode(raw_text)
+         sentences = self.text_processor.segment_into_sentences(normalized)
+ 
+-        logger.info(f"Processing document: {len(normalized)} chars, {len(sentences)} sentences")
++        logger.info(
++            f"Processing document: {len(normalized)} chars, {len(sentences)} sentences"
++        )
+ 
+         # Extract metadata
+         metadata = self._extract_metadata(normalized)
+ 
+         # Evidence extraction by policy point
+         point_evidence = {}
+         for point_code in sorted(self.point_patterns.keys()):
+-            evidence = self._extract_point_evidence(
+-                normalized, sentences, point_code
+-            )
++            evidence = self._extract_point_evidence(normalized, sentences, point_code)
+             if evidence:
+                 point_evidence[point_code] = evidence
+ 
+         # Global causal dimension analysis
+         dimension_analysis = self._analyze_causal_dimensions(normalized, sentences)
+@@ -569,15 +578,15 @@
+     def _match_patterns_in_sentences(
+         self, compiled_patterns: List, relevant_sentences: List[str]
+     ) -> Tuple[List[str], List[int]]:
+         """
+         Execute pattern matching across relevant sentences and collect matches with positions.
+-        
++
+         Args:
+             compiled_patterns: List of compiled regex patterns to match
+             relevant_sentences: Filtered sentences to search within
+-            
++
+         Returns:
+             Tuple of (matched_strings, match_positions)
+         """
+         matches = []
+         positions = []
+@@ -593,16 +602,16 @@
+     def _compute_evidence_confidence(
+         self, matches: List[str], text_length: int, pattern_specificity: float
+     ) -> float:
+         """
+         Calculate confidence score for evidence based on pattern matches and contextual factors.
+-        
++
+         Args:
+             matches: List of matched pattern strings
+             text_length: Total length of the document text
+             pattern_specificity: Specificity coefficient for pattern weighting
+-            
++
+         Returns:
+             Computed confidence score
+         """
+         confidence = self.scorer.compute_evidence_score(
+             matches, text_length, pattern_specificity=pattern_specificity
+@@ -617,18 +626,18 @@
+         positions: List[int],
+         confidence: float,
+     ) -> Dict[str, Any]:
+         """
+         Assemble evidence bundle from matched patterns and computed confidence.
+-        
++
+         Args:
+             dimension: Causal dimension classification
+             category: Specific category within dimension
+             matches: List of matched pattern strings
+             positions: List of match positions in text
+             confidence: Computed confidence score
+-            
++
+         Returns:
+             Serialized evidence bundle dictionary
+         """
+         bundle = EvidenceBundle(
+             dimension=dimension,
+@@ -706,13 +715,15 @@
+ 
+             dimension_scores[dimension.value] = {
+                 "categories": category_results,
+                 "total_matches": total_matches,
+                 "dimension_confidence": round(
+-                    np.mean([c["confidence"] for c in category_results.values()])
+-                    if category_results
+-                    else 0.0,
++                    (
++                        np.mean([c["confidence"] for c in category_results.values()])
++                        if category_results
++                        else 0.0
++                    ),
+                     4,
+                 ),
+             }
+ 
+         return dimension_scores
+@@ -723,18 +734,22 @@
+         # Title extraction
+         title_match = re.search(
+             r"(?i)plan\s+(?:de\s+)?desarrollo\s+(?:municipal|departamental|local)?\s*[:\-]?\s*([^\n]{10,150})",
+             text[:2000],
+         )
+-        title = title_match.group(1).strip() if title_match else "Sin título identificado"
++        title = (
++            title_match.group(1).strip() if title_match else "Sin título identificado"
++        )
+ 
+         # Entity extraction
+         entity_match = re.search(
+             r"(?i)(?:municipio|alcald[íi]a|gobernaci[óo]n|distrito)\s+(?:de\s+)?([A-ZÁÉÍÓÚÑ][a-záéíóúñ\s]+)",
+             text[:3000],
+         )
+-        entity = entity_match.group(1).strip() if entity_match else "Entidad no especificada"
++        entity = (
++            entity_match.group(1).strip() if entity_match else "Entidad no especificada"
++        )
+ 
+         # Period extraction
+         period_match = re.search(r"(20\d{2})\s*[-–—]\s*(20\d{2})", text[:3000])
+         period = {
+             "start_year": int(period_match.group(1)) if period_match else None,
+@@ -789,10 +804,11 @@
+ 
+ # ============================================================================
+ # ENHANCED SANITIZER WITH STRUCTURE PRESERVATION
+ # ============================================================================
+ 
++
+ class AdvancedTextSanitizer:
+     """
+     Sophisticated text sanitization preserving semantic structure and
+     critical policy elements with differential privacy guarantees.
+     """
+@@ -831,11 +847,12 @@
+         text = re.sub(r"[ \t]+", " ", text)
+         text = re.sub(r"\n{3,}", "\n\n", text)
+ 
+         # Stage 4: Remove control characters (except newlines/tabs)
+         text = "".join(
+-            char for char in text
++            char
++            for char in text
+             if unicodedata.category(char)[0] != "C" or char in "\n\t"
+         )
+ 
+         # Stage 5: Restore protected elements
+         if self.config.preserve_document_structure:
+@@ -885,10 +902,11 @@
+ 
+ # ============================================================================
+ # INTEGRATED FILE HANDLING WITH RESILIENCE
+ # ============================================================================
+ 
++
+ class ResilientFileHandler:
+     """
+     Production-grade file I/O with automatic encoding detection,
+     retry logic, and comprehensive error classification.
+     """
+@@ -943,10 +961,11 @@
+ 
+ # ============================================================================
+ # UNIFIED ORCHESTRATOR
+ # ============================================================================
+ 
++
+ class PolicyAnalysisPipeline:
+     """
+     End-to-end orchestrator for Colombian local development plan analysis
+     implementing the complete DECALOGO causal framework evaluation workflow.
+     """
+@@ -1020,10 +1039,11 @@
+ 
+ # ============================================================================
+ # FACTORY FUNCTIONS FOR BACKWARD COMPATIBILITY
+ # ============================================================================
+ 
++
+ def create_policy_processor(
+     preserve_structure: bool = True,
+     enable_semantic_tagging: bool = True,
+     confidence_threshold: float = 0.65,
+     **kwargs: Any,
+@@ -1050,10 +1070,11 @@
+ 
+ 
+ # ============================================================================
+ # COMMAND-LINE INTERFACE
+ # ============================================================================
++
+ 
+ def main():
+     """Command-line interface for policy plan analysis."""
+     import argparse
+ 
+@@ -1103,12 +1124,16 @@
+         print("POLICY ANALYSIS SUMMARY")
+         print("=" * 70)
+         print(f"Document: {results['metadata'].get('title', 'N/A')}")
+         print(f"Entity: {results['metadata'].get('entity', 'N/A')}")
+         print(f"Period: {results['metadata'].get('period', {})}")
+-        print(f"\nPolicy Points Covered: {results['document_statistics']['point_coverage']}")
+-        print(f"Average Confidence: {results['document_statistics']['avg_confidence']:.2%}")
++        print(
++            f"\nPolicy Points Covered: {results['document_statistics']['point_coverage']}"
++        )
++        print(
++            f"Average Confidence: {results['document_statistics']['avg_confidence']:.2%}"
++        )
+         print(f"Total Sentences: {results['document_statistics']['sentence_count']}")
+         print("=" * 70 + "\n")
+ 
+     except Exception as e:
+         logger.error(f"Analysis failed: {e}", exc_info=True)
+would reformat policy_processor.py
+
+Oh no! 💥 💔 💥
+1 file would be reformatted.
+Exit code: 1

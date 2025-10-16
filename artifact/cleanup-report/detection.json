@@ -1,0 +1,156 @@
+{
+  "project_types": [],
+  "total_files": 22,
+  "files": [
+    {
+      "path": "semantic_chunking_policy.py",
+      "size": 21267,
+      "extension": ".py",
+      "language": "Python"
+    },
+    {
+      "path": "cuestionario_canonico.txt",
+      "size": 66953,
+      "extension": ".txt",
+      "language": "Text"
+    },
+    {
+      "path": "evidence_quality_auditors.py",
+      "size": 35190,
+      "extension": ".py",
+      "language": "Python"
+    },
+    {
+      "path": "cuestionario.json",
+      "size": 840291,
+      "extension": ".json",
+      "language": "JSON"
+    },
+    {
+      "path": "policy_processor.py",
+      "size": 42120,
+      "extension": ".py",
+      "language": "Python"
+    },
+    {
+      "path": "rubric_scoring.json",
+      "size": 43413,
+      "extension": ".json",
+      "language": "JSON"
+    },
+    {
+      "path": "temp_rest.txt",
+      "size": 90655,
+      "extension": ".txt",
+      "language": "Text"
+    },
+    {
+      "path": "financiero_viabilidad_tablas.py",
+      "size": 99111,
+      "extension": ".py",
+      "language": "Python"
+    },
+    {
+      "path": "teoria_cambio.py",
+      "size": 34644,
+      "extension": ".py",
+      "language": "Python"
+    },
+    {
+      "path": "contradiction_deteccion.py",
+      "size": 113953,
+      "extension": ".py",
+      "language": "Python"
+    },
+    {
+      "path": "emebedding_policy.py",
+      "size": 54068,
+      "extension": ".py",
+      "language": "Python"
+    },
+    {
+      "path": "dereck_beach",
+      "size": 179026,
+      "extension": "",
+      "language": "Other"
+    },
+    {
+      "path": ".idea/vcs.xml",
+      "size": 167,
+      "extension": ".xml",
+      "language": "Other"
+    },
+    {
+      "path": ".idea/copilot.data.migration.edit.xml",
+      "size": 189,
+      "extension": ".xml",
+      "language": "Other"
+    },
+    {
+      "path": ".idea/FARFAN-3.0.iml",
+      "size": 226,
+      "extension": ".iml",
+      "language": "Other"
+    },
+    {
+      "path": ".idea/copilot.data.migration.ask.xml",
+      "size": 188,
+      "extension": ".xml",
+      "language": "Other"
+    },
+    {
+      "path": ".idea/misc.xml",
+      "size": 383,
+      "extension": ".xml",
+      "language": "Other"
+    },
+    {
+      "path": ".idea/.gitignore",
+      "size": 176,
+      "extension": "",
+      "language": "Other"
+    },
+    {
+      "path": ".idea/copilot.data.migration.ask2agent.xml",
+      "size": 194,
+      "extension": ".xml",
+      "language": "Other"
+    },
+    {
+      "path": ".idea/copilot.data.migration.agent.xml",
+      "size": 190,
+      "extension": ".xml",
+      "language": "Other"
+    },
+    {
+      "path": ".idea/inspectionProfiles/profiles_settings.xml",
+      "size": 174,
+      "extension": ".xml",
+      "language": "Other"
+    },
+    {
+      "path": ".idea/inspectionProfiles/Project_Default.xml",
+      "size": 2325,
+      "extension": ".xml",
+      "language": "Other"
+    }
+  ],
+  "language_summary": {
+    "Python": {
+      "count": 7,
+      "total_size": 400353
+    },
+    "Text": {
+      "count": 2,
+      "total_size": 157608
+    },
+    "JSON": {
+      "count": 2,
+      "total_size": 883704
+    },
+    "Other": {
+      "count": 11,
+      "total_size": 183238
+    }
+  }
+}
