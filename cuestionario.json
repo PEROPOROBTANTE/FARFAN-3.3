@@ -8,7 +8,7 @@
     "base_questions": 30,
     "policy_areas": 10,
     "dimensions": 6,
-    "author": "AI Systems Architect"
+    "author": "JCRR"
   },
   "dimensiones": {
     "D1": {
@@ -79,35 +79,6 @@
           "is_critical": true,
           "minimum_score": 0.55
         }
-      },
-      "causal_verification_template": {
-        "dimension_name": "Diagnóstico y Líneas Base",
-        "required_elements": [
-          "baseline_with_source",
-          "time_series_minimum_3_years",
-          "measurement_unit",
-          "coverage_specification",
-          "data_quality_assessment"
-        ],
-        "validation_patterns": [
-          "\\d{4}",
-          "fuente:|según|datos de",
-          "DANE|DNP|SISPRO|SIVIGILA|Ministerio|Secretaría",
-          "línea base|base line|año base",
-          "serie.*temporal|históric|tendencia",
-          "\\d+(\\.\\d+)?\\s*%",
-          "tasa de|índice de|proporción de|cobertura de"
-        ],
-        "minimum_quantitative_indicators": 3,
-        "minimum_sources": 2,
-        "minimum_time_series_years": 3,
-        "scoring_weights": [
-          0.25,
-          0.2,
-          0.25,
-          0.15,
-          0.15
-        ]
       }
     },
     "D2": {
@@ -178,39 +149,6 @@
           "is_critical": true,
           "minimum_score": 0.55
         }
-      },
-      "causal_verification_template": {
-        "dimension_name": "Actividades Formalizadas",
-        "required_elements": [
-          "responsible_entity",
-          "input_specification",
-          "output_definition",
-          "timeline_calendar",
-          "unit_cost_or_budget"
-        ],
-        "table_structure_indicators": [
-          "tabla|cuadro|matriz",
-          "responsable|actor|entidad",
-          "insumo|recurso|input",
-          "producto|output|entregable",
-          "cronograma|calendario|plazo|trimestre|año",
-          "costo|presupuesto|valor|monto"
-        ],
-        "causal_mechanism_patterns": [
-          "mecanismo|teoría de cambio|lógica causal",
-          "porque|dado que|en consecuencia",
-          "genera|produce|conlleva|ocasiona",
-          "población diana|población objetivo|beneficiarios"
-        ],
-        "minimum_formalized_activities": 3,
-        "scoring_weights": [
-          0.2,
-          0.2,
-          0.15,
-          0.2,
-          0.15,
-          0.1
-        ]
       }
     },
     "D3": {
@@ -281,41 +219,6 @@
           "is_critical": false,
           "minimum_score": 0.55
         }
-      },
-      "causal_verification_template": {
-        "dimension_name": "Productos Verificables",
-        "required_elements": [
-          "indicator_formula",
-          "data_source",
-          "baseline_value",
-          "target_value",
-          "measurement_mechanism"
-        ],
-        "indicator_verification_patterns": [
-          "indicador|métrica|medición",
-          "fórmula|cálculo|metodología",
-          "fuente de verificación|medio de verificación",
-          "línea base.*\\d+",
-          "meta.*\\d+|objetivo.*\\d+",
-          "\\d+(\\.\\d+)?\\s*%",
-          "por cada|por 100|por 1000|por 100.000"
-        ],
-        "budget_traceability_patterns": [
-          "PPI|plan plurianual de inversiones",
-          "BPIN|banco de proyectos",
-          "código.*proyecto|ficha.*proyecto",
-          "asignación.*presupuestal|recursos.*asignados",
-          "\\$\\s*\\d+|COP\\s*\\d+",
-          "millones|mil millones|billones"
-        ],
-        "minimum_indicators_with_baseline": 3,
-        "scoring_weights": [
-          0.2,
-          0.2,
-          0.2,
-          0.2,
-          0.2
-        ]
       }
     },
     "D4": {
@@ -386,43 +289,6 @@
           "is_critical": false,
           "minimum_score": 0.55
         }
-      },
-      "causal_verification_template": {
-        "dimension_name": "Resultados Medibles",
-        "required_elements": [
-          "outcome_metric",
-          "baseline_value",
-          "target_value",
-          "maturation_window",
-          "causal_chain_explicit"
-        ],
-        "outcome_patterns": [
-          "resultado|outcome|efecto",
-          "cambio en|variación en|mejora en",
-          "reducción de|aumento de|incremento de",
-          "tasa.*resultado|indicador.*resultado",
-          "\\d+%.*\\d{4}|\\d{4}.*\\d+%"
-        ],
-        "causality_chain_patterns": [
-          "productos.*→.*resultados|productos.*a.*resultados",
-          "supuesto|condición habilitante|factor crítico",
-          "si.*entonces|dado.*resulta",
-          "mediador|variable intermedia|mecanismo"
-        ],
-        "alignment_patterns": [
-          "PND|Plan Nacional de Desarrollo",
-          "ODS|Objetivos de Desarrollo Sostenible",
-          "CONPES|política nacional",
-          "alineado con|articulado con|coherente con"
-        ],
-        "minimum_outcome_indicators": 2,
-        "scoring_weights": [
-          0.2,
-          0.2,
-          0.2,
-          0.2,
-          0.2
-        ]
       }
     },
     "D5": {
@@ -493,42 +359,6 @@
           "is_critical": false,
           "minimum_score": 0.55
         }
-      },
-      "causal_verification_template": {
-        "dimension_name": "Impactos de Largo Plazo",
-        "required_elements": [
-          "impact_definition",
-          "transmission_route",
-          "time_lag_specification",
-          "proxy_indicators",
-          "systemic_risk_consideration"
-        ],
-        "impact_patterns": [
-          "impacto|transformación|cambio estructural",
-          "largo plazo|mediano y largo plazo|sostenible",
-          "bienestar|desarrollo|calidad de vida",
-          "\\d+\\s*años|horizonte.*\\d+",
-          "rezago|demora|tiempo de maduración"
-        ],
-        "proxy_patterns": [
-          "proxy|indicador aproximado|indicador sustituto",
-          "variable instrumental|medición indirecta",
-          "validez externa|limitación de medición"
-        ],
-        "systemic_risk_patterns": [
-          "riesgo sistémico|factor externo|choque",
-          "crisis|emergencia|contingencia",
-          "supuesto crítico|condición necesaria",
-          "efecto no deseado|externalidad negativa"
-        ],
-        "minimum_impact_indicators": 1,
-        "scoring_weights": [
-          0.2,
-          0.2,
-          0.2,
-          0.2,
-          0.2
-        ]
       }
     },
     "D6": {
@@ -599,42 +429,6 @@
           "is_critical": false,
           "minimum_score": 0.55
         }
-      },
-      "causal_verification_template": {
-        "dimension_name": "Teoría de Cambio Explícita",
-        "required_elements": [
-          "causal_diagram_or_explicit_chain",
-          "root_causes_identified",
-          "mediators_specified",
-          "moderators_acknowledged",
-          "assumptions_testable"
-        ],
-        "theory_of_change_patterns": [
-          "teoría de cambio|marco lógico|cadena causal",
-          "diagrama|gráfico|esquema|modelo",
-          "causa raíz|factor estructural|determinante",
-          "mediador|variable intermedia|eslabón",
-          "moderador|factor contextual|condición"
-        ],
-        "assumption_patterns": [
-          "supuesto|asunción|premisa",
-          "verificable|testeable|comprobable",
-          "si se cumple|en caso de|condicionado a"
-        ],
-        "failure_pattern_recognition": [
-          "drift|desviación|deriva",
-          "layering|superposición|acumulación",
-          "conversión|reinterpretación|cambio de sentido",
-          "mecanismo de corrección|retroalimentación|aprendizaje"
-        ],
-        "minimum_causal_links": 3,
-        "scoring_weights": [
-          0.2,
-          0.2,
-          0.2,
-          0.2,
-          0.2
-        ]
       }
     }
   },
@@ -1053,6 +847,7 @@
           "criteria": "Sin cuantificación de brecha o sin reconocimiento de limitaciones"
         }
       },
+   
       "verificacion_magnitud_problema": {
         "cuantificacion_brecha": {
           "patterns": [
@@ -23879,5 +23674,5 @@
         }
       }
     }
-  }
+  ]
 }

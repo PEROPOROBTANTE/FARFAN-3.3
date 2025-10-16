@@ -1,0 +1,3107 @@
+{
+  "estructura": {
+    "raiz": "/Users/recovered/PycharmProjects/FLUX/FARFAN-3.0",
+    "directorios": [
+      ".cadence",
+      ".cadence/configs",
+      ".idea",
+      ".idea/inspectionProfiles"
+    ],
+    "archivos_config": [],
+    "archivos_python": 7,
+    "total_archivos": 24
+  },
+  "archivos_python": [
+    {
+      "path": "financiero_viabilidad_tablas.py",
+      "lineas": 2337,
+      "es_punto_entrada": true
+    },
+    {
+      "path": "policy_processor.py",
+      "lineas": 1120,
+      "es_punto_entrada": true
+    },
+    {
+      "path": "contradiction_deteccion.py",
+      "lineas": 2824,
+      "es_punto_entrada": true
+    },
+    {
+      "path": "info_info.py",
+      "lineas": 560,
+      "es_punto_entrada": true
+    },
+    {
+      "path": "emebedding_policy.py",
+      "lineas": 1495,
+      "es_punto_entrada": true
+    },
+    {
+      "path": "semantic_chunking_policy.py",
+      "lineas": 613,
+      "es_punto_entrada": true
+    },
+    {
+      "path": "teoria_cambio.py",
+      "lineas": 915,
+      "es_punto_entrada": true
+    }
+  ],
+  "dependencias": {
+    "imports_stdlib": [
+      "__future__",
+      "argparse",
+      "ast",
+      "collections",
+      "dataclasses",
+      "datetime",
+      "enum",
+      "functools",
+      "hashlib",
+      "itertools",
+      "json",
+      "logging",
+      "os",
+      "pathlib",
+      "random",
+      "re",
+      "sys",
+      "time",
+      "typing",
+      "unicodedata"
+    ],
+    "imports_terceros": [
+      "networkx",
+      "numpy",
+      "pandas",
+      "retry_handler",
+      "scipy",
+      "sentence_transformers",
+      "sklearn",
+      "spacy",
+      "statsmodels",
+      "torch",
+      "torch_geometric",
+      "transformers"
+    ],
+    "imports_locales": []
+  },
+  "funciones": [
+    {
+      "nombre": "create_policy_processor",
+      "archivo": "policy_processor.py",
+      "linea": 1025,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "preserve_structure",
+        "enable_semantic_tagging",
+        "confidence_threshold"
+      ]
+    },
+    {
+      "nombre": "main",
+      "archivo": "policy_processor.py",
+      "linea": 1056,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": []
+    },
+    {
+      "nombre": "from_legacy",
+      "archivo": "policy_processor.py",
+      "linea": 239,
+      "es_async": false,
+      "decoradores": [
+        "classmethod"
+      ],
+      "argumentos": [
+        "cls"
+      ]
+    },
+    {
+      "nombre": "validate",
+      "archivo": "policy_processor.py",
+      "linea": 247,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self"
+      ]
+    },
+    {
+      "nombre": "__init__",
+      "archivo": "policy_processor.py",
+      "linea": 269,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "prior_confidence",
+        "entropy_weight"
+      ]
+    },
+    {
+      "nombre": "compute_evidence_score",
+      "archivo": "policy_processor.py",
+      "linea": 274,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "matches",
+        "total_corpus_size",
+        "pattern_specificity"
+      ]
+    },
+    {
+      "nombre": "_calculate_shannon_entropy",
+      "archivo": "policy_processor.py",
+      "linea": 315,
+      "es_async": false,
+      "decoradores": [
+        "staticmethod"
+      ],
+      "argumentos": [
+        "values"
+      ]
+    },
+    {
+      "nombre": "__init__",
+      "archivo": "policy_processor.py",
+      "linea": 341,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "config"
+      ]
+    },
+    {
+      "nombre": "normalize_unicode",
+      "archivo": "policy_processor.py",
+      "linea": 348,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "text"
+      ]
+    },
+    {
+      "nombre": "segment_into_sentences",
+      "archivo": "policy_processor.py",
+      "linea": 352,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "text"
+      ]
+    },
+    {
+      "nombre": "extract_contextual_window",
+      "archivo": "policy_processor.py",
+      "linea": 378,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "text",
+        "match_position",
+        "window_size"
+      ]
+    },
+    {
+      "nombre": "compile_pattern",
+      "archivo": "policy_processor.py",
+      "linea": 394,
+      "es_async": false,
+      "decoradores": [
+        "lru_cache"
+      ],
+      "argumentos": [
+        "self",
+        "pattern_str"
+      ]
+    },
+    {
+      "nombre": "to_dict",
+      "archivo": "policy_processor.py",
+      "linea": 414,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self"
+      ]
+    },
+    {
+      "nombre": "__init__",
+      "archivo": "policy_processor.py",
+      "linea": 434,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "config",
+        "questionnaire_path"
+      ]
+    },
+    {
+      "nombre": "_load_questionnaire",
+      "archivo": "policy_processor.py",
+      "linea": 462,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self"
+      ]
+    },
+    {
+      "nombre": "_compile_pattern_registry",
+      "archivo": "policy_processor.py",
+      "linea": 476,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self"
+      ]
+    },
+    {
+      "nombre": "_build_point_patterns",
+      "archivo": "policy_processor.py",
+      "linea": 487,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self"
+      ]
+    },
+    {
+      "nombre": "process",
+      "archivo": "policy_processor.py",
+      "linea": 516,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "raw_text"
+      ]
+    },
+    {
+      "nombre": "_match_patterns_in_sentences",
+      "archivo": "policy_processor.py",
+      "linea": 569,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "compiled_patterns",
+        "relevant_sentences"
+      ]
+    },
+    {
+      "nombre": "_compute_evidence_confidence",
+      "archivo": "policy_processor.py",
+      "linea": 593,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "matches",
+        "text_length",
+        "pattern_specificity"
+      ]
+    },
+    {
+      "nombre": "_construct_evidence_bundle",
+      "archivo": "policy_processor.py",
+      "linea": 612,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "dimension",
+        "category",
+        "matches",
+        "positions",
+        "confidence"
+      ]
+    },
+    {
+      "nombre": "_extract_point_evidence",
+      "archivo": "policy_processor.py",
+      "linea": 642,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "text",
+        "sentences",
+        "point_code"
+      ]
+    },
+    {
+      "nombre": "_analyze_causal_dimensions",
+      "archivo": "policy_processor.py",
+      "linea": 681,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "text",
+        "sentences"
+      ]
+    },
+    {
+      "nombre": "_extract_metadata",
+      "archivo": "policy_processor.py",
+      "linea": 721,
+      "es_async": false,
+      "decoradores": [
+        "staticmethod"
+      ],
+      "argumentos": [
+        "text"
+      ]
+    },
+    {
+      "nombre": "_compute_avg_confidence",
+      "archivo": "policy_processor.py",
+      "linea": 752,
+      "es_async": false,
+      "decoradores": [
+        "staticmethod"
+      ],
+      "argumentos": [
+        "dimension_analysis"
+      ]
+    },
+    {
+      "nombre": "_empty_result",
+      "archivo": "policy_processor.py",
+      "linea": 761,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self"
+      ]
+    },
+    {
+      "nombre": "export_results",
+      "archivo": "policy_processor.py",
+      "linea": 777,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "results",
+        "output_path"
+      ]
+    },
+    {
+      "nombre": "__init__",
+      "archivo": "policy_processor.py",
+      "linea": 800,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "config"
+      ]
+    },
+    {
+      "nombre": "sanitize",
+      "archivo": "policy_processor.py",
+      "linea": 809,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "raw_text"
+      ]
+    },
+    {
+      "nombre": "_protect_structure",
+      "archivo": "policy_processor.py",
+      "linea": 846,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "text"
+      ]
+    },
+    {
+      "nombre": "_restore_structure",
+      "archivo": "policy_processor.py",
+      "linea": 877,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "text"
+      ]
+    },
+    {
+      "nombre": "read_text",
+      "archivo": "policy_processor.py",
+      "linea": 899,
+      "es_async": false,
+      "decoradores": [
+        "classmethod"
+      ],
+      "argumentos": [
+        "cls",
+        "file_path"
+      ]
+    },
+    {
+      "nombre": "write_text",
+      "archivo": "policy_processor.py",
+      "linea": 933,
+      "es_async": false,
+      "decoradores": [
+        "classmethod"
+      ],
+      "argumentos": [
+        "cls",
+        "content",
+        "file_path"
+      ]
+    },
+    {
+      "nombre": "__init__",
+      "archivo": "policy_processor.py",
+      "linea": 954,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "config",
+        "questionnaire_path"
+      ]
+    },
+    {
+      "nombre": "analyze_file",
+      "archivo": "policy_processor.py",
+      "linea": 964,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "input_path",
+        "output_path"
+      ]
+    },
+    {
+      "nombre": "analyze_text",
+      "archivo": "policy_processor.py",
+      "linea": 1007,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "raw_text"
+      ]
+    },
+    {
+      "nombre": "create_detector",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 2714,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "device"
+      ]
+    },
+    {
+      "nombre": "__init__",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 122,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self"
+      ]
+    },
+    {
+      "nombre": "calculate_posterior",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 127,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "evidence_strength",
+        "observations",
+        "domain_weight",
+        "prior_knowledge"
+      ]
+    },
+    {
+      "nombre": "build_causal_network",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 161,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "statements"
+      ]
+    },
+    {
+      "nombre": "_estimate_causal_strength",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 178,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "cause",
+        "effect"
+      ]
+    },
+    {
+      "nombre": "_check_temporal_precedence",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 215,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "cause",
+        "effect"
+      ]
+    },
+    {
+      "nombre": "__init__",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 243,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self"
+      ]
+    },
+    {
+      "nombre": "verify_temporal_consistency",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 252,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "statements"
+      ]
+    },
+    {
+      "nombre": "_build_structured_timeline",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 283,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "statements"
+      ]
+    },
+    {
+      "nombre": "_parse_temporal_interval",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 303,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "marker"
+      ]
+    },
+    {
+      "nombre": "_detect_temporal_violation",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 328,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "event_a",
+        "event_b"
+      ]
+    },
+    {
+      "nombre": "_intervals_overlap",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 354,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "interval_a",
+        "interval_b"
+      ]
+    },
+    {
+      "nombre": "_are_mutually_exclusive",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 362,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "stmt_a",
+        "stmt_b"
+      ]
+    },
+    {
+      "nombre": "_requires_precedence",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 384,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "stmt_a",
+        "stmt_b"
+      ]
+    },
+    {
+      "nombre": "_extract_temporal_constraints",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 403,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "text"
+      ]
+    },
+    {
+      "nombre": "_contradicts_always",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 413,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "stmt",
+        "always_stmt"
+      ]
+    },
+    {
+      "nombre": "_calculate_temporal_severity",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 432,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "conflict_type"
+      ]
+    },
+    {
+      "nombre": "_calculate_temporal_consistency_score",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 442,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "num_conflicts",
+        "num_events"
+      ]
+    },
+    {
+      "nombre": "__init__",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 460,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "embedding_dim",
+        "hidden_dim"
+      ]
+    },
+    {
+      "nombre": "detect_implicit_contradictions",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 473,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "statements",
+        "knowledge_graph"
+      ]
+    },
+    {
+      "nombre": "_build_geometric_graph",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 522,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "statements",
+        "nx_graph"
+      ]
+    },
+    {
+      "nombre": "_compute_contradiction_score",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 552,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "emb_a",
+        "emb_b",
+        "stmt_a",
+        "stmt_b"
+      ]
+    },
+    {
+      "nombre": "_extract_path_attention",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 586,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "node_i",
+        "node_j"
+      ]
+    },
+    {
+      "nombre": "numerical_divergence_test",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 612,
+      "es_async": false,
+      "decoradores": [
+        "staticmethod"
+      ],
+      "argumentos": [
+        "claims"
+      ]
+    },
+    {
+      "nombre": "resource_allocation_chi_square",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 667,
+      "es_async": false,
+      "decoradores": [
+        "staticmethod"
+      ],
+      "argumentos": [
+        "allocations"
+      ]
+    },
+    {
+      "nombre": "__init__",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 690,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "device"
+      ]
+    },
+    {
+      "nombre": "_initialize_pdm_ontology",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 728,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self"
+      ]
+    },
+    {
+      "nombre": "detect",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 776,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "text",
+        "plan_name",
+        "dimension"
+      ]
+    },
+    {
+      "nombre": "_extract_policy_statements",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 880,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "text",
+        "dimension"
+      ]
+    },
+    {
+      "nombre": "_generate_contextual_embeddings",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 925,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "statements"
+      ]
+    },
+    {
+      "nombre": "_detect_semantic_contradictions_nli",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 967,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "statements"
+      ]
+    },
+    {
+      "nombre": "_classify_nli",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 1009,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "premise",
+        "hypothesis"
+      ]
+    },
+    {
+      "nombre": "_collect_comparable_claim_pairs",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 1036,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "statements"
+      ]
+    },
+    {
+      "nombre": "_validate_statistical_divergence",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 1053,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "divergence",
+        "p_value"
+      ]
+    },
+    {
+      "nombre": "_build_numerical_contradiction_evidence",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 1061,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "stmt_a",
+        "stmt_b",
+        "divergence",
+        "p_value"
+      ]
+    },
+    {
+      "nombre": "_detect_numerical_inconsistencies_robust",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 1098,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "statements"
+      ]
+    },
+    {
+      "nombre": "_detect_temporal_conflicts_formal",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 1124,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "statements"
+      ]
+    },
+    {
+      "nombre": "_detect_implicit_contradictions_gnn",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 1172,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "statements"
+      ]
+    },
+    {
+      "nombre": "_detect_causal_inconsistencies",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 1214,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "statements"
+      ]
+    },
+    {
+      "nombre": "_extract_resource_allocations_by_type",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 1351,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "statements"
+      ]
+    },
+    {
+      "nombre": "_detect_budget_overlap_conflicts",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 1366,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "allocations",
+        "resource_type",
+        "chi2_stat",
+        "p_value"
+      ]
+    },
+    {
+      "nombre": "_build_resource_conflict_evidence",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 1389,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "stmt_a",
+        "stmt_b",
+        "amount_a",
+        "amount_b",
+        "resource_type",
+        "chi2_stat",
+        "p_value",
+        "rel_diff"
+      ]
+    },
+    {
+      "nombre": "_check_temporal_resource_overlap",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 1433,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "stmt_a",
+        "stmt_b"
+      ]
+    },
+    {
+      "nombre": "_detect_resource_conflicts_statistical",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 1460,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "statements"
+      ]
+    },
+    {
+      "nombre": "_build_knowledge_graph",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 1484,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "statements"
+      ]
+    },
+    {
+      "nombre": "_compute_individual_coherence_scores",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 1516,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "contradictions",
+        "statements"
+      ]
+    },
+    {
+      "nombre": "_compute_weighted_coherence_score",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 1546,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "contradiction_density",
+        "semantic_coherence",
+        "temporal_consistency",
+        "causal_coherence",
+        "objective_alignment",
+        "graph_fragmentation"
+      ]
+    },
+    {
+      "nombre": "_compute_auxiliary_metrics",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 1570,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "contradictions",
+        "text",
+        "coherence_score",
+        "num_statements"
+      ]
+    },
+    {
+      "nombre": "_calculate_advanced_coherence_metrics",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 1590,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "contradictions",
+        "statements",
+        "text"
+      ]
+    },
+    {
+      "nombre": "_calculate_contextual_similarity",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 1631,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "stmt_a",
+        "stmt_b"
+      ]
+    },
+    {
+      "nombre": "_extract_structured_temporal_markers",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 1649,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "text"
+      ]
+    },
+    {
+      "nombre": "_convert_to_timestamp",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 1674,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "text",
+        "marker_type"
+      ]
+    },
+    {
+      "nombre": "_extract_structured_quantitative_claims",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 1694,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "text"
+      ]
+    },
+    {
+      "nombre": "_parse_number_robust",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 1767,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "text"
+      ]
+    },
+    {
+      "nombre": "_determine_semantic_role_advanced",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 1779,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "sent"
+      ]
+    },
+    {
+      "nombre": "_identify_deep_dependencies",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 1830,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "sent",
+        "doc"
+      ]
+    },
+    {
+      "nombre": "_extract_causal_relations",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 1859,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "sent"
+      ]
+    },
+    {
+      "nombre": "_extract_regulatory_references",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 1880,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "text"
+      ]
+    },
+    {
+      "nombre": "_get_extended_context",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 1901,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "text",
+        "start",
+        "end",
+        "window_size"
+      ]
+    },
+    {
+      "nombre": "_get_ontology_weight",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 1921,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "stmt"
+      ]
+    },
+    {
+      "nombre": "_analyze_regulatory_constraints",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 1928,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "statements",
+        "text",
+        "temporal_conflicts"
+      ]
+    },
+    {
+      "nombre": "_calculate_comprehensive_severity",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 2046,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "stmt_a",
+        "stmt_b",
+        "base_score"
+      ]
+    },
+    {
+      "nombre": "_generate_resolution_strategies",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 2077,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "contradiction_type",
+        "stmt_a",
+        "stmt_b",
+        "context"
+      ]
+    },
+    {
+      "nombre": "_are_comparable_claims_advanced",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 2137,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "claim_a",
+        "claim_b"
+      ]
+    },
+    {
+      "nombre": "_extract_detailed_resource_mentions",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 2165,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "text"
+      ]
+    },
+    {
+      "nombre": "_determine_relation_type_advanced",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 2196,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "stmt_a",
+        "stmt_b"
+      ]
+    },
+    {
+      "nombre": "_get_relation_weight",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 2223,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "relation_type"
+      ]
+    },
+    {
+      "nombre": "_deduplicate_contradictions",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 2235,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "contradictions"
+      ]
+    },
+    {
+      "nombre": "_calculate_global_semantic_coherence_advanced",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 2255,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "statements"
+      ]
+    },
+    {
+      "nombre": "_calculate_causal_coherence",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 2286,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self"
+      ]
+    },
+    {
+      "nombre": "_calculate_objective_alignment_advanced",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 2309,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "statements"
+      ]
+    },
+    {
+      "nombre": "_calculate_graph_coherence_metrics",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 2338,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self"
+      ]
+    },
+    {
+      "nombre": "_calculate_shannon_entropy",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 2369,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "contradictions"
+      ]
+    },
+    {
+      "nombre": "_calculate_syntactic_complexity_advanced",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 2391,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "text"
+      ]
+    },
+    {
+      "nombre": "_get_dependency_depth",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 2420,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "token"
+      ]
+    },
+    {
+      "nombre": "_calculate_bootstrap_confidence_interval",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 2433,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "score",
+        "n_observations",
+        "n_bootstrap",
+        "confidence"
+      ]
+    },
+    {
+      "nombre": "_assign_quality_grade",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 2456,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "coherence_score"
+      ]
+    },
+    {
+      "nombre": "_generate_actionable_recommendations",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 2471,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "contradictions"
+      ]
+    },
+    {
+      "nombre": "_get_recommendation_description",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 2538,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "cont_type"
+      ]
+    },
+    {
+      "nombre": "_estimate_resolution_effort",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 2556,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "cont_type",
+        "count"
+      ]
+    },
+    {
+      "nombre": "_serialize_contradiction",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 2576,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "contradiction"
+      ]
+    },
+    {
+      "nombre": "_categorize_severity",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 2620,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "severity"
+      ]
+    },
+    {
+      "nombre": "_get_advanced_graph_statistics",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 2631,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self"
+      ]
+    },
+    {
+      "nombre": "_get_causal_network_statistics",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 2675,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self"
+      ]
+    },
+    {
+      "nombre": "main",
+      "archivo": "info_info.py",
+      "linea": 528,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": []
+    },
+    {
+      "nombre": "__init__",
+      "archivo": "info_info.py",
+      "linea": 18,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "repo_path"
+      ]
+    },
+    {
+      "nombre": "analizar_todo",
+      "archivo": "info_info.py",
+      "linea": 40,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self"
+      ]
+    },
+    {
+      "nombre": "analizar_estructura",
+      "archivo": "info_info.py",
+      "linea": 54,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self"
+      ]
+    },
+    {
+      "nombre": "analizar_dependencias_requirements",
+      "archivo": "info_info.py",
+      "linea": 87,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self"
+      ]
+    },
+    {
+      "nombre": "analizar_archivos_python",
+      "archivo": "info_info.py",
+      "linea": 117,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self"
+      ]
+    },
+    {
+      "nombre": "analizar_ast",
+      "archivo": "info_info.py",
+      "linea": 150,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "tree",
+        "filepath",
+        "content"
+      ]
+    },
+    {
+      "nombre": "get_decorator_name",
+      "archivo": "info_info.py",
+      "linea": 216,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "decorator"
+      ]
+    },
+    {
+      "nombre": "get_base_name",
+      "archivo": "info_info.py",
+      "linea": 229,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "base"
+      ]
+    },
+    {
+      "nombre": "clasificar_import",
+      "archivo": "info_info.py",
+      "linea": 237,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "module_name"
+      ]
+    },
+    {
+      "nombre": "detectar_frameworks",
+      "archivo": "info_info.py",
+      "linea": 255,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self"
+      ]
+    },
+    {
+      "nombre": "detectar_patrones_arquitectura",
+      "archivo": "info_info.py",
+      "linea": 292,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self"
+      ]
+    },
+    {
+      "nombre": "analizar_configuraciones",
+      "archivo": "info_info.py",
+      "linea": 332,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self"
+      ]
+    },
+    {
+      "nombre": "generar_reporte",
+      "archivo": "info_info.py",
+      "linea": 350,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self"
+      ]
+    },
+    {
+      "nombre": "generar_reporte_markdown",
+      "archivo": "info_info.py",
+      "linea": 384,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self"
+      ]
+    },
+    {
+      "nombre": "generar_recomendaciones",
+      "archivo": "info_info.py",
+      "linea": 493,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self"
+      ]
+    },
+    {
+      "nombre": "create_policy_embedder",
+      "archivo": "emebedding_policy.py",
+      "linea": 1328,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "model_tier"
+      ]
+    },
+    {
+      "nombre": "example_pdm_analysis",
+      "archivo": "emebedding_policy.py",
+      "linea": 1386,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": []
+    },
+    {
+      "nombre": "encode",
+      "archivo": "emebedding_policy.py",
+      "linea": 107,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "texts",
+        "batch_size",
+        "normalize"
+      ]
+    },
+    {
+      "nombre": "__init__",
+      "archivo": "emebedding_policy.py",
+      "linea": 153,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "config"
+      ]
+    },
+    {
+      "nombre": "chunk_document",
+      "archivo": "emebedding_policy.py",
+      "linea": 157,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "text",
+        "document_metadata"
+      ]
+    },
+    {
+      "nombre": "_normalize_text",
+      "archivo": "emebedding_policy.py",
+      "linea": 225,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "text"
+      ]
+    },
+    {
+      "nombre": "_recursive_split",
+      "archivo": "emebedding_policy.py",
+      "linea": 232,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "text",
+        "target_size",
+        "overlap"
+      ]
+    },
+    {
+      "nombre": "_find_sentence_boundary",
+      "archivo": "emebedding_policy.py",
+      "linea": 274,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "text",
+        "start",
+        "end"
+      ]
+    },
+    {
+      "nombre": "_extract_sections",
+      "archivo": "emebedding_policy.py",
+      "linea": 285,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "text"
+      ]
+    },
+    {
+      "nombre": "_extract_tables",
+      "archivo": "emebedding_policy.py",
+      "linea": 301,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "text"
+      ]
+    },
+    {
+      "nombre": "_extract_lists",
+      "archivo": "emebedding_policy.py",
+      "linea": 315,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "text"
+      ]
+    },
+    {
+      "nombre": "_infer_pdq_context",
+      "archivo": "emebedding_policy.py",
+      "linea": 322,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "chunk_text"
+      ]
+    },
+    {
+      "nombre": "_contains_table",
+      "archivo": "emebedding_policy.py",
+      "linea": 383,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "chunk_text",
+        "tables"
+      ]
+    },
+    {
+      "nombre": "_contains_list",
+      "archivo": "emebedding_policy.py",
+      "linea": 392,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "chunk_text",
+        "lists"
+      ]
+    },
+    {
+      "nombre": "_find_section",
+      "archivo": "emebedding_policy.py",
+      "linea": 396,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "chunk_text",
+        "sections"
+      ]
+    },
+    {
+      "nombre": "__init__",
+      "archivo": "emebedding_policy.py",
+      "linea": 424,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "prior_strength"
+      ]
+    },
+    {
+      "nombre": "evaluate_policy_metric",
+      "archivo": "emebedding_policy.py",
+      "linea": 435,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "observed_values",
+        "n_posterior_samples"
+      ]
+    },
+    {
+      "nombre": "_beta_binomial_posterior",
+      "archivo": "emebedding_policy.py",
+      "linea": 484,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "observations",
+        "n_samples"
+      ]
+    },
+    {
+      "nombre": "_normal_normal_posterior",
+      "archivo": "emebedding_policy.py",
+      "linea": 511,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "observations",
+        "n_samples"
+      ]
+    },
+    {
+      "nombre": "_classify_evidence_strength",
+      "archivo": "emebedding_policy.py",
+      "linea": 544,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "credible_interval_width"
+      ]
+    },
+    {
+      "nombre": "_compute_coherence",
+      "archivo": "emebedding_policy.py",
+      "linea": 557,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "observations"
+      ]
+    },
+    {
+      "nombre": "_null_evaluation",
+      "archivo": "emebedding_policy.py",
+      "linea": 580,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self"
+      ]
+    },
+    {
+      "nombre": "compare_policies",
+      "archivo": "emebedding_policy.py",
+      "linea": 590,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "policy_a_values",
+        "policy_b_values"
+      ]
+    },
+    {
+      "nombre": "__init__",
+      "archivo": "emebedding_policy.py",
+      "linea": 654,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "model_name",
+        "max_length",
+        "retry_handler"
+      ]
+    },
+    {
+      "nombre": "rerank",
+      "archivo": "emebedding_policy.py",
+      "linea": 693,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "query",
+        "candidates",
+        "top_k",
+        "min_score"
+      ]
+    },
+    {
+      "nombre": "__init__",
+      "archivo": "emebedding_policy.py",
+      "linea": 776,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "config",
+        "retry_handler"
+      ]
+    },
+    {
+      "nombre": "process_document",
+      "archivo": "emebedding_policy.py",
+      "linea": 825,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "document_text",
+        "document_metadata"
+      ]
+    },
+    {
+      "nombre": "semantic_search",
+      "archivo": "emebedding_policy.py",
+      "linea": 873,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "query",
+        "document_chunks",
+        "pdq_filter",
+        "use_reranking"
+      ]
+    },
+    {
+      "nombre": "evaluate_policy_numerical_consistency",
+      "archivo": "emebedding_policy.py",
+      "linea": 943,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "chunks",
+        "pdq_context"
+      ]
+    },
+    {
+      "nombre": "compare_policy_interventions",
+      "archivo": "emebedding_policy.py",
+      "linea": 995,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "intervention_a_chunks",
+        "intervention_b_chunks",
+        "pdq_context"
+      ]
+    },
+    {
+      "nombre": "generate_pdq_report",
+      "archivo": "emebedding_policy.py",
+      "linea": 1015,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "document_chunks",
+        "target_pdq"
+      ]
+    },
+    {
+      "nombre": "_embed_texts",
+      "archivo": "emebedding_policy.py",
+      "linea": 1069,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "texts"
+      ]
+    },
+    {
+      "nombre": "_filter_by_pdq",
+      "archivo": "emebedding_policy.py",
+      "linea": 1126,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "chunks",
+        "pdq_filter"
+      ]
+    },
+    {
+      "nombre": "_apply_mmr",
+      "archivo": "emebedding_policy.py",
+      "linea": 1138,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "ranked_results"
+      ]
+    },
+    {
+      "nombre": "_extract_numerical_values",
+      "archivo": "emebedding_policy.py",
+      "linea": 1192,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "chunks"
+      ]
+    },
+    {
+      "nombre": "_generate_query_from_pdq",
+      "archivo": "emebedding_policy.py",
+      "linea": 1247,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "pdq"
+      ]
+    },
+    {
+      "nombre": "_compute_overall_confidence",
+      "archivo": "emebedding_policy.py",
+      "linea": 1255,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "relevant_chunks",
+        "numerical_eval"
+      ]
+    },
+    {
+      "nombre": "_cached_similarity",
+      "archivo": "emebedding_policy.py",
+      "linea": 1296,
+      "es_async": false,
+      "decoradores": [
+        "lru_cache"
+      ],
+      "argumentos": [
+        "self",
+        "text_hash1",
+        "text_hash2"
+      ]
+    },
+    {
+      "nombre": "get_diagnostics",
+      "archivo": "emebedding_policy.py",
+      "linea": 1304,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self"
+      ]
+    },
+    {
+      "nombre": "load_model",
+      "archivo": "emebedding_policy.py",
+      "linea": 681,
+      "es_async": false,
+      "decoradores": [
+        "with_retry"
+      ],
+      "argumentos": []
+    },
+    {
+      "nombre": "load_embedding_model",
+      "archivo": "emebedding_policy.py",
+      "linea": 791,
+      "es_async": false,
+      "decoradores": [
+        "with_retry"
+      ],
+      "argumentos": []
+    },
+    {
+      "nombre": "encode_with_retry",
+      "archivo": "emebedding_policy.py",
+      "linea": 1097,
+      "es_async": false,
+      "decoradores": [
+        "with_retry"
+      ],
+      "argumentos": []
+    },
+    {
+      "nombre": "configure_logging",
+      "archivo": "teoria_cambio.py",
+      "linea": 67,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": []
+    },
+    {
+      "nombre": "_create_advanced_seed",
+      "archivo": "teoria_cambio.py",
+      "linea": 322,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "plan_name",
+        "salt"
+      ]
+    },
+    {
+      "nombre": "create_policy_theory_of_change_graph",
+      "archivo": "teoria_cambio.py",
+      "linea": 807,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": []
+    },
+    {
+      "nombre": "main",
+      "archivo": "teoria_cambio.py",
+      "linea": 842,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": []
+    },
+    {
+      "nombre": "__post_init__",
+      "archivo": "teoria_cambio.py",
+      "linea": 143,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self"
+      ]
+    },
+    {
+      "nombre": "__init__",
+      "archivo": "teoria_cambio.py",
+      "linea": 200,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self"
+      ]
+    },
+    {
+      "nombre": "_es_conexion_valida",
+      "archivo": "teoria_cambio.py",
+      "linea": 207,
+      "es_async": false,
+      "decoradores": [
+        "staticmethod"
+      ],
+      "argumentos": [
+        "origen",
+        "destino"
+      ]
+    },
+    {
+      "nombre": "construir_grafo_causal",
+      "archivo": "teoria_cambio.py",
+      "linea": 212,
+      "es_async": false,
+      "decoradores": [
+        "lru_cache"
+      ],
+      "argumentos": [
+        "self"
+      ]
+    },
+    {
+      "nombre": "validacion_completa",
+      "archivo": "teoria_cambio.py",
+      "linea": 235,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "grafo"
+      ]
+    },
+    {
+      "nombre": "_extraer_categorias",
+      "archivo": "teoria_cambio.py",
+      "linea": 251,
+      "es_async": false,
+      "decoradores": [
+        "staticmethod"
+      ],
+      "argumentos": [
+        "grafo"
+      ]
+    },
+    {
+      "nombre": "_validar_orden_causal",
+      "archivo": "teoria_cambio.py",
+      "linea": 260,
+      "es_async": false,
+      "decoradores": [
+        "staticmethod"
+      ],
+      "argumentos": [
+        "grafo"
+      ]
+    },
+    {
+      "nombre": "_encontrar_caminos_completos",
+      "archivo": "teoria_cambio.py",
+      "linea": 271,
+      "es_async": false,
+      "decoradores": [
+        "staticmethod"
+      ],
+      "argumentos": [
+        "grafo"
+      ]
+    },
+    {
+      "nombre": "_generar_sugerencias_internas",
+      "archivo": "teoria_cambio.py",
+      "linea": 295,
+      "es_async": false,
+      "decoradores": [
+        "staticmethod"
+      ],
+      "argumentos": [
+        "validacion"
+      ]
+    },
+    {
+      "nombre": "__init__",
+      "archivo": "teoria_cambio.py",
+      "linea": 361,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "graph_type"
+      ]
+    },
+    {
+      "nombre": "add_node",
+      "archivo": "teoria_cambio.py",
+      "linea": 372,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "name",
+        "dependencies",
+        "role",
+        "metadata"
+      ]
+    },
+    {
+      "nombre": "add_edge",
+      "archivo": "teoria_cambio.py",
+      "linea": 384,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "from_node",
+        "to_node",
+        "weight"
+      ]
+    },
+    {
+      "nombre": "_initialize_rng",
+      "archivo": "teoria_cambio.py",
+      "linea": 393,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "plan_name",
+        "salt"
+      ]
+    },
+    {
+      "nombre": "_is_acyclic",
+      "archivo": "teoria_cambio.py",
+      "linea": 420,
+      "es_async": false,
+      "decoradores": [
+        "staticmethod"
+      ],
+      "argumentos": [
+        "nodes"
+      ]
+    },
+    {
+      "nombre": "_generate_subgraph",
+      "archivo": "teoria_cambio.py",
+      "linea": 443,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self"
+      ]
+    },
+    {
+      "nombre": "calculate_acyclicity_pvalue",
+      "archivo": "teoria_cambio.py",
+      "linea": 463,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "plan_name",
+        "iterations"
+      ]
+    },
+    {
+      "nombre": "_perform_sensitivity_analysis_internal",
+      "archivo": "teoria_cambio.py",
+      "linea": 510,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "plan_name",
+        "base_p_value",
+        "iterations"
+      ]
+    },
+    {
+      "nombre": "_calculate_confidence_interval",
+      "archivo": "teoria_cambio.py",
+      "linea": 553,
+      "es_async": false,
+      "decoradores": [
+        "staticmethod"
+      ],
+      "argumentos": [
+        "s",
+        "n",
+        "conf"
+      ]
+    },
+    {
+      "nombre": "_calculate_statistical_power",
+      "archivo": "teoria_cambio.py",
+      "linea": 567,
+      "es_async": false,
+      "decoradores": [
+        "staticmethod"
+      ],
+      "argumentos": [
+        "s",
+        "n",
+        "alpha"
+      ]
+    },
+    {
+      "nombre": "_calculate_bayesian_posterior",
+      "archivo": "teoria_cambio.py",
+      "linea": 578,
+      "es_async": false,
+      "decoradores": [
+        "staticmethod"
+      ],
+      "argumentos": [
+        "likelihood",
+        "prior"
+      ]
+    },
+    {
+      "nombre": "_calculate_node_importance",
+      "archivo": "teoria_cambio.py",
+      "linea": 586,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self"
+      ]
+    },
+    {
+      "nombre": "get_graph_stats",
+      "archivo": "teoria_cambio.py",
+      "linea": 607,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self"
+      ]
+    },
+    {
+      "nombre": "_create_empty_result",
+      "archivo": "teoria_cambio.py",
+      "linea": 617,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "plan_name",
+        "seed",
+        "timestamp"
+      ]
+    },
+    {
+      "nombre": "__init__",
+      "archivo": "teoria_cambio.py",
+      "linea": 653,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self"
+      ]
+    },
+    {
+      "nombre": "execute_suite",
+      "archivo": "teoria_cambio.py",
+      "linea": 663,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self"
+      ]
+    },
+    {
+      "nombre": "validate_engine_readiness",
+      "archivo": "teoria_cambio.py",
+      "linea": 695,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self"
+      ]
+    },
+    {
+      "nombre": "validate_causal_categories",
+      "archivo": "teoria_cambio.py",
+      "linea": 714,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self"
+      ]
+    },
+    {
+      "nombre": "validate_connection_matrix",
+      "archivo": "teoria_cambio.py",
+      "linea": 731,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self"
+      ]
+    },
+    {
+      "nombre": "run_performance_benchmarks",
+      "archivo": "teoria_cambio.py",
+      "linea": 751,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self"
+      ]
+    },
+    {
+      "nombre": "_benchmark_operation",
+      "archivo": "teoria_cambio.py",
+      "linea": 780,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "operation_name",
+        "callable_obj",
+        "threshold"
+      ]
+    },
+    {
+      "nombre": "_log_metric",
+      "archivo": "teoria_cambio.py",
+      "linea": 790,
+      "es_async": false,
+      "decoradores": [],
+      "argumentos": [
+        "self",
+        "name",
+        "value",
+        "unit",
+        "threshold"
+      ]
+    }
+  ],
+  "clases": [
+    {
+      "nombre": "CausalDimension",
+      "archivo": "policy_processor.py",
+      "linea": 51,
+      "herencia": [
+        "Enum"
+      ],
+      "metodos": []
+    },
+    {
+      "nombre": "ProcessorConfig",
+      "archivo": "policy_processor.py",
+      "linea": 215,
+      "herencia": [],
+      "metodos": [
+        "from_legacy",
+        "validate"
+      ]
+    },
+    {
+      "nombre": "BayesianEvidenceScorer",
+      "archivo": "policy_processor.py",
+      "linea": 261,
+      "herencia": [],
+      "metodos": [
+        "__init__",
+        "compute_evidence_score",
+        "_calculate_shannon_entropy"
+      ]
+    },
+    {
+      "nombre": "PolicyTextProcessor",
+      "archivo": "policy_processor.py",
+      "linea": 335,
+      "herencia": [],
+      "metodos": [
+        "__init__",
+        "normalize_unicode",
+        "segment_into_sentences",
+        "extract_contextual_window",
+        "compile_pattern"
+      ]
+    },
+    {
+      "nombre": "EvidenceBundle",
+      "archivo": "policy_processor.py",
+      "linea": 404,
+      "herencia": [],
+      "metodos": [
+        "to_dict"
+      ]
+    },
+    {
+      "nombre": "IndustrialPolicyProcessor",
+      "archivo": "policy_processor.py",
+      "linea": 425,
+      "herencia": [],
+      "metodos": [
+        "__init__",
+        "_load_questionnaire",
+        "_compile_pattern_registry",
+        "_build_point_patterns",
+        "process",
+        "_match_patterns_in_sentences",
+        "_compute_evidence_confidence",
+        "_construct_evidence_bundle",
+        "_extract_point_evidence",
+        "_analyze_causal_dimensions",
+        "_extract_metadata",
+        "_compute_avg_confidence",
+        "_empty_result",
+        "export_results"
+      ]
+    },
+    {
+      "nombre": "AdvancedTextSanitizer",
+      "archivo": "policy_processor.py",
+      "linea": 794,
+      "herencia": [],
+      "metodos": [
+        "__init__",
+        "sanitize",
+        "_protect_structure",
+        "_restore_structure"
+      ]
+    },
+    {
+      "nombre": "ResilientFileHandler",
+      "archivo": "policy_processor.py",
+      "linea": 890,
+      "herencia": [],
+      "metodos": [
+        "read_text",
+        "write_text"
+      ]
+    },
+    {
+      "nombre": "PolicyAnalysisPipeline",
+      "archivo": "policy_processor.py",
+      "linea": 948,
+      "herencia": [],
+      "metodos": [
+        "__init__",
+        "analyze_file",
+        "analyze_text"
+      ]
+    },
+    {
+      "nombre": "ContradictionType",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 59,
+      "herencia": [
+        "Enum"
+      ],
+      "metodos": []
+    },
+    {
+      "nombre": "PolicyDimension",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 71,
+      "herencia": [
+        "Enum"
+      ],
+      "metodos": []
+    },
+    {
+      "nombre": "PolicyStatement",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 82,
+      "herencia": [],
+      "metodos": []
+    },
+    {
+      "nombre": "ContradictionEvidence",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 100,
+      "herencia": [],
+      "metodos": []
+    },
+    {
+      "nombre": "BayesianCausalInference",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 119,
+      "herencia": [],
+      "metodos": [
+        "__init__",
+        "calculate_posterior",
+        "build_causal_network",
+        "_estimate_causal_strength",
+        "_check_temporal_precedence"
+      ]
+    },
+    {
+      "nombre": "TemporalLogicVerifier",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 240,
+      "herencia": [],
+      "metodos": [
+        "__init__",
+        "verify_temporal_consistency",
+        "_build_structured_timeline",
+        "_parse_temporal_interval",
+        "_detect_temporal_violation",
+        "_intervals_overlap",
+        "_are_mutually_exclusive",
+        "_requires_precedence",
+        "_extract_temporal_constraints",
+        "_contradicts_always",
+        "_calculate_temporal_severity",
+        "_calculate_temporal_consistency_score"
+      ]
+    },
+    {
+      "nombre": "GraphNeuralReasoningEngine",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 457,
+      "herencia": [],
+      "metodos": [
+        "__init__",
+        "detect_implicit_contradictions",
+        "_build_geometric_graph",
+        "_compute_contradiction_score",
+        "_extract_path_attention"
+      ]
+    },
+    {
+      "nombre": "AdvancedStatisticalTesting",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 608,
+      "herencia": [],
+      "metodos": [
+        "numerical_divergence_test",
+        "resource_allocation_chi_square"
+      ]
+    },
+    {
+      "nombre": "PolicyContradictionDetectorV2",
+      "archivo": "contradiction_deteccion.py",
+      "linea": 687,
+      "herencia": [],
+      "metodos": [
+        "__init__",
+        "_initialize_pdm_ontology",
+        "detect",
+        "_extract_policy_statements",
+        "_generate_contextual_embeddings",
+        "_detect_semantic_contradictions_nli",
+        "_classify_nli",
+        "_collect_comparable_claim_pairs",
+        "_validate_statistical_divergence",
+        "_build_numerical_contradiction_evidence",
+        "_detect_numerical_inconsistencies_robust",
+        "_detect_temporal_conflicts_formal",
+        "_detect_implicit_contradictions_gnn",
+        "_detect_causal_inconsistencies",
+        "_extract_resource_allocations_by_type",
+        "_detect_budget_overlap_conflicts",
+        "_build_resource_conflict_evidence",
+        "_check_temporal_resource_overlap",
+        "_detect_resource_conflicts_statistical",
+        "_build_knowledge_graph",
+        "_compute_individual_coherence_scores",
+        "_compute_weighted_coherence_score",
+        "_compute_auxiliary_metrics",
+        "_calculate_advanced_coherence_metrics",
+        "_calculate_contextual_similarity",
+        "_extract_structured_temporal_markers",
+        "_convert_to_timestamp",
+        "_extract_structured_quantitative_claims",
+        "_parse_number_robust",
+        "_determine_semantic_role_advanced",
+        "_identify_deep_dependencies",
+        "_extract_causal_relations",
+        "_extract_regulatory_references",
+        "_get_extended_context",
+        "_get_ontology_weight",
+        "_analyze_regulatory_constraints",
+        "_calculate_comprehensive_severity",
+        "_generate_resolution_strategies",
+        "_are_comparable_claims_advanced",
+        "_extract_detailed_resource_mentions",
+        "_determine_relation_type_advanced",
+        "_get_relation_weight",
+        "_deduplicate_contradictions",
+        "_calculate_global_semantic_coherence_advanced",
+        "_calculate_causal_coherence",
+        "_calculate_objective_alignment_advanced",
+        "_calculate_graph_coherence_metrics",
+        "_calculate_shannon_entropy",
+        "_calculate_syntactic_complexity_advanced",
+        "_get_dependency_depth",
+        "_calculate_bootstrap_confidence_interval",
+        "_assign_quality_grade",
+        "_generate_actionable_recommendations",
+        "_get_recommendation_description",
+        "_estimate_resolution_effort",
+        "_serialize_contradiction",
+        "_categorize_severity",
+        "_get_advanced_graph_statistics",
+        "_get_causal_network_statistics"
+      ]
+    },
+    {
+      "nombre": "RepositoryAnalyzer",
+      "archivo": "info_info.py",
+      "linea": 17,
+      "herencia": [],
+      "metodos": [
+        "__init__",
+        "analizar_todo",
+        "analizar_estructura",
+        "analizar_dependencias_requirements",
+        "analizar_archivos_python",
+        "analizar_ast",
+        "get_decorator_name",
+        "get_base_name",
+        "clasificar_import",
+        "detectar_frameworks",
+        "detectar_patrones_arquitectura",
+        "analizar_configuraciones",
+        "generar_reporte",
+        "generar_reporte_markdown",
+        "generar_recomendaciones"
+      ]
+    },
+    {
+      "nombre": "PolicyDomain",
+      "archivo": "emebedding_policy.py",
+      "linea": 46,
+      "herencia": [
+        "Enum"
+      ],
+      "metodos": []
+    },
+    {
+      "nombre": "AnalyticalDimension",
+      "archivo": "emebedding_policy.py",
+      "linea": 61,
+      "herencia": [
+        "Enum"
+      ],
+      "metodos": []
+    },
+    {
+      "nombre": "PDQIdentifier",
+      "archivo": "emebedding_policy.py",
+      "linea": 72,
+      "herencia": [
+        "TypedDict"
+      ],
+      "metodos": []
+    },
+    {
+      "nombre": "SemanticChunk",
+      "archivo": "emebedding_policy.py",
+      "linea": 82,
+      "herencia": [
+        "TypedDict"
+      ],
+      "metodos": []
+    },
+    {
+      "nombre": "BayesianEvaluation",
+      "archivo": "emebedding_policy.py",
+      "linea": 94,
+      "herencia": [
+        "TypedDict"
+      ],
+      "metodos": []
+    },
+    {
+      "nombre": "EmbeddingProtocol",
+      "archivo": "emebedding_policy.py",
+      "linea": 104,
+      "herencia": [
+        "Protocol"
+      ],
+      "metodos": [
+        "encode"
+      ]
+    },
+    {
+      "nombre": "ChunkingConfig",
+      "archivo": "emebedding_policy.py",
+      "linea": 118,
+      "herencia": [],
+      "metodos": []
+    },
+    {
+      "nombre": "AdvancedSemanticChunker",
+      "archivo": "emebedding_policy.py",
+      "linea": 130,
+      "herencia": [],
+      "metodos": [
+        "__init__",
+        "chunk_document",
+        "_normalize_text",
+        "_recursive_split",
+        "_find_sentence_boundary",
+        "_extract_sections",
+        "_extract_tables",
+        "_extract_lists",
+        "_infer_pdq_context",
+        "_contains_table",
+        "_contains_list",
+        "_find_section"
+      ]
+    },
+    {
+      "nombre": "BayesianNumericalAnalyzer",
+      "archivo": "emebedding_policy.py",
+      "linea": 412,
+      "herencia": [],
+      "metodos": [
+        "__init__",
+        "evaluate_policy_metric",
+        "_beta_binomial_posterior",
+        "_normal_normal_posterior",
+        "_classify_evidence_strength",
+        "_compute_coherence",
+        "_null_evaluation",
+        "compare_policies"
+      ]
+    },
+    {
+      "nombre": "PolicyCrossEncoderReranker",
+      "archivo": "emebedding_policy.py",
+      "linea": 646,
+      "herencia": [],
+      "metodos": [
+        "__init__",
+        "rerank"
+      ]
+    },
+    {
+      "nombre": "PolicyEmbeddingConfig",
+      "archivo": "emebedding_policy.py",
+      "linea": 738,
+      "herencia": [],
+      "metodos": []
+    },
+    {
+      "nombre": "PolicyAnalysisEmbedder",
+      "archivo": "emebedding_policy.py",
+      "linea": 762,
+      "herencia": [],
+      "metodos": [
+        "__init__",
+        "process_document",
+        "semantic_search",
+        "evaluate_policy_numerical_consistency",
+        "compare_policy_interventions",
+        "generate_pdq_report",
+        "_embed_texts",
+        "_filter_by_pdq",
+        "_apply_mmr",
+        "_extract_numerical_values",
+        "_generate_query_from_pdq",
+        "_compute_overall_confidence",
+        "_cached_similarity",
+        "get_diagnostics"
+      ]
+    },
+    {
+      "nombre": "CategoriaCausal",
+      "archivo": "teoria_cambio.py",
+      "linea": 89,
+      "herencia": [
+        "Enum"
+      ],
+      "metodos": []
+    },
+    {
+      "nombre": "GraphType",
+      "archivo": "teoria_cambio.py",
+      "linea": 102,
+      "herencia": [
+        "Enum"
+      ],
+      "metodos": []
+    },
+    {
+      "nombre": "ValidacionResultado",
+      "archivo": "teoria_cambio.py",
+      "linea": 112,
+      "herencia": [],
+      "metodos": []
+    },
+    {
+      "nombre": "ValidationMetric",
+      "archivo": "teoria_cambio.py",
+      "linea": 123,
+      "herencia": [],
+      "metodos": []
+    },
+    {
+      "nombre": "AdvancedGraphNode",
+      "archivo": "teoria_cambio.py",
+      "linea": 135,
+      "herencia": [],
+      "metodos": [
+        "__post_init__"
+      ]
+    },
+    {
+      "nombre": "MonteCarloAdvancedResult",
+      "archivo": "teoria_cambio.py",
+      "linea": 150,
+      "herencia": [],
+      "metodos": []
+    },
+    {
+      "nombre": "TeoriaCambio",
+      "archivo": "teoria_cambio.py",
+      "linea": 184,
+      "herencia": [],
+      "metodos": [
+        "__init__",
+        "_es_conexion_valida",
+        "construir_grafo_causal",
+        "validacion_completa",
+        "_extraer_categorias",
+        "_validar_orden_causal",
+        "_encontrar_caminos_completos",
+        "_generar_sugerencias_internas"
+      ]
+    },
+    {
+      "nombre": "AdvancedDAGValidator",
+      "archivo": "teoria_cambio.py",
+      "linea": 354,
+      "herencia": [],
+      "metodos": [
+        "__init__",
+        "add_node",
+        "add_edge",
+        "_initialize_rng",
+        "_is_acyclic",
+        "_generate_subgraph",
+        "calculate_acyclicity_pvalue",
+        "_perform_sensitivity_analysis_internal",
+        "_calculate_confidence_interval",
+        "_calculate_statistical_power",
+        "_calculate_bayesian_posterior",
+        "_calculate_node_importance",
+        "get_graph_stats",
+        "_create_empty_result"
+      ]
+    },
+    {
+      "nombre": "IndustrialGradeValidator",
+      "archivo": "teoria_cambio.py",
+      "linea": 648,
+      "herencia": [],
+      "metodos": [
+        "__init__",
+        "execute_suite",
+        "validate_engine_readiness",
+        "validate_causal_categories",
+        "validate_connection_matrix",
+        "run_performance_benchmarks",
+        "_benchmark_operation",
+        "_log_metric"
+      ]
+    }
+  ],
+  "puntos_entrada": [
+    "financiero_viabilidad_tablas.py",
+    "policy_processor.py",
+    "contradiction_deteccion.py",
+    "info_info.py",
+    "emebedding_policy.py",
+    "semantic_chunking_policy.py",
+    "teoria_cambio.py"
+  ],
+  "configuraciones": [],
+  "patrones_detectados": [],
+  "frameworks": [
+    "NumPy",
+    "Pandas"
+  ],
+  "apis_endpoints": [],
+  "tareas_async": [],
+  "conexiones_db": [
+    {
+      "tipo": "create_engine",
+      "archivo": "info_info.py"
+    },
+    {
+      "tipo": "AsyncIOMotorClient",
+      "archivo": "info_info.py"
+    }
+  ],
+  "arquitectura": {},
+  "estadisticas": {
+    "total_archivos_python": 7,
+    "total_funciones": 213,
+    "total_clases": 40,
+    "total_funciones_async": 0,
+    "total_endpoints_api": 0,
+    "frameworks_detectados": 2,
+    "patrones_detectados": 0
+  }
+}

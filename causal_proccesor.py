@@ -1,58 +1,44 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 """
 Causal Policy Analysis Framework - State-of-the-Art Edition
 Specialized for Colombian Municipal Development Plans (PDM)
+
 Scientific Foundation:
 - Semantic: BGE-M3 (2024, SOTA multilingual dense retrieval)
 - Chunking: Semantic-aware with policy structure recognition
 - Math: Information-theoretic Bayesian evidence accumulation
 - Causal: Directed Acyclic Graph inference with interventional calculus
+
 Design Principles:
 - Zero placeholders, zero heuristics
 - Calibrated to Colombian PDM structure (Ley 152/1994, DNP guidelines)
 - Production-grade error handling
 - Lazy loading for resource efficiency
 """
+
 from __future__ import annotations
-import re
-import torch
-from transformers import AutoTokenizer, AutoModel
+
 import logging
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Literal, Protocol
 from enum import Enum
-from typing import Any, Literal
+from collections import defaultdict
 
 import numpy as np
 from numpy.typing import NDArray
 import scipy.stats as stats
+from scipy.special import kl_div, rel_entr
 from scipy.spatial.distance import cosine
-from scipy.special import rel_entr
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("policy_framework")
-
-# ========================
-# CALIBRATED CONSTANTS (SOTA)
-# ========================
-POSITION_WEIGHT_SCALE: float = 0.42  # Early sections exert stronger evidentiary leverage
-TABLE_WEIGHT_FACTOR: float = 1.35  # Tabular content is typically audited data
-NUMERICAL_WEIGHT_FACTOR: float = 1.18  # Numerical narratives reinforce credibility
-PLAN_SECTION_WEIGHT_FACTOR: float = 1.25  # Investment plans anchor execution feasibility
-DIAGNOSTIC_SECTION_WEIGHT_FACTOR: float = 0.92  # Diagnostics contextualize but do not commit resources
-RENYI_ALPHA_ORDER: float = 1.45  # Van Erven & Harremoës (2014) Optimum between KL and Rényi regimes
-RENYI_ALERT_THRESHOLD: float = 0.24  # Empirically tuned on 2021-2024 Colombian PDM corpus
-RENYI_CURVATURE_GAIN: float = 0.85  # Amplifies curvature impact without destabilizing evidence
-RENYI_FLUX_TEMPERATURE: float = 0.65  # Controls saturation of Renyi coherence flux
-RENYI_STABILITY_EPSILON: float = 1e-9  # Numerical guard-rail for degenerative posteriors
 
 
 # ========================
 # DOMAIN ONTOLOGY
 # ========================
-
 
 class CausalDimension(Enum):
     """Marco Lógico standard (DNP Colombia)"""
@@ -65,11 +51,7 @@ class CausalDimension(Enum):
 
 
 class PDMSection(Enum):
-    """
-    Enumerates the typical sections of a Colombian Municipal Development Plan (PDM),
-    as defined by Ley 152/1994. Each member represents a key structural component
-    of the PDM document, facilitating semantic analysis and policy structure recognition.
-    """
+    """Estructura típica PDM colombiano (Ley 152/1994)"""
     DIAGNOSTICO = "diagnostico"
     VISION_ESTRATEGICA = "vision_estrategica"
     PLAN_PLURIANUAL = "plan_plurianual"
@@ -97,7 +79,6 @@ class SemanticConfig:
 # SEMANTIC PROCESSOR (SOTA)
 # ========================
 
-
 class SemanticProcessor:
     """
     State-of-the-art semantic processing with:
@@ -115,8 +96,13 @@ class SemanticProcessor:
     def _lazy_load(self) -> None:
         if self._loaded:
             return
+
         try:
+            from transformers import AutoTokenizer, AutoModel
+            import torch
+
             device = self.config.device or ("cuda" if torch.cuda.is_available() else "cpu")
+
             logger.info(f"Loading BGE-M3 model on {device}...")
             self._tokenizer = AutoTokenizer.from_pretrained(self.config.embedding_model)
             self._model = AutoModel.from_pretrained(
@@ -126,17 +112,10 @@ class SemanticProcessor:
             self._model.eval()
             self._loaded = True
             logger.info("BGE-M3 loaded successfully")
+
         except ImportError as e:
-            missing = None
-            msg = str(e)
-            if "transformers" in msg:
-                missing = "transformers"
-            elif "torch" in msg:
-                missing = "torch"
-            else:
-                missing = "transformers or torch"
             raise RuntimeError(
-                f"Missing dependency: {missing}. Please install with 'pip install {missing}'"
+                "Missing dependencies: pip install transformers torch"
             ) from e
 
     def chunk_text(self, text: str, preserve_structure: bool = True) -> list[dict[str, Any]]:
@@ -147,8 +126,10 @@ class SemanticProcessor:
         - Preserves reference links between text segments
         """
         self._lazy_load()
+
         # Detect structural elements (headings, numbered sections, tables)
         sections = self._detect_pdm_structure(text)
+
         chunks = []
         for section in sections:
             # Tokenize section
@@ -157,10 +138,12 @@ class SemanticProcessor:
                 add_special_tokens=False,
                 truncation=False
             )
+
             # Sliding window with overlap
             for i in range(0, len(tokens), self.config.chunk_size - self.config.chunk_overlap):
                 chunk_tokens = tokens[i:i + self.config.chunk_size]
                 chunk_text = self._tokenizer.decode(chunk_tokens, skip_special_tokens=True)
+
                 chunks.append({
                     "text": chunk_text,
                     "section_type": section["type"],
@@ -170,16 +153,21 @@ class SemanticProcessor:
                     "has_table": self._detect_table(chunk_text),
                     "has_numerical": self._detect_numerical_data(chunk_text)
                 })
+
         # Batch embed all chunks
         embeddings = self._embed_batch([c["text"] for c in chunks])
         for chunk, emb in zip(chunks, embeddings):
             chunk["embedding"] = emb
+
         logger.info(f"Generated {len(chunks)} policy-aware chunks")
         return chunks
 
     def _detect_pdm_structure(self, text: str) -> list[dict[str, Any]]:
         """Detect PDM sections using Colombian policy document patterns"""
+        import re
+
         sections = []
+
         # Patterns for Colombian PDM structure
         patterns = {
             PDMSection.DIAGNOSTICO: r"(?i)(diagnóstico|caracterización|situación actual)",
@@ -189,19 +177,23 @@ class SemanticProcessor:
             PDMSection.MARCO_FISCAL: r"(?i)(marco fiscal|sostenibilidad fiscal)",
             PDMSection.SEGUIMIENTO: r"(?i)(seguimiento|evaluación|indicadores)"
         }
+
         # Split by major headers (numbered or capitalized)
         parts = re.split(r'\n(?=[0-9]+\.|[A-ZÑÁÉÍÓÚ]{3,})', text)
+
         for i, part in enumerate(parts):
             section_type = PDMSection.DIAGNOSTICO  # default
             for stype, pattern in patterns.items():
                 if re.search(pattern, part[:200]):
                     section_type = stype
                     break
+
             sections.append({
                 "text": part.strip(),
                 "type": section_type,
                 "id": f"sec_{i}"
             })
+
         return sections
 
     def _detect_table(self, text: str) -> bool:
@@ -209,10 +201,11 @@ class SemanticProcessor:
         # Multiple tabs or pipes suggest table structure
         return (text.count('\t') > 3 or
                 text.count('|') > 3 or
-                bool(re.search(r'\d+\s+\d+\s+\d+', text)))
+                bool(__import__('re').search(r'\d+\s+\d+\s+\d+', text)))
 
     def _detect_numerical_data(self, text: str) -> bool:
         """Detect if chunk contains significant numerical/financial data"""
+        import re
         # Look for currency, percentages, large numbers
         patterns = [
             r'\$\s*\d+(?:[\.,]\d+)*',  # Currency
@@ -221,12 +214,16 @@ class SemanticProcessor:
         ]
         return any(re.search(p, text) for p in patterns)
 
-    def _embed_batch(self, texts: list[str]) -> list[NDArray[np.floating[Any]]]:
+    def _embed_batch(self, texts: list[str]) -> list[NDArray[np.float32]]:
         """Batch embedding with BGE-M3"""
+        import torch
+
         self._lazy_load()
+
         embeddings = []
         for i in range(0, len(texts), self.config.batch_size):
             batch = texts[i:i + self.config.batch_size]
+
             # Tokenize batch
             encoded = self._tokenizer(
                 batch,
@@ -235,20 +232,23 @@ class SemanticProcessor:
                 max_length=self.config.chunk_size,
                 return_tensors="pt"
             ).to(self._model.device)
+
             # Generate embeddings (mean pooling)
             with torch.no_grad():
                 outputs = self._model(**encoded)
-            # Mean pooling over sequence
-            attention_mask = encoded["attention_mask"]
-            token_embeddings = outputs.last_hidden_state
-            input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
-            sum_embeddings = torch.sum(token_embeddings * input_mask_expanded, 1)
-            sum_mask = torch.clamp(input_mask_expanded.sum(1), min=1e-9)
-            batch_embeddings = (sum_embeddings / sum_mask).cpu().numpy()
+                # Mean pooling over sequence
+                attention_mask = encoded["attention_mask"]
+                token_embeddings = outputs.last_hidden_state
+                input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
+                sum_embeddings = torch.sum(token_embeddings * input_mask_expanded, 1)
+                sum_mask = torch.clamp(input_mask_expanded.sum(1), min=1e-9)
+                batch_embeddings = (sum_embeddings / sum_mask).cpu().numpy()
+
             embeddings.extend([emb.astype(np.float32) for emb in batch_embeddings])
+
         return embeddings
 
-    def embed_single(self, text: str) -> NDArray[np.floating[Any]]:
+    def embed_single(self, text: str) -> NDArray[np.float32]:
         """Single text embedding"""
         return self._embed_batch([text])[0]
 
@@ -256,7 +256,6 @@ class SemanticProcessor:
 # ========================
 # MATHEMATICAL ENHANCER (RIGOROUS)
 # ========================
-
 
 class BayesianEvidenceIntegrator:
     """
@@ -271,24 +270,20 @@ class BayesianEvidenceIntegrator:
         """
         Args:
             prior_concentration: Dirichlet concentration (α).
-                Lower = more uncertain prior (conservative)
+                                Lower = more uncertain prior (conservative)
         """
         if prior_concentration <= 0:
-            raise ValueError(
-                "Invalid prior_concentration: Dirichlet concentration parameter (α) must be strictly positive. "
-                "Typical values are in the range 0.1–1.0 for conservative priors. "
-                "Lower values (e.g., 0.1) indicate greater prior uncertainty; higher values (e.g., 1.0) indicate stronger prior beliefs. "
-                f"Received: {prior_concentration}"
-            )
+            raise ValueError("Prior concentration must be positive")
         self.prior_alpha = float(prior_concentration)
 
     def integrate_evidence(
-        self,
-        similarities: NDArray[np.float64],
-        chunk_metadata: list[dict[str, Any]]
+            self,
+            similarities: NDArray[np.float64],
+            chunk_metadata: list[dict[str, Any]]
     ) -> dict[str, float]:
         """
         Bayesian evidence integration with information-theoretic rigor:
+
         1. Map similarities to likelihood space via monotonic transform
         2. Weight evidence by chunk reliability (position, structure, content type)
         3. Update Dirichlet posterior
@@ -297,43 +292,49 @@ class BayesianEvidenceIntegrator:
         """
         if len(similarities) == 0:
             return self._null_evidence()
+
         # 1. Transform similarities to probability space
         # Using sigmoid with learned temperature for calibration
         sims = np.asarray(similarities, dtype=np.float64)
         probs = self._similarity_to_probability(sims)
+
         # 2. Compute reliability weights from metadata
         weights = self._compute_reliability_weights(chunk_metadata)
+
         # 3. Aggregate weighted evidence
         # Dirichlet posterior parameters: α_post = α_prior + weighted_counts
         positive_evidence = np.sum(weights * probs)
         negative_evidence = np.sum(weights * (1.0 - probs))
+
         alpha_pos = self.prior_alpha + positive_evidence
         alpha_neg = self.prior_alpha + negative_evidence
         alpha_total = alpha_pos + alpha_neg
+
         # 4. Posterior statistics
         posterior_mean = alpha_pos / alpha_total
         posterior_variance = (alpha_pos * alpha_neg) / (
-            alpha_total**2 * (alpha_total + 1)
+                alpha_total ** 2 * (alpha_total + 1)
         )
+
         # 5. Information gain (KL divergence from prior to posterior)
         prior_dist = np.array([self.prior_alpha, self.prior_alpha])
         prior_dist = prior_dist / prior_dist.sum()
         posterior_dist = np.array([alpha_pos, alpha_neg])
         posterior_dist = posterior_dist / posterior_dist.sum()
+
         kl_divergence = float(np.sum(rel_entr(posterior_dist, prior_dist)))
+
         # 6. Entropy-based calibrated confidence
         posterior_entropy = stats.beta.entropy(alpha_pos, alpha_neg)
         max_entropy = stats.beta.entropy(1, 1)  # Maximum uncertainty
         confidence = 1.0 - (posterior_entropy / max_entropy)
+
         return {
             "posterior_mean": float(np.clip(posterior_mean, 0.0, 1.0)),
             "posterior_std": float(np.sqrt(posterior_variance)),
             "information_gain": float(kl_divergence),
             "confidence": float(confidence),
-            "evidence_strength": float(
-                positive_evidence / (alpha_total - 2 * self.prior_alpha)
-                if abs(alpha_total - 2 * self.prior_alpha) > 1e-8 else 0.0
-            ),
+            "evidence_strength": float(positive_evidence / (alpha_total - 2 * self.prior_alpha)),
             "n_chunks": len(similarities)
         }
 
@@ -356,30 +357,34 @@ class BayesianEvidenceIntegrator:
         """
         n = len(metadata)
         weights = np.ones(n, dtype=np.float64)
+
         for i, meta in enumerate(metadata):
             # Position weight (early = more reliable)
-            pos_weight = 1.0 - (meta["position"] / max(1, n)) * POSITION_WEIGHT_SCALE
+            pos_weight = 1.0 - (meta["position"] / max(1, n)) * 0.3
+
             # Content type weight
             content_weight = 1.0
             if meta.get("has_table", False):
-                content_weight *= TABLE_WEIGHT_FACTOR
+                content_weight *= 1.2
             if meta.get("has_numerical", False):
-                content_weight *= NUMERICAL_WEIGHT_FACTOR
+                content_weight *= 1.15
+
             # Section type weight (plan sections > diagnostic)
             section_type = meta.get("section_type")
             if section_type in [PDMSection.PLAN_PLURIANUAL, PDMSection.PLAN_INVERSIONES]:
-                content_weight *= PLAN_SECTION_WEIGHT_FACTOR
+                content_weight *= 1.25
             elif section_type == PDMSection.DIAGNOSTICO:
-                content_weight *= DIAGNOSTIC_SECTION_WEIGHT_FACTOR
+                content_weight *= 0.9
+
             weights[i] = pos_weight * content_weight
+
         # Normalize to sum to n (preserve total evidence mass)
         return weights * (n / weights.sum())
 
     def _null_evidence(self) -> dict[str, float]:
         """Return prior state (no evidence)"""
         prior_mean = 0.5
-        prior_var = self.prior_alpha / \
-            ((2 * self.prior_alpha)**2 * (2 * self.prior_alpha + 1))
+        prior_var = self.prior_alpha / ((2 * self.prior_alpha) ** 2 * (2 * self.prior_alpha + 1))
         return {
             "posterior_mean": prior_mean,
             "posterior_std": float(np.sqrt(prior_var)),
@@ -390,22 +395,25 @@ class BayesianEvidenceIntegrator:
         }
 
     def causal_strength(
-        self,
-        cause_emb: NDArray[np.floating[Any]],
-        effect_emb: NDArray[np.floating[Any]],
-        context_emb: NDArray[np.floating[Any]]
+            self,
+            cause_emb: NDArray[np.float32],
+            effect_emb: NDArray[np.float32],
+            context_emb: NDArray[np.float32]
     ) -> float:
         """
         Causal strength via conditional independence approximation:
         strength = sim(cause, effect) * [1 - |sim(cause,ctx) - sim(effect,ctx)|]
+
         Intuition: Strong causal link if cause-effect similar AND
-        both relate similarly to context (conditional independence test proxy)
+                   both relate similarly to context (conditional independence test proxy)
         """
         sim_ce = 1.0 - cosine(cause_emb, effect_emb)
         sim_c_ctx = 1.0 - cosine(cause_emb, context_emb)
         sim_e_ctx = 1.0 - cosine(effect_emb, context_emb)
+
         # Conditional independence proxy
         cond_indep = 1.0 - abs(sim_c_ctx - sim_e_ctx)
+
         # Combined strength (normalized to [0,1])
         strength = ((sim_ce + 1) / 2) * cond_indep
         return float(np.clip(strength, 0.0, 1.0))
@@ -414,7 +422,6 @@ class BayesianEvidenceIntegrator:
 # ========================
 # POLICY ANALYZER (INTEGRATED)
 # ========================
-
 
 class PolicyDocumentAnalyzer:
     """
@@ -431,10 +438,11 @@ class PolicyDocumentAnalyzer:
         self.bayesian = BayesianEvidenceIntegrator(
             prior_concentration=self.config.bayesian_prior_strength
         )
+
         # Initialize dimension embeddings
         self.dimension_embeddings = self._init_dimension_embeddings()
 
-    def _init_dimension_embeddings(self) -> dict[CausalDimension, NDArray[np.floating[Any]]]:
+    def _init_dimension_embeddings(self) -> dict[CausalDimension, NDArray[np.float32]]:
         """
         Canonical embeddings for Marco Lógico dimensions
         Using Colombian policy-specific terminology
@@ -465,6 +473,7 @@ class PolicyDocumentAnalyzer:
                 "viabilidad política sostenibilidad financiera apropiación comunitaria"
             )
         }
+
         return {
             dim: self.semantic.embed_single(desc)
             for dim, desc in descriptions.items()
@@ -477,6 +486,7 @@ class PolicyDocumentAnalyzer:
         # 1. Policy-aware chunking
         chunks = self.semantic.chunk_text(text, preserve_structure=True)
         logger.info(f"Processing {len(chunks)} chunks")
+
         # 2. Analyze each causal dimension
         dimension_results = {}
         for dim, dim_emb in self.dimension_embeddings.items():
@@ -484,26 +494,31 @@ class PolicyDocumentAnalyzer:
                 1.0 - cosine(chunk["embedding"], dim_emb)
                 for chunk in chunks
             ])
+
             # Filter by threshold
             relevant_mask = similarities >= self.config.similarity_threshold
             relevant_sims = similarities[relevant_mask]
             relevant_chunks = [c for c, m in zip(chunks, relevant_mask) if m]
+
             # Bayesian integration
             if len(relevant_sims) >= self.config.min_evidence_chunks:
                 evidence = self.bayesian.integrate_evidence(
                     relevant_sims,
-                    relevant_chunks
+                    [chunks[i] for i in np.where(relevant_mask)[0]]
                 )
             else:
                 evidence = self.bayesian._null_evidence()
+
             dimension_results[dim.value] = {
                 "total_chunks": int(np.sum(relevant_mask)),
                 "mean_similarity": float(np.mean(similarities)),
                 "max_similarity": float(np.max(similarities)),
                 **evidence
             }
+
         # 3. Extract key findings (top chunks per dimension)
         key_excerpts = self._extract_key_excerpts(chunks, dimension_results)
+
         return {
             "summary": {
                 "total_chunks": len(chunks),
@@ -516,12 +531,13 @@ class PolicyDocumentAnalyzer:
         }
 
     def _extract_key_excerpts(
-        self,
-        chunks: list[dict[str, Any]],
-        dimension_results: dict[str, dict[str, Any]]
+            self,
+            chunks: list[dict[str, Any]],
+            dimension_results: dict[str, dict[str, Any]]
     ) -> dict[str, list[str]]:
         """Extract most relevant text excerpts per dimension"""
         excerpts = {}
+
         for dim, dim_emb in self.dimension_embeddings.items():
             # Rank chunks by similarity
             sims = [
@@ -529,12 +545,14 @@ class PolicyDocumentAnalyzer:
                 for i, chunk in enumerate(chunks)
             ]
             sims.sort(key=lambda x: x[1], reverse=True)
+
             # Top 3 excerpts
             top_chunks = [chunks[i] for i, _ in sims[:3]]
             excerpts[dim.value] = [
                 c["text"][:300] + ("..." if len(c["text"]) > 300 else "")
                 for c in top_chunks
             ]
+
         return excerpts
 
 
@@ -542,34 +560,36 @@ class PolicyDocumentAnalyzer:
 # CLI INTERFACE
 # ========================
 
-
 def main():
     """Example usage"""
     sample_pdm = """
-PLAN DE DESARROLLO MUNICIPAL 2024-2027
-MUNICIPIO DE EJEMPLO, COLOMBIA
+    PLAN DE DESARROLLO MUNICIPAL 2024-2027
+    MUNICIPIO DE EJEMPLO, COLOMBIA
 
-1. DIAGNÓSTICO TERRITORIAL
-El municipio cuenta con 45,000 habitantes, de los cuales 60% reside en zona rural.
-La tasa de pobreza multidimensional es 42.3%, superior al promedio departamental.
+    1. DIAGNÓSTICO TERRITORIAL
+    El municipio cuenta con 45,000 habitantes, de los cuales 60% reside en zona rural.
+    La tasa de pobreza multidimensional es 42.3%, superior al promedio departamental.
 
-2. VISIÓN ESTRATÉGICA
-Para 2027, el municipio será reconocido por su desarrollo sostenible e inclusivo.
+    2. VISIÓN ESTRATÉGICA
+    Para 2027, el municipio será reconocido por su desarrollo sostenible e inclusivo.
 
-3. PLAN PLURIANUAL DE INVERSIONES
-Se destinarán $12,500 millones al sector educación, con meta de construir
-3 instituciones educativas y capacitar 250 docentes en pedagogías innovadoras.
+    3. PLAN PLURIANUAL DE INVERSIONES
+    Se destinarán $12,500 millones al sector educación, con meta de construir 
+    3 instituciones educativas y capacitar 250 docentes en pedagogías innovadoras.
 
-4. SEGUIMIENTO Y EVALUACIÓN
-Se implementará sistema de indicadores alineado con ODS, con mediciones semestrales.
-"""
+    4. SEGUIMIENTO Y EVALUACIÓN
+    Se implementará sistema de indicadores alineado con ODS, con mediciones semestrales.
+    """
+
     config = SemanticConfig(
         chunk_size=512,
         chunk_overlap=100,
         similarity_threshold=0.80
     )
+
     analyzer = PolicyDocumentAnalyzer(config)
     results = analyzer.analyze(sample_pdm)
+
     print(json.dumps({
         "summary": results["summary"],
         "dimensions": {
