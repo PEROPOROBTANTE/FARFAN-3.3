@@ -106,161 +106,161 @@ class SemanticProcessor:
     """
 
 
-def __init__(self, config: SemanticConfig):
+    def __init__(self, config: SemanticConfig):
 
 
-self.config = config
-self._model = None
-self._tokenizer = None
-self._loaded = False
-def _lazy_load(self) -> None:
+            self.config = config
+        self._model = None
+        self._tokenizer = None
+        self._loaded = False
+    def _lazy_load(self) -> None:
 
 
-if self._loaded:
-return
-try:
-device = self.config.device or ("cuda" if torch.cuda.is_available() else "cpu")
-logger.info(f"Loading BGE-M3 model on {device}...")
-self._tokenizer = AutoTokenizer.from_pretrained(self.config.embedding_model)
-self._model = AutoModel.from_pretrained(
-    self.config.embedding_model,
-    torch_dtype=torch.float16 if self.config.fp16 and device == "cuda" else torch.float32
-).to(device)
-self._model.eval()
-self._loaded = True
-logger.info("BGE-M3 loaded successfully")
-except ImportError as e:
-missing = None
-msg = str(e)
-if "transformers" in msg:
-missing = "transformers"
-elif "torch" in msg:
-missing = "torch"
-else:
-missing = "transformers or torch"
-raise RuntimeError(
-    f"Missing dependency: {missing}. Please install with 'pip install {missing}'"
-) from e
-def chunk_text(self, text: str,
+            if self._loaded:
+            return
+        try:
+            device = self.config.device or ("cuda" if torch.cuda.is_available() else "cpu")
+        logger.info(f"Loading BGE-M3 model on {device}...")
+        self._tokenizer = AutoTokenizer.from_pretrained(self.config.embedding_model)
+        self._model = AutoModel.from_pretrained(
+        self.config.embedding_model,
+        torch_dtype=torch.float16 if self.config.fp16 and device == "cuda" else torch.float32
+        ).to(device)
+        self._model.eval()
+        self._loaded = True
+        logger.info("BGE-M3 loaded successfully")
+        except ImportError as e:
+            missing = None
+        msg = str(e)
+        if "transformers" in msg:
+            missing = "transformers"
+        elif "torch" in msg:
+            missing = "torch"
+        else:
+            missing = "transformers or torch"
+        raise RuntimeError(
+        f"Missing dependency: {missing}. Please install with 'pip install {missing}'"
+        ) from e
+    def chunk_text(self, text: str,
                preserve_structure: bool = True) -> list[dict[str, Any]]:
 
 
-"""
-Policy-aware semantic chunking:
-- Respects section boundaries (numbered lists, headers)
-- Maintains table integrity
-- Preserves reference links between text segments
-"""
-self._lazy_load()
-# Detect structural elements (headings, numbered sections, tables)
-sections = self._detect_pdm_structure(text)
-chunks = []
-for section in sections:
-    # Tokenize section
-tokens = self._tokenizer.encode(
-    section["text"],
-    add_special_tokens=False,
-    truncation=False
-)
-# Sliding window with overlap
-for i in range(
+            """
+        Policy-aware semantic chunking:
+            - Respects section boundaries (numbered lists, headers)
+        - Maintains table integrity
+        - Preserves reference links between text segments
+        """
+        self._lazy_load()
+        # Detect structural elements (headings, numbered sections, tables)
+        sections = self._detect_pdm_structure(text)
+        chunks = []
+        for section in sections:
+            # Tokenize section
+        tokens = self._tokenizer.encode(
+        section["text"],
+        add_special_tokens=False,
+        truncation=False
+        )
+        # Sliding window with overlap
+        for i in range(
         0,
         len(tokens),
         self.config.chunk_size -
         self.config.chunk_overlap):
-chunk_tokens = tokens[i:i + self.config.chunk_size]
-chunk_text = self._tokenizer.decode(chunk_tokens, skip_special_tokens=True)
-chunks.append({
-    "text": chunk_text,
-    "section_type": section["type"],
-    "section_id": section["id"],
-    "token_count": len(chunk_tokens),
-    "position": len(chunks),
-    "has_table": self._detect_table(chunk_text),
-    "has_numerical": self._detect_numerical_data(chunk_text)
-})
-# Batch embed all chunks
-embeddings = self._embed_batch([c["text"] for c in chunks])
-for chunk, emb in zip(chunks, embeddings):
-chunk["embedding"] = emb
-logger.info(f"Generated {len(chunks)} policy-aware chunks")
-return chunks
-def _detect_pdm_structure(self, text: str) -> list[dict[str, Any]]:
+            chunk_tokens = tokens[i:i + self.config.chunk_size]
+        chunk_text = self._tokenizer.decode(chunk_tokens, skip_special_tokens=True)
+        chunks.append({
+        "text": chunk_text,
+        "section_type": section["type"],
+        "section_id": section["id"],
+        "token_count": len(chunk_tokens),
+        "position": len(chunks),
+        "has_table": self._detect_table(chunk_text),
+        "has_numerical": self._detect_numerical_data(chunk_text)
+        })
+        # Batch embed all chunks
+        embeddings = self._embed_batch([c["text"] for c in chunks])
+        for chunk, emb in zip(chunks, embeddings):
+            chunk["embedding"] = emb
+        logger.info(f"Generated {len(chunks)} policy-aware chunks")
+        return chunks
+    def _detect_pdm_structure(self, text: str) -> list[dict[str, Any]]:
 
 
-"""Detect PDM sections using Colombian policy document patterns"""
-sections = []
-# Patterns for Colombian PDM structure
-patterns = {
-    PDMSection.DIAGNOSTICO: r"(?i)(diagnóstico|caracterización|situación actual)",
-    PDMSection.VISION_ESTRATEGICA: r"(?i)(visión|misión|objetivos estratégicos)",
-    PDMSection.PLAN_PLURIANUAL: r"(?i)(plan plurianual|programas|proyectos)",
-    PDMSection.PLAN_INVERSIONES: r"(?i)(plan de inversiones|presupuesto|recursos)",
-    PDMSection.MARCO_FISCAL: r"(?i)(marco fiscal|sostenibilidad fiscal)",
-    PDMSection.SEGUIMIENTO: r"(?i)(seguimiento|evaluación|indicadores)"}
-# Split by major headers (numbered or capitalized)
-parts = re.split(r'\n(?=[0-9]+\.|[A-ZÑÁÉÍÓÚ]{3,})', text)
-for i, part in enumerate(parts):
-section_type = PDMSection.DIAGNOSTICO  # default
-for stype, pattern in patterns.items():
-if re.search(pattern, part[:200]):
-section_type = stype
-break
-sections.append({
-    "text": part.strip(),
-    "type": section_type,
-    "id": f"sec_{i}"
-})
-return sections
-def _detect_table(self, text: str) -> bool:
+            """Detect PDM sections using Colombian policy document patterns"""
+        sections = []
+        # Patterns for Colombian PDM structure
+        patterns = {
+        PDMSection.DIAGNOSTICO: r"(?i)(diagnóstico|caracterización|situación actual)",
+        PDMSection.VISION_ESTRATEGICA: r"(?i)(visión|misión|objetivos estratégicos)",
+        PDMSection.PLAN_PLURIANUAL: r"(?i)(plan plurianual|programas|proyectos)",
+        PDMSection.PLAN_INVERSIONES: r"(?i)(plan de inversiones|presupuesto|recursos)",
+        PDMSection.MARCO_FISCAL: r"(?i)(marco fiscal|sostenibilidad fiscal)",
+        PDMSection.SEGUIMIENTO: r"(?i)(seguimiento|evaluación|indicadores)"}
+        # Split by major headers (numbered or capitalized)
+        parts = re.split(r'\n(?=[0-9]+\.|[A-ZÑÁÉÍÓÚ]{3,})', text)
+        for i, part in enumerate(parts):
+            section_type = PDMSection.DIAGNOSTICO  # default
+        for stype, pattern in patterns.items():
+            if re.search(pattern, part[:200]):
+            section_type = stype
+        break
+        sections.append({
+        "text": part.strip(),
+        "type": section_type,
+        "id": f"sec_{i}"
+        })
+        return sections
+    def _detect_table(self, text: str) -> bool:
 
 
-"""Detect if chunk contains tabular data"""
-# Multiple tabs or pipes suggest table structure
-return (text.count('\t') > 3 or
+            """Detect if chunk contains tabular data"""
+        # Multiple tabs or pipes suggest table structure
+        return (text.count('\t') > 3 or
         text.count('|') > 3 or
         bool(__import__('re').search(r'\d+\s+\d+\s+\d+', text)))
 
 
-def _detect_numerical_data(self, text: str) -> bool:
+    def _detect_numerical_data(self, text: str) -> bool:
 
 
-"""Detect if chunk contains significant numerical/financial data"""
-# Look for currency, percentages, large numbers
-patterns = [
-    r'\$\s*\d+(?:[\.,]\d+)*',  # Currency
-    r'\d+(?:[\.,]\d+)*\s*%',  # Percentages
-    r'\d{1,3}(?:[.,]\d{3})+',  # Large numbers with separators
-]
-return any(re.search(p, text) for p in patterns)
-def _embed_batch(self, texts: list[str]) -> list[NDArray[np.floating[Any]]]:
+            """Detect if chunk contains significant numerical/financial data"""
+        # Look for currency, percentages, large numbers
+        patterns = [
+        r'\$\s*\d+(?:[\.,]\d+)*',  # Currency
+        r'\d+(?:[\.,]\d+)*\s*%',  # Percentages
+        r'\d{1,3}(?:[.,]\d{3})+',  # Large numbers with separators
+        ]
+        return any(re.search(p, text) for p in patterns)
+    def _embed_batch(self, texts: list[str]) -> list[NDArray[np.floating[Any]]]:
 
 
-"""Batch embedding with BGE-M3"""
-self._lazy_load()
-embeddings = []
-for i in range(0, len(texts), self.config.batch_size):
-batch = texts[i:i + self.config.batch_size]
-# Tokenize batch
-encoded = self._tokenizer(
-    batch,
-    padding=True,
-    truncation=True,
-    max_length=self.config.chunk_size,
-    return_tensors="pt"
-).to(self._model.device)
-# Generate embeddings (mean pooling)
-with torch.no_grad():
-outputs = self._model(**encoded)
-# Mean pooling over sequence
-attention_mask = encoded["attention_mask"]
-token_embeddings = outputs.last_hidden_state
-input_mask_expanded = attention_mask.unsqueeze(
-    -1).expand(token_embeddings.size()).float()
-sum_embeddings = torch.sum(token_embeddings * input_mask_expanded, 1)
-sum_mask = torch.clamp(input_mask_expanded.sum(1), min=1e-9)
-batch_embeddings = (sum_embeddings / sum_mask).cpu().numpy()
-embeddings.extend([emb.astype(np.float32) for emb in batch_embeddings])
+            """Batch embedding with BGE-M3"""
+        self._lazy_load()
+        embeddings = []
+        for i in range(0, len(texts), self.config.batch_size):
+            batch = texts[i:i + self.config.batch_size]
+        # Tokenize batch
+        encoded = self._tokenizer(
+        batch,
+        padding=True,
+        truncation=True,
+        max_length=self.config.chunk_size,
+        return_tensors="pt"
+        ).to(self._model.device)
+        # Generate embeddings (mean pooling)
+        with torch.no_grad():
+            outputs = self._model(**encoded)
+        # Mean pooling over sequence
+        attention_mask = encoded["attention_mask"]
+        token_embeddings = outputs.last_hidden_state
+        input_mask_expanded = attention_mask.unsqueeze(
+        -1).expand(token_embeddings.size()).float()
+        sum_embeddings = torch.sum(token_embeddings * input_mask_expanded, 1)
+        sum_mask = torch.clamp(input_mask_expanded.sum(1), min=1e-9)
+        batch_embeddings = (sum_embeddings / sum_mask).cpu().numpy()
+        embeddings.extend([emb.astype(np.float32) for emb in batch_embeddings])
 return embeddings
 def embed_single(self, text: str) -> NDArray[np.floating[Any]]:
 
