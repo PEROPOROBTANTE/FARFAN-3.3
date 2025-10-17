@@ -1,3 +1,4 @@
+# coding=utf-8
 """
 Report Assembly - MICRO/MESO/MACRO multi-level reporting
 Generates doctoral-level insights and convergence analysis
