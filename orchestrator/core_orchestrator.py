@@ -14,7 +14,7 @@ from datetime import datetime
 from .config import CONFIG
 from .question_router import QuestionRouter, Question
 from .choreographer import ExecutionChoreographer, ExecutionResult
-from .circuit_breaker import CircuitBreaker, create_module_specific_fallback
+# from .circuit_breaker import CircuitBreaker, create_module_specific_fallback  # TODO: Fix circuit_breaker.py
 from .report_assembly import (
     ReportAssembler,
     MicroLevelAnswer,
@@ -49,7 +49,7 @@ class FARFANOrchestrator:
 
         self.router = QuestionRouter()
         self.choreographer = ExecutionChoreographer()
-        self.circuit_breaker = CircuitBreaker()
+        # self.circuit_breaker = CircuitBreaker()  # TODO: Fix circuit_breaker.py - currently has wrong content
         self.report_assembler = ReportAssembler()
 
         self.execution_stats = {
