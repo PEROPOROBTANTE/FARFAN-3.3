@@ -1,6 +1,8 @@
 """
 Core Orchestrator - The main coordination engine
 Integrates Router, Choreographer, Circuit Breaker, and Report Assembly
+
+Ensures QuestionnaireParser is initialized and propagates dimension metadata.
 """
 import logging
 import time
@@ -19,6 +21,7 @@ from .report_assembly import (
     MesoLevelCluster,
     MacroLevelConvergence
 )
+from .questionnaire_parser import get_questionnaire_parser
 
 logger = logging.getLogger(__name__)
 
@@ -32,10 +35,17 @@ class FARFANOrchestrator:
     - Module execution with dependency management
     - Fault tolerance and graceful degradation
     - Multi-level report generation (MICRO/MESO/MACRO)
+    
+    Ensures QuestionnaireParser initialization for deterministic behavior.
     """
 
     def __init__(self):
         logger.info("Initializing FARFAN Orchestrator")
+
+        # Initialize questionnaire parser (validates cuestionario.json)
+        self.parser = get_questionnaire_parser()
+        logger.info(f"Questionnaire parser initialized - Version {self.parser.version}, "
+                   f"{self.parser.total_questions} total questions")
 
         self.router = QuestionRouter()
         self.choreographer = ExecutionChoreographer()

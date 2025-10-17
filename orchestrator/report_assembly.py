@@ -1,6 +1,8 @@
 """
 Report Assembly - MICRO/MESO/MACRO multi-level reporting
 Generates doctoral-level insights and convergence analysis
+
+Refactored to use QuestionnaireParser as canonical source for rubric and dimension data.
 """
 import json
 import logging
@@ -15,6 +17,7 @@ from datetime import datetime
 from .config import CONFIG
 from .choreographer import ExecutionResult
 from .question_router import Question
+from .questionnaire_parser import get_questionnaire_parser
 
 logger = logging.getLogger(__name__)
 
@@ -69,9 +72,14 @@ class ReportAssembler:
     - MICRO: Per-question analysis
     - MESO: Cluster-level synthesis
     - MACRO: Overall convergence assessment
+    
+    Uses QuestionnaireParser for rubric levels and dimension metadata.
     """
 
     def __init__(self):
+        # Use QuestionnaireParser for canonical data
+        self.parser = get_questionnaire_parser()
+        
         self.rubric_levels = {
             "EXCELENTE": (0.85, 1.00),
             "BUENO": (0.70, 0.84),
@@ -79,15 +87,18 @@ class ReportAssembler:
             "INSUFICIENTE": (0.00, 0.54)
         }
 
-        # Dimension descriptions for reporting
-        self.dimension_descriptions = {
-            "D1": "Insumos/Inputs - Baseline identification, gap analysis, budget allocation",
-            "D2": "Actividades/Activities - Activity format, mechanisms, causal links",
-            "D3": "Productos/Products - DNP ficha, indicators, budget alignment",
-            "D4": "Resultados/Results - Measurability, causal chain, monitoring",
-            "D5": "Impactos/Impacts - Projection methodology, proxy indicators, validity",
-            "D6": "Causalidad/Causality - Theory of change, causal logic, consistency"
-        }
+        # Load dimension descriptions from parser
+        self.dimension_descriptions = self._load_dimension_descriptions()
+
+    def _load_dimension_descriptions(self) -> Dict[str, str]:
+        """Load dimension descriptions from QuestionnaireParser"""
+        descriptions = {}
+        dimensions = self.parser.get_all_dimensions()
+        
+        for dim_code, dim_data in dimensions.items():
+            descriptions[dim_code] = f"{dim_data.name} - {dim_data.description}"
+        
+        return descriptions
 
     # ============================================================================
     # MICRO LEVEL

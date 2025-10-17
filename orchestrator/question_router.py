@@ -1,5 +1,6 @@
 # question_router.py - Enhanced with comprehensive module mapping
 # Production-ready version with complete 300-question mapping
+# Refactored to use QuestionnaireParser as canonical source
 
 import json
 import logging
@@ -7,6 +8,7 @@ from pathlib import Path
 from typing import Dict, List, Set, Tuple, Optional
 from dataclasses import dataclass
 from .config import CONFIG
+from .questionnaire_parser import get_questionnaire_parser, QuestionnaireParser
 
 logger = logging.getLogger(__name__)
 
@@ -36,56 +38,60 @@ class QuestionRouter:
 
     Enhanced with comprehensive module mapping based on the full inventory
     of available classes and methods.
+    
+    Uses QuestionnaireParser as the canonical source for question data.
     """
 
     def __init__(self, cuestionario_path: Optional[Path] = None):
-        self.cuestionario_path = cuestionario_path or CONFIG.cuestionario_path
+        # Use QuestionnaireParser for all questionnaire data
+        self.parser = get_questionnaire_parser(cuestionario_path)
         self.questions: Dict[str, Question] = {}
         self.routing_table: Dict[str, List[str]] = {}
         self._load_questionnaire()
         self._build_routing_table()
 
     def _load_questionnaire(self):
-        """Load the 300-question configuration from cuestionario.json"""
-        logger.info(f"Loading questionnaire from {self.cuestionario_path}")
+        """Load the 300-question configuration from QuestionnaireParser"""
+        logger.info(f"Loading questionnaire via QuestionnaireParser from {self.parser.questionnaire_path}")
 
-        try:
-            with open(self.cuestionario_path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-        except FileNotFoundError:
-            logger.error(f"Questionnaire file not found: {self.cuestionario_path}")
-            raise
-        except json.JSONDecodeError as e:
-            logger.error(f"Invalid JSON in questionnaire file: {e}")
-            raise
-
-        # Extract policy areas, dimensions, and questions
-        policy_areas = data.get("politicas", [])
-        dimensions_data = data.get("dimensiones", {})
+        # Get all policy points and dimensions from parser
+        policy_points = self.parser.get_all_policy_points()
+        dimensions = self.parser.get_all_dimensions()
 
         # Generate 300 questions (10 policy areas × 6 dimensions × 5 questions)
-        for policy_area in policy_areas:
-            policy_id = policy_area.get("id", "")
-            for dim_code, dim_data in dimensions_data.items():
-                # Get questions for this dimension
-                base_questions = self._extract_base_questions(dim_data, dim_code)
+        for point_code in sorted(policy_points.keys()):
+            for dim_code in sorted(dimensions.keys()):
+                dimension = dimensions[dim_code]
+                
+                # Get base questions for this dimension
+                base_questions = self.parser.get_questions_for_dimension(dim_code)
 
-                for q_num, q_data in enumerate(base_questions, start=1):
+                for q_num in range(1, dimension.num_questions + 1):
                     # Determine required modules based on dimension and question
                     required_modules, primary_module, supporting_modules = self._determine_modules(dim_code, q_num)
 
+                    # Get base question data if available
+                    base_q_id = f"{dim_code}-Q{q_num}"
+                    base_q = self.parser.get_question(base_q_id)
+                    
+                    # Get text and patterns
+                    if base_q:
+                        text = base_q.text_template
+                        verification_patterns = base_q.verification_patterns
+                    else:
+                        text = f"Question {q_num} for {dim_code}"
+                        verification_patterns = []
+                    
+                    # Get rubric from parser
+                    rubric_levels = self.parser.get_rubric_for_question(base_q_id)
+
                     question = Question(
-                        policy_area=policy_id,
+                        policy_area=point_code,
                         dimension=dim_code,
                         question_num=q_num,
-                        text=q_data["text"],
-                        rubric_levels=q_data.get("rubric", {
-                            "EXCELENTE": 0.85,
-                            "BUENO": 0.70,
-                            "ACEPTABLE": 0.55,
-                            "INSUFICIENTE": 0.0
-                        }),
-                        verification_patterns=q_data.get("patterns", []),
+                        text=text,
+                        rubric_levels=rubric_levels,
+                        verification_patterns=verification_patterns,
                         required_modules=required_modules,
                         primary_module=primary_module,
                         supporting_modules=supporting_modules
@@ -93,71 +99,40 @@ class QuestionRouter:
 
                     self.questions[question.canonical_id] = question
 
-        logger.info(f"Loaded {len(self.questions)} questions")
+        logger.info(f"Loaded {len(self.questions)} questions from QuestionnaireParser")
 
     def _extract_base_questions(self, dim_data: Dict, dim_code: str) -> List[Dict]:
-        """Extract base questions from dimension data"""
-        num_questions = dim_data.get("preguntas", 5)
+        """
+        Extract base questions from dimension data
+        
+        NOTE: This method is deprecated. Use parser.get_questions_for_dimension() instead.
+        Kept for backward compatibility.
+        """
+        # Delegate to parser
+        questions = self.parser.get_questions_for_dimension(dim_code)
+        dimension = self.parser.get_dimension(dim_code)
+        num_questions = dimension.num_questions if dimension else 5
+        
+        # Convert to legacy format for backward compatibility
         base_questions = []
-
-        # Question templates for each dimension
-        question_templates = {
-            "D1": [
-                "¿El plan identifica adecuadamente las líneas base para los indicadores propuestos?",
-                "¿El análisis de brechas es metodológicamente riguroso y basado en evidencia?",
-                "¿La asignación presupuestal es coherente con las prioridades del plan?",
-                "¿El plan evalúa la capacidad institucional requerida para la implementación?",
-                "¿El plan identifica las restricciones y limitaciones clave?"
-            ],
-            "D2": [
-                "¿Las actividades están formuladas con el formato adecuado según estándares DNP?",
-                "¿Los mecanismos de implementación están claramente especificados?",
-                "¿Los enlaces causales entre actividades y productos son explícitos?",
-                "¿El plan identifica y evalúa los riesgos asociados a las actividades?",
-                "¿La secuencia de actividades es lógica y temporalmente coherente?"
-            ],
-            "D3": [
-                "¿Los productos cuentan con ficha técnica DNP completa?",
-                "¿Los indicadores de producto son específicos, medibles y alcanzables?",
-                "¿La asignación presupuestal a productos es proporcional a su importancia?",
-                "¿La viabilidad de los productos está adecuadamente evaluada?",
-                "¿Los mecanismos para lograr los productos están claramente definidos?"
-            ],
-            "D4": [
-                "¿Los resultados propuestos son medibles con indicadores claros?",
-                "¿La cadena causal completa desde productos hasta resultados está explicitada?",
-                "¿Los plazos para lograr los resultados son realistas?",
-                "¿El plan define mecanismos de monitoreo para los resultados?",
-                "¿Los resultados están alineados con los objetivos estratégicos del plan?"
-            ],
-            "D5": [
-                "¿La metodología de proyección de impactos es técnicamente sólida?",
-                "¿Se utilizan indicadores proxy adecuados cuando los impactos directos no son medibles?",
-                "¿La validez de las hipótesis de impacto está adecuadamente fundamentada?",
-                "¿El plan analiza los riesgos que podrían afectar los impactos esperados?",
-                "¿El plan considera posibles efectos no deseados de las intervenciones?"
-            ],
-            "D6": [
-                "¿El plan presenta una teoría del cambio explícita y coherente?",
-                "¿La lógica causal entre insumos, actividades, productos, resultados e impactos es consistente?",
-                "¿El plan detecta y gestiona posibles inconsistencias en la lógica causal?",
-                "¿El plan define mecanismos de monitoreo adaptativo basados en evidencia?",
-                "¿El plan adopta un enfoque diferencial para grupos poblacionales específicos?"
-            ]
-        }
-
-        templates = question_templates.get(dim_code, ["Question text not available"] * num_questions)
-
-        for i in range(min(num_questions, len(templates))):
+        for q in questions:
             base_questions.append({
-                "text": templates[i],
+                "text": q.text_template,
+                "rubric": q.rubric_levels,
+                "patterns": q.verification_patterns
+            })
+        
+        # Fill in missing questions with defaults if needed
+        while len(base_questions) < num_questions:
+            base_questions.append({
+                "text": f"Question {len(base_questions) + 1} for {dim_code}",
                 "rubric": {
                     "EXCELENTE": 0.85,
                     "BUENO": 0.70,
                     "ACEPTABLE": 0.55,
                     "INSUFICIENTE": 0.0
                 },
-                "patterns": dim_data.get("causal_verification_template", {}).get("validation_patterns", [])
+                "patterns": []
             })
 
         return base_questions
