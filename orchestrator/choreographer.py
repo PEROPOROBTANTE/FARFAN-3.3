@@ -1,3 +1,4 @@
+# choreographer.py - Updated to use QuestionnaireParser for component mapping
 """
 Execution Choreographer - Orchestrates module execution with dependency management
 Implements hybrid parallel/sequential execution strategy with detailed component mapping
@@ -99,260 +100,189 @@ class ExecutionChoreographer:
         """
         Initialize the detailed question-to-component mapping.
         This mapping connects each question to specific components and methods.
+        Uses the QuestionnaireParser to get the questions and their module mappings.
         """
-        self.component_mapping = {
-            # Dimension 1 (D1: Insumos/Inputs)
-            "D1-Q1": {
-                "components": [
-                    ("semantic_processor", "chunk_text"),
-                    ("policy_processor", "normalize_unicode"),
-                    ("embedding_policy", "chunk_document"),
-                    ("policy_segmenter", "segment")
-                ],
-                "primary": "semantic_processor"
-            },
-            "D1-Q2": {
-                "components": [
-                    ("bayesian_integrator", "integrate_evidence"),
-                    ("analyzer_one", "extract_semantic_cube"),
-                    ("embedding_policy", "evaluate_policy_metric")
-                ],
-                "primary": "bayesian_integrator"
-            },
-            "D1-Q3": {
-                "components": [
-                    ("financial_analyzer", "trace_financial_allocation"),
-                    ("pdet_analyzer", "analyze_financial_feasibility"),
-                    ("causal_processor", "extract_goals")
-                ],
-                "primary": "financial_analyzer"
-            },
-            "D1-Q4": {
-                "components": [
-                    ("analyzer_one", "classify_value_chain_link"),
-                    ("analyzer_one", "analyze_performance"),
-                    ("analyzer_one", "diagnose_critical_links")
-                ],
-                "primary": "analyzer_one"
-            },
-            "D1-Q5": {
-                "components": [
-                    ("contradiction_detector", "detect"),
-                    ("dereck_beach", "audit_evidence_traceability"),
-                    ("semantic_processor", "detect_pdm_structure")
-                ],
-                "primary": "contradiction_detector"
-            },
+        self.component_mapping = {}
 
-            # Dimension 2 (D2: Actividades/Activities)
-            "D2-Q1": {
-                "components": [
-                    ("policy_segmenter", "segment"),
-                    ("policy_segmenter", "segment_into_sentences")
-                ],
-                "primary": "policy_segmenter"
-            },
-            "D2-Q2": {
-                "components": [
-                    ("dereck_beach", "extract_entity_activity"),
-                    ("causal_processor", "extract_causal_links"),
-                    ("causal_processor", "build_causal_graph")
-                ],
-                "primary": "dereck_beach"
-            },
-            "D2-Q3": {
-                "components": [
-                    ("causal_processor", "extract_causal_hierarchy"),
-                    ("pdet_analyzer", "construct_causal_dag"),
-                    ("causal_validator", "add_edge")
-                ],
-                "primary": "causal_processor"
-            },
-            "D2-Q4": {
-                "components": [
-                    ("contradiction_detector", "detect_logical_incompatibilities"),
-                    ("analyzer_one", "assess_risks"),
-                    ("analyzer_one", "detect_bottlenecks")
-                ],
-                "primary": "contradiction_detector"
-            },
-            "D2-Q5": {
-                "components": [
-                    ("contradiction_detector", "verify_temporal_consistency"),
-                    ("contradiction_detector", "detect_temporal_conflicts"),
-                    ("causal_processor", "assess_temporal_coherence")
-                ],
-                "primary": "contradiction_detector"
-            },
+        # Get all questions from the router
+        all_questions = self.router.questions
 
-            # Dimension 3 (D3: Productos/Products)
-            "D3-Q1": {
-                "components": [
-                    ("dereck_beach", "validate_dnp_compliance"),
-                    ("policy_processor", "analyze"),
-                    ("semantic_processor", "detect_table")
-                ],
-                "primary": "dereck_beach"
-            },
-            "D3-Q2": {
-                "components": [
-                    ("embedding_policy", "evaluate_policy_metric"),
-                    ("semantic_processor", "detect_numerical_data"),
-                    ("embedding_policy", "evaluate_policy_numerical_consistency")
-                ],
-                "primary": "embedding_policy"
-            },
-            "D3-Q3": {
-                "components": [
-                    ("financial_analyzer", "trace_financial_allocation"),
-                    ("pdet_analyzer", "extract_budget_for_pillar"),
-                    ("causal_processor", "assess_financial_consistency")
-                ],
-                "primary": "financial_analyzer"
-            },
-            "D3-Q4": {
-                "components": [
-                    ("analyzer_one", "analyze_performance"),
-                    ("pdet_analyzer", "assess_financial_sustainability"),
-                    ("dereck_beach", "calculate_coherence_factor")
-                ],
-                "primary": "analyzer_one"
-            },
-            "D3-Q5": {
-                "components": [
-                    ("dereck_beach", "extract_entity_activity"),
-                    ("analyzer_one", "process_segment"),
-                    ("causal_processor", "build_type_hierarchy")
-                ],
-                "primary": "dereck_beach"
-            },
+        # Build component mapping based on the questions
+        for question_id, question in all_questions.items():
+            # Extract dimension and question number from question_id
+            parts = question_id.split("-")
+            if len(parts) >= 3:
+                dimension = parts[1]
+                question_num = parts[2]
 
-            # Dimension 4 (D4: Resultados/Results)
-            "D4-Q1": {
-                "components": [
-                    ("embedding_policy", "evaluate_policy_metric"),
-                    ("semantic_processor", "detect_numerical_data"),
-                    ("embedding_policy", "extract_numerical_values")
-                ],
-                "primary": "embedding_policy"
-            },
-            "D4-Q2": {
-                "components": [
-                    ("causal_processor", "extract_causal_hierarchy"),
-                    ("causal_processor", "validate_complete"),
-                    ("causal_validator", "calculate_acyclicity_pvalue")
-                ],
-                "primary": "causal_processor"
-            },
-            "D4-Q3": {
-                "components": [
-                    ("contradiction_detector", "verify_temporal_consistency"),
-                    ("contradiction_detector", "extract_temporal_markers"),
-                    ("causal_processor", "assess_temporal_coherence")
-                ],
-                "primary": "contradiction_detector"
-            },
-            "D4-Q4": {
-                "components": [
-                    ("dereck_beach", "audit_sequence_logic"),
-                    ("analyzer_one", "generate_recommendations"),
-                    ("dereck_beach", "generate_accountability_matrix")
-                ],
-                "primary": "dereck_beach"
-            },
-            "D4-Q5": {
-                "components": [
-                    ("analyzer_one", "classify_policy_domain"),
-                    ("embedding_policy", "semantic_search"),
-                    ("policy_processor", "analyze_causal_dimensions")
-                ],
-                "primary": "analyzer_one"
-            },
+                # Create component mapping based on the question's required modules
+                components = []
 
-            # Dimension 5 (D5: Impactos/Impacts)
-            "D5-Q1": {
-                "components": [
-                    ("embedding_policy", "beta_binomial_posterior"),
-                    ("pdet_analyzer", "generate_counterfactuals"),
-                    ("embedding_policy", "compare_policy_interventions")
-                ],
-                "primary": "embedding_policy"
-            },
-            "D5-Q2": {
-                "components": [
-                    ("analyzer_one", "classify_cross_cutting_themes"),
-                    ("embedding_policy", "rerank"),
-                    ("embedding_policy", "filter_by_pdq")
-                ],
-                "primary": "analyzer_one"
-            },
-            "D5-Q3": {
-                "components": [
-                    ("dereck_beach", "test_sufficiency"),
-                    ("dereck_beach", "test_necessity"),
-                    ("causal_validator", "perform_sensitivity_analysis")
-                ],
-                "primary": "dereck_beach"
-            },
-            "D5-Q4": {
-                "components": [
-                    ("contradiction_detector", "detect_resource_conflicts"),
-                    ("pdet_analyzer", "sensitivity_analysis"),
-                    ("analyzer_one", "assess_risks")
-                ],
-                "primary": "contradiction_detector"
-            },
-            "D5-Q5": {
-                "components": [
-                    ("contradiction_detector", "detect"),
-                    ("pdet_analyzer", "simulate_intervention"),
-                    ("causal_processor", "validate_causal_order")
-                ],
-                "primary": "contradiction_detector"
-            },
+                # Add primary module components
+                if question.primary_module in CONFIG.modules:
+                    # Get methods for the primary module based on dimension and question
+                    primary_methods = self._get_module_methods(question.primary_module, dimension, question_num)
+                    for method in primary_methods:
+                        components.append((question.primary_module, method))
 
-            # Dimension 6 (D6: Causalidad/Causality)
-            "D6-Q1": {
-                "components": [
-                    ("causal_processor", "build_causal_graph"),
-                    ("causal_processor", "extract_causal_hierarchy"),
-                    ("policy_processor", "analyze_causal_dimensions")
-                ],
-                "primary": "causal_processor"
+                # Add supporting module components
+                for module in question.supporting_modules:
+                    if module in CONFIG.modules:
+                        # Get methods for the supporting module based on dimension and question
+                        supporting_methods = self._get_module_methods(module, dimension, question_num)
+                        for method in supporting_methods:
+                            components.append((module, method))
+
+                # Store the component mapping
+                self.component_mapping[question_id] = {
+                    "components": components,
+                    "primary": question.primary_module
+                }
+
+        logger.info(f"Initialized component mapping for {len(self.component_mapping)} questions")
+
+    def _get_module_methods(self, module_name: str, dimension: str, question_num: int) -> List[str]:
+        """
+        Get the appropriate methods for a module based on dimension and question number.
+        """
+        # Define method mappings for each module based on dimension and question
+        method_mappings = {
+            "semantic_processor": {
+                "D1": ["chunk_text", "detect_numerical_data"],
+                "D2": ["detect_table", "extract_semantic_cube"],
+                "D3": ["detect_table", "detect_numerical_data"],
+                "D4": ["detect_numerical_data", "extract_semantic_cube"],
+                "D5": ["detect_numerical_data", "extract_semantic_cube"],
+                "D6": ["detect_pdm_structure", "extract_semantic_cube"]
             },
-            "D6-Q2": {
-                "components": [
-                    ("dereck_beach", "apply_test_logic"),
-                    ("dereck_beach", "infer_mechanisms"),
-                    ("dereck_beach", "assign_probative_value")
-                ],
-                "primary": "dereck_beach"
+            "embedding_policy": {
+                "D1": ["chunk_document", "evaluate_policy_metric"],
+                "D2": ["chunk_document", "semantic_search"],
+                "D3": ["evaluate_policy_metric", "evaluate_policy_numerical_consistency"],
+                "D4": ["evaluate_policy_metric", "extract_numerical_values"],
+                "D5": ["beta_binomial_posterior", "compare_policy_interventions"],
+                "D6": ["generate_pdq_report", "calculate_semantic_complexity"]
             },
-            "D6-Q3": {
-                "components": [
-                    ("contradiction_detector", "detect"),
-                    ("causal_validator", "is_acyclic"),
-                    ("dereck_beach", "bayesian_counterfactual_audit")
-                ],
-                "primary": "contradiction_detector"
+            "analyzer_one": {
+                "D1": ["extract_semantic_cube", "classify_value_chain_link"],
+                "D2": ["process_segment", "analyze_performance"],
+                "D3": ["analyze_performance", "diagnose_critical_links"],
+                "D4": ["assess_risks", "detect_bottlenecks"],
+                "D5": ["classify_cross_cutting_themes", "generate_recommendations"],
+                "D6": ["classify_policy_domain", "calculate_throughput_metrics"]
             },
-            "D6-Q4": {
-                "components": [
-                    ("dereck_beach", "generate_causal_diagram"),
-                    ("causal_processor", "check_structural_violation"),
-                    ("analyzer_one", "calculate_throughput_metrics")
-                ],
-                "primary": "dereck_beach"
+            "policy_segmenter": {
+                "D1": ["segment", "segment_into_sentences"],
+                "D2": ["segment", "segment_into_sentences"],
+                "D3": ["segment", "segment_into_sentences"],
+                "D4": ["segment", "segment_into_sentences"],
+                "D5": ["segment", "segment_into_sentences"],
+                "D6": ["segment", "segment_into_sentences"]
             },
-            "D6-Q5": {
-                "components": [
-                    ("embedding_policy", "generate_pdq_report"),
-                    ("analyzer_one", "calculate_semantic_complexity"),
-                    ("bayesian_integrator", "causal_strength")
-                ],
-                "primary": "embedding_policy"
+            "policy_processor": {
+                "D1": ["process", "extract_policy_sections"],
+                "D2": ["process", "analyze_causal_dimensions"],
+                "D3": ["process", "analyze"],
+                "D4": ["process", "analyze_causal_dimensions"],
+                "D5": ["process", "analyze_causal_dimensions"],
+                "D6": ["process", "analyze_causal_dimensions"]
+            },
+            "causal_processor": {
+                "D1": ["extract_goals", "build_causal_graph"],
+                "D2": ["extract_causal_links", "build_causal_graph"],
+                "D3": ["build_type_hierarchy", "validate_complete"],
+                "D4": ["extract_causal_hierarchy", "validate_complete"],
+                "D5": ["validate_causal_order", "simulate_intervention"],
+                "D6": ["build_causal_graph", "extract_causal_hierarchy"]
+            },
+            "contradiction_detector": {
+                "D1": ["detect", "detect_logical_incompatibilities"],
+                "D2": ["detect", "verify_temporal_consistency"],
+                "D3": ["detect", "detect_resource_conflicts"],
+                "D4": ["detect", "verify_temporal_consistency"],
+                "D5": ["detect", "detect_resource_conflicts"],
+                "D6": ["detect", "detect_logical_incompatibilities"]
+            },
+            "dereck_beach": {
+                "D1": ["audit_evidence_traceability", "generate_accountability_matrix"],
+                "D2": ["extract_entity_activity", "build_causal_graph"],
+                "D3": ["validate_dnp_compliance", "audit_sequence_logic"],
+                "D4": ["audit_sequence_logic", "generate_causal_diagram"],
+                "D5": ["test_sufficiency", "test_necessity"],
+                "D6": ["apply_test_logic", "infer_mechanisms"]
+            },
+            "financial_analyzer": {
+                "D1": ["trace_financial_allocation", "analyze_budget_feasibility"],
+                "D2": ["assess_financial_consistency", "analyze_budget_feasibility"],
+                "D3": ["trace_financial_allocation", "analyze_budget_feasibility"],
+                "D4": ["assess_financial_consistency", "analyze_budget_feasibility"],
+                "D5": ["assess_financial_consistency", "analyze_budget_feasibility"],
+                "D6": ["assess_financial_consistency", "analyze_budget_feasibility"]
+            },
+            "bayesian_integrator": {
+                "D1": ["integrate_evidence", "causal_strength"],
+                "D2": ["integrate_evidence", "causal_strength"],
+                "D3": ["integrate_evidence", "causal_strength"],
+                "D4": ["integrate_evidence", "causal_strength"],
+                "D5": ["integrate_evidence", "causal_strength"],
+                "D6": ["integrate_evidence", "causal_strength"]
+            },
+            "validation_framework": {
+                "D1": ["validate_evidence", "check_completeness"],
+                "D2": ["validate_evidence", "check_completeness"],
+                "D3": ["validate_evidence", "check_completeness"],
+                "D4": ["validate_evidence", "check_completeness"],
+                "D5": ["validate_evidence", "check_completeness"],
+                "D6": ["validate_evidence", "check_completeness"]
+            },
+            "municipal_analyzer": {
+                "D1": ["analyze_municipal_context", "assess_institutional_capacity"],
+                "D2": ["analyze_municipal_context", "assess_institutional_capacity"],
+                "D3": ["analyze_municipal_context", "assess_institutional_capacity"],
+                "D4": ["analyze_municipal_context", "assess_institutional_capacity"],
+                "D5": ["analyze_municipal_context", "assess_institutional_capacity"],
+                "D6": ["analyze_municipal_context", "assess_institutional_capacity"]
+            },
+            "pdet_analyzer": {
+                "D1": ["analyze_financial_feasibility", "extract_budget_for_pillar"],
+                "D2": ["construct_causal_dag", "assess_financial_sustainability"],
+                "D3": ["analyze_financial_feasibility", "extract_budget_for_pillar"],
+                "D4": ["construct_causal_dag", "assess_financial_sustainability"],
+                "D5": ["simulate_intervention", "sensitivity_analysis"],
+                "D6": ["construct_causal_dag", "assess_financial_sustainability"]
+            },
+            "decologo_processor": {
+                "D1": ["process_decologo", "analyze_decologo_alignment"],
+                "D2": ["process_decologo", "analyze_decologo_alignment"],
+                "D3": ["process_decologo", "analyze_decologo_alignment"],
+                "D4": ["process_decologo", "analyze_decologo_alignment"],
+                "D5": ["process_decologo", "analyze_decologo_alignment"],
+                "D6": ["process_decologo", "analyze_decologo_alignment"]
+            },
+            "embedding_analyzer": {
+                "D1": ["analyze_embeddings", "calculate_semantic_similarity"],
+                "D2": ["analyze_embeddings", "calculate_semantic_similarity"],
+                "D3": ["analyze_embeddings", "calculate_semantic_similarity"],
+                "D4": ["analyze_embeddings", "calculate_semantic_similarity"],
+                "D5": ["analyze_embeddings", "calculate_semantic_similarity"],
+                "D6": ["analyze_embeddings", "calculate_semantic_similarity"]
+            },
+            "causal_validator": {
+                "D1": ["validate_causal_model", "check_structural_violations"],
+                "D2": ["validate_causal_model", "check_structural_violations"],
+                "D3": ["validate_causal_model", "check_structural_violations"],
+                "D4": ["validate_causal_model", "check_structural_violations"],
+                "D5": ["validate_causal_model", "check_structural_violations"],
+                "D6": ["validate_causal_model", "check_structural_violations"]
             }
         }
+
+        # Get methods for the module and dimension
+        if module_name in method_mappings and dimension in method_mappings[module_name]:
+            return method_mappings[module_name][dimension]
+        else:
+            # Default methods if no specific mapping found
+            return ["process"]
 
     def execute_for_question(
             self,

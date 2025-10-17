@@ -1,3 +1,4 @@
+# core_orchestrator.py - Updated to initialize ReportAssembler with dimension descriptions
 """
 Core Orchestrator - The main coordination engine
 Integrates Router, Choreographer, Circuit Breaker, and Report Assembly
@@ -10,7 +11,7 @@ from collections import defaultdict
 from datetime import datetime
 
 from .config import CONFIG
-from .question_router import QuestionRouter, Question
+from .question_router import QuestionRouter
 from .choreographer import ExecutionChoreographer, ExecutionResult
 from .circuit_breaker import CircuitBreaker, create_module_specific_fallback
 from .report_assembly import (
@@ -40,7 +41,10 @@ class FARFANOrchestrator:
         self.router = QuestionRouter()
         self.choreographer = ExecutionChoreographer()
         self.circuit_breaker = CircuitBreaker()
-        self.report_assembler = ReportAssembler()
+
+        # Initialize ReportAssembler with dimension descriptions from the router
+        dimension_descriptions = self.router.get_dimension_descriptions()
+        self.report_assembler = ReportAssembler(dimension_descriptions=dimension_descriptions)
 
         self.execution_stats = {
             "total_plans_processed": 0,

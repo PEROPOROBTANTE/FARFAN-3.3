@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Dict, List, Set, Tuple, Optional
 from dataclasses import dataclass
 from .config import CONFIG
+from .questionnaire_parser import QuestionnaireParser, QuestionSpec
 
 logger = logging.getLogger(__name__)
 
@@ -42,12 +43,44 @@ class QuestionRouter:
         self.cuestionario_path = cuestionario_path or CONFIG.cuestionario_path
         self.questions: Dict[str, Question] = {}
         self.routing_table: Dict[str, List[str]] = {}
+        self.parser = None
         self._load_questionnaire()
         self._build_routing_table()
 
     def _load_questionnaire(self):
-        """Load the 300-question configuration from cuestionario.json"""
+        """Load the 300-question configuration using QuestionnaireParser"""
         logger.info(f"Loading questionnaire from {self.cuestionario_path}")
+
+        try:
+            # Use QuestionnaireParser to parse the TXT file
+            txt_path = self.cuestionario_path.with_suffix('.txt')
+            self.parser = QuestionnaireParser(txt_path)
+
+            # Convert QuestionSpec to Question objects
+            for question_id, question_spec in self.parser.get_all_questions().items():
+                question = Question(
+                    policy_area=question_spec.policy_area,
+                    dimension=question_spec.dimension,
+                    question_num=question_spec.question_num,
+                    text=question_spec.text,
+                    rubric_levels=question_spec.rubric_levels,
+                    verification_patterns=question_spec.verification_patterns,
+                    required_modules=question_spec.required_modules,
+                    primary_module=question_spec.primary_module,
+                    supporting_modules=question_spec.supporting_modules
+                )
+                self.questions[question_id] = question
+
+            logger.info(f"Loaded {len(self.questions)} questions using QuestionnaireParser")
+
+        except Exception as e:
+            logger.error(f"Failed to load questionnaire: {e}")
+            # Fallback to JSON loading if TXT parsing fails
+            self._load_json_fallback()
+
+    def _load_json_fallback(self):
+        """Fallback method to load from JSON if TXT parsing fails"""
+        logger.warning("Falling back to JSON questionnaire loading")
 
         try:
             with open(self.cuestionario_path, 'r', encoding='utf-8') as f:
@@ -93,7 +126,7 @@ class QuestionRouter:
 
                     self.questions[question.canonical_id] = question
 
-        logger.info(f"Loaded {len(self.questions)} questions")
+        logger.info(f"Loaded {len(self.questions)} questions from JSON fallback")
 
     def _extract_base_questions(self, dim_data: Dict, dim_code: str) -> List[Dict]:
         """Extract base questions from dimension data"""
@@ -451,3 +484,22 @@ class QuestionRouter:
             "dimensions": list(set(q.dimension for q in self.questions.values())),
             "policy_areas": list(set(q.policy_area for q in self.questions.values()))
         }
+
+    def get_dimension_descriptions(self) -> Dict[str, str]:
+        """Get dimension descriptions from the parser"""
+        if self.parser:
+            dimensions = self.parser.get_dimensions()
+            return {
+                code: f"{data['name']} - {data['code']}"
+                for code, data in dimensions.items()
+            }
+        else:
+            # Fallback descriptions
+            return {
+                "D1": "Insumos/Inputs - Baseline identification, gap analysis, budget allocation",
+                "D2": "Actividades/Activities - Activity format, mechanisms, causal links",
+                "D3": "Productos/Products - DNP ficha, indicators, budget alignment",
+                "D4": "Resultados/Results - Measurability, causal chain, monitoring",
+                "D5": "Impactos/Impacts - Projection methodology, proxy indicators, validity",
+                "D6": "Causalidad/Causality - Theory of change, causal logic, consistency"
+            }

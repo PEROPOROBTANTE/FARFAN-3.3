@@ -1,3 +1,4 @@
+# report_assembly.py - Updated to use dimension descriptions from QuestionnaireParser
 # coding=utf-8
 """
 Report Assembly - MICRO/MESO/MACRO multi-level reporting
@@ -72,7 +73,7 @@ class ReportAssembler:
     - MACRO: Overall convergence assessment
     """
 
-    def __init__(self):
+    def __init__(self, dimension_descriptions: Optional[Dict[str, str]] = None):
         self.rubric_levels = {
             "EXCELENTE": (0.85, 1.00),
             "BUENO": (0.70, 0.84),
@@ -80,8 +81,8 @@ class ReportAssembler:
             "INSUFICIENTE": (0.00, 0.54)
         }
 
-        # Dimension descriptions for reporting
-        self.dimension_descriptions = {
+        # Use provided dimension descriptions or fallback
+        self.dimension_descriptions = dimension_descriptions or {
             "D1": "Insumos/Inputs - Baseline identification, gap analysis, budget allocation",
             "D2": "Actividades/Activities - Activity format, mechanisms, causal links",
             "D3": "Productos/Products - DNP ficha, indicators, budget alignment",
