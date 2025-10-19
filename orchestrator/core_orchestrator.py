@@ -1,4 +1,4 @@
-# core_orchestrator.py - Updated to initialize ReportAssembler with dimension descriptions
+# core_orchestrator.py - Updated to match new module_adapters.py structure
 """
 Core Orchestrator - The main coordination engine
 Integrates Router, Choreographer, Circuit Breaker, and Report Assembly
@@ -12,7 +12,7 @@ from datetime import datetime
 
 from .config import CONFIG
 from .question_router import QuestionRouter
-from .choreographer import ExecutionChoreographer, ExecutionResult
+from .choreographer import ExecutionChoreographer, ExecutionResult, ExecutionStatus
 from .circuit_breaker import CircuitBreaker, create_module_specific_fallback
 from .report_assembly import (
     ReportAssembler,
@@ -214,7 +214,8 @@ class FARFANOrchestrator:
             "file_name": plan_path.name,
             "file_size": plan_path.stat().st_size,
             "extraction_date": datetime.now().isoformat(),
-            "file_type": plan_path.suffix
+            "file_type": plan_path.suffix,
+            "name": plan_path.stem
         }
 
         try:
@@ -356,8 +357,8 @@ class FARFANOrchestrator:
 
     def _group_questions_by_components(
             self,
-            questions: List[Question]
-    ) -> Dict[frozenset, List[Question]]:
+            questions: List
+    ) -> Dict[frozenset, List]:
         """
         Group questions that require the same set of components.
 
@@ -437,9 +438,9 @@ class FARFANOrchestrator:
                         module_name=module_name,
                         component_name=component_key,
                         method_name=method_name,
-                        status="completed",
+                        status=ExecutionStatus.COMPLETED,
                         output=fallback_result,
-                        evidence_extracted={"status": "degraded"}
+                        evidence_extracted={"status": "degraded", "fallback": True}
                     )
                 continue
 
@@ -451,10 +452,72 @@ class FARFANOrchestrator:
 
                     for method_name in method_names:
                         # Prepare arguments based on module
-                        args = [plan_text]
-                        kwargs = {"plan_metadata": plan_metadata}
+                        args = []
+                        kwargs = {}
 
-                        # Execute module through adapter registry
+                        # Module-specific argument preparation
+                        if module_name == "contradiction_detector":
+                            args = [plan_text]
+                            kwargs = {
+                                "plan_name": plan_metadata.get("name", "Unknown"),
+                                "dimension": "D1"  # Default dimension
+                            }
+                        elif module_name == "dereck_beach":
+                            args = [plan_text, plan_metadata.get("name", "Unknown")]
+                            kwargs = {}
+                        elif module_name == "embedding_policy":
+                            if method_name == "chunk_document":
+                                args = [plan_text, plan_metadata]
+                            elif method_name == "evaluate_policy_metric":
+                                args = [[0.5, 0.6, 0.7]]  # Default observed values
+                            elif method_name in ["semantic_search", "rerank"]:
+                                args = ["policy analysis", []]
+                            else:
+                                args = [plan_text, plan_metadata]
+                            kwargs = {}
+                        elif module_name == "causal_processor":
+                            args = [plan_text]
+                            kwargs = {}
+                        elif module_name == "modulos_teoria_cambio":
+                            if method_name == "calculate_acyclicity_pvalue":
+                                args = [plan_metadata.get("name", "Unknown"), 10000]
+                            elif method_name == "validacion_completa":
+                                # Need to construct graph first
+                                graph_result = registry.execute_module_method(
+                                    "modulos_teoria_cambio",
+                                    "construir_grafo_causal",
+                                    [], {}
+                                )
+                                args = [graph_result.data.get("grafo")]
+                            elif method_name == "execute_suite":
+                                args = []
+                            else:
+                                args = []
+                            kwargs = {}
+                        elif module_name == "policy_processor":
+                            if method_name == "_extract_point_evidence":
+                                args = [plan_text, "D1"]  # Default dimension
+                            elif method_name == "score_evidence":
+                                # Create dummy EvidenceBundle
+                                args = [None]  # Will be handled by adapter
+                            else:
+                                args = [plan_text]
+                            kwargs = {}
+                        elif module_name == "analyzer_one":
+                            args = [plan_text]
+                            kwargs = {}
+                        elif module_name == "financial_analyzer":
+                            if method_name == "analyze_budget_allocation":
+                                args = [{}]  # Empty budget dict
+                            else:
+                                args = [plan_text]
+                            kwargs = {}
+                        else:
+                            # Default argument preparation
+                            args = [plan_text]
+                            kwargs = {"plan_metadata": plan_metadata}
+
+                        # Execute module method through registry
                         module_result = registry.execute_module_method(
                             module_name=module_name,
                             method_name=method_name,
@@ -487,14 +550,16 @@ class FARFANOrchestrator:
 
                 # Convert to ExecutionResult
                 for component_key, result in module_results.items():
+                    status = ExecutionStatus.COMPLETED if result.get("status") == "success" else ExecutionStatus.FAILED
+                    
                     results[component_key] = ExecutionResult(
                         module_name=result.get("module", module_name),
                         component_name=result.get("component", component_key),
                         method_name=result.get("method", "unknown"),
-                        status="completed" if result.get("status") == "success" else "failed",
+                        status=status,
                         output=result.get("data", {}),
                         execution_time=result.get("execution_time", 0.0),
-                        evidence_extracted=self._extract_evidence(result),
+                        evidence_extracted=self._extract_evidence_from_module_result(result),
                         confidence=result.get("confidence", 0.0),
                         error=result.get("errors", [None])[0] if result.get("errors") else None
                     )
@@ -529,9 +594,10 @@ class FARFANOrchestrator:
                         module_name=module_name,
                         component_name=component_key,
                         method_name=method_name,
-                        status="failed",
+                        status=ExecutionStatus.FAILED,
                         output=fallback_result,
-                        error=str(e)
+                        error=str(e),
+                        evidence_extracted={"status": "degraded", "error": str(e)}
                     )
 
                     self.execution_stats["component_performance"][component_key]["calls"] += 1
@@ -539,9 +605,9 @@ class FARFANOrchestrator:
 
         return results
 
-    def _extract_evidence(self, component_output: Dict[str, Any]) -> Dict[str, Any]:
+    def _extract_evidence_from_module_result(self, component_output: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Extract structured evidence from component output.
+        Extract structured evidence from component output (ModuleResult format).
 
         Maps component-specific output to canonical evidence format
 
@@ -560,9 +626,6 @@ class FARFANOrchestrator:
         }
 
         module_name = component_output.get("module", "")
-        component_name = component_output.get("component", "")
-        method_name = component_output.get("method", "")
-        module_data = component_output.get("data", {})
         module_evidence = component_output.get("evidence", [])
         confidence = component_output.get("confidence", 0.0)
 
@@ -570,88 +633,43 @@ class FARFANOrchestrator:
         if isinstance(module_evidence, list):
             for ev_item in module_evidence:
                 if isinstance(ev_item, dict):
+                    ev_type = ev_item.get("type", "")
+
                     # Policy processor evidence (dimensions D1-D6)
-                    if "dimension" in ev_item:
+                    if "dimension" in ev_item or "point_evidence" in ev_item:
                         evidence["quantitative_claims"].append({
                             "dimension": ev_item.get("dimension"),
                             "point_evidence": ev_item.get("point_evidence", []),
                             "bayesian_score": ev_item.get("bayesian_score", 0.0)
                         })
 
-                    # Causal processor evidence
-                    if "causal_dimensions" in ev_item:
+                    # Causal evidence
+                    if "causal" in ev_type.lower():
                         evidence["causal_links"].append(ev_item)
 
-                    # Contradiction detector evidence
-                    if "contradictions" in ev_item:
-                        evidence["contradictions"].extend(ev_item["contradictions"])
+                    # Contradiction evidence
+                    if "contradiction" in ev_type.lower():
+                        contradictions = ev_item.get("contradictions", [])
+                        if isinstance(contradictions, list):
+                            evidence["contradictions"].extend(contradictions)
+                        else:
+                            evidence["contradictions"].append(ev_item)
 
-        # Module-specific evidence extraction from data field
-        if module_name == "contradiction_detector":
-            evidence["contradictions"] = module_data.get("contradictions", [])
-            evidence["confidence_scores"]["coherence"] = module_data.get("coherence_metrics", {}).get("coherence_score",
-                                                                                                      confidence)
+                    # Financial evidence
+                    if any(keyword in ev_type.lower() for keyword in ["financial", "budget", "indicator"]):
+                        evidence["quantitative_claims"].append(ev_item)
 
-        elif module_name == "causal_processor":
-            evidence["causal_links"] = module_data.get("causal_dimensions", {})
-            evidence["confidence_scores"]["causal_strength"] = module_data.get("information_gain", confidence)
-
-        elif module_name == "dereck_beach":
-            # Derek Beach process tracing evidence
-            evidence["causal_links"] = module_data.get("mechanism_parts", [])
-            evidence["confidence_scores"]["mechanism_confidence"] = module_data.get("rigor_status", confidence)
-            evidence["quantitative_claims"].append({
-                "causal_hierarchy": module_data.get("causal_hierarchy", {}),
-                "mechanism_inferences": module_data.get("mechanism_inferences", [])
-            })
-
-        elif module_name == "policy_processor":
-            # IndustrialPolicyProcessor dimension analysis
-            dimensions_data = module_data.get("dimensions", {})
-            for dim, dim_data in dimensions_data.items():
-                evidence["quantitative_claims"].append({
-                    "dimension": dim,
-                    "point_evidence": dim_data.get("point_evidence", []),
-                    "bayesian_score": dim_data.get("bayesian_score", 0.0)
-                })
-            evidence["confidence_scores"]["overall"] = module_data.get("overall_score", confidence)
-
-        elif module_name == "financial_analyzer":
-            evidence["quantitative_claims"] = module_data.get("budget_analysis", {})
-            evidence["confidence_scores"]["financial_coherence"] = module_data.get("viability_score", confidence)
-
-        elif module_name == "analyzer_one":
-            # MunicipalAnalyzer evidence
-            evidence["quantitative_claims"] = module_data.get("analysis_results", {})
-            evidence["confidence_scores"]["semantic_quality"] = module_data.get("quality_score", confidence)
-
-        elif module_name == "embedding_policy":
-            # PolicyAnalysisEmbedder evidence
-            evidence["quantitative_claims"].append({
-                "chunks_processed": module_data.get("chunks_processed", 0),
-                "embeddings_generated": module_data.get("embeddings_generated", False)
-            })
-            evidence["confidence_scores"]["embedding_quality"] = confidence
-
-        elif module_name == "policy_segmenter":
-            # DocumentSegmenter evidence
-            segments = module_data.get("segments", [])
-            evidence["quantitative_claims"].append({
-                "num_segments": len(segments),
-                "avg_segment_length": sum(len(s.get("text", "")) for s in segments) / len(segments) if segments else 0
-            })
-            evidence["confidence_scores"]["segmentation_quality"] = confidence
-
-        # Add method-specific evidence if available
-        if method_name:
-            evidence["confidence_scores"][f"{method_name}_confidence"] = confidence
+                    # Extract confidence scores from evidence
+                    for key, value in ev_item.items():
+                        if isinstance(value, (int, float)) and any(keyword in key.lower() for keyword in ["confidence", "score", "posterior", "power"]):
+                            evidence["confidence_scores"][key] = value
 
         # Add overall confidence from ModuleResult
         evidence["confidence_scores"]["module_confidence"] = confidence
 
         return evidence
 
-    def _create_degraded_answer(self, question: Question) -> MicroLevelAnswer:
+    def _create_degraded_answer(self, question) -> MicroLevelAnswer:
         """Create a degraded answer when processing fails"""
         return MicroLevelAnswer(
             question_id=question.canonical_id,
@@ -680,7 +698,7 @@ class FARFANOrchestrator:
             # Filter micro answers for this cluster
             cluster_answers = [
                 answer for answer in micro_answers
-                if answer.metadata["policy_area"] in policy_areas
+                if answer.metadata.get("policy_area") in policy_areas
             ]
 
             if cluster_answers:
