@@ -70,6 +70,790 @@ except ImportError as e:
     stopwords = None
 
 # ---------------------------------------------------------------------------
+# 1. CORE DATA STRUCTURES
+# ---------------------------------------------------------------------------
+
+@dataclass
+class ValueChainLink:
+    """Represents a link in the municipal development value chain."""
+    name: str
+    instruments: List[str]
+    mediators: List[str]
+    outputs: List[str]
+    outcomes: List[str]
+    bottlenecks: List[str]
+    lead_time_days: float
+    conversion_rates: Dict[str, float]
+    capacity_constraints: Dict[str, float]
+
+
+class MunicipalOntology:
+    """Core ontology for municipal development domains."""
+
+    def __init__(self):
+        self.value_chain_links = {
+            "diagnostic_planning": ValueChainLink(
+                name="diagnostic_planning",
+                instruments=["territorial_diagnosis", "stakeholder_mapping", "needs_assessment"],
+                mediators=["technical_capacity", "participatory_processes", "information_systems"],
+                outputs=["diagnostic_report", "territorial_profile", "stakeholder_matrix"],
+                outcomes=["shared_territorial_vision", "prioritized_problems"],
+                bottlenecks=["data_availability", "technical_capacity_gaps", "time_constraints"],
+                lead_time_days=90,
+                conversion_rates={"diagnosis_to_strategy": 0.75},
+                capacity_constraints={"technical_staff": 0.8, "financial_resources": 0.6}
+            ),
+            "strategic_planning": ValueChainLink(
+                name="strategic_planning",
+                instruments=["strategic_framework", "theory_of_change", "results_matrix"],
+                mediators=["planning_methodology", "stakeholder_participation", "technical_assistance"],
+                outputs=["development_plan", "sector_strategies", "investment_plan"],
+                outcomes=["strategic_alignment", "resource_optimization", "implementation_readiness"],
+                bottlenecks=["political_changes", "resource_constraints", "coordination_failures"],
+                lead_time_days=120,
+                conversion_rates={"strategy_to_programs": 0.80},
+                capacity_constraints={"planning_expertise": 0.7, "resources": 0.8}
+            ),
+            "implementation": ValueChainLink(
+                name="implementation",
+                instruments=["project_management", "service_delivery", "capacity_building"],
+                mediators=["administrative_systems", "human_resources", "quality_control"],
+                outputs=["services_delivered", "capacities_developed", "results_achieved"],
+                outcomes=["improved_living_conditions", "enhanced_capabilities", "social_cohesion"],
+                bottlenecks=["budget_execution", "capacity_constraints", "coordination_failures"],
+                lead_time_days=365,
+                conversion_rates={"inputs_to_outputs": 0.75},
+                capacity_constraints={"implementation_capacity": 0.65, "coordination": 0.60}
+            )
+        }
+
+        self.policy_domains = {
+            "economic_development": ["competitiveness", "entrepreneurship", "employment"],
+            "social_development": ["education", "health", "housing"],
+            "territorial_development": ["land_use", "infrastructure", "connectivity"],
+            "institutional_development": ["governance", "transparency", "capacity_building"]
+        }
+
+        self.cross_cutting_themes = {
+            "governance": ["transparency", "accountability", "participation"],
+            "equity": ["gender_equality", "social_inclusion", "poverty_reduction"],
+            "sustainability": ["environmental_protection", "climate_adaptation"],
+            "innovation": ["digital_transformation", "process_innovation"]
+        }
+
+
+# ---------------------------------------------------------------------------
+# 2. SEMANTIC ANALYSIS ENGINE
+# ---------------------------------------------------------------------------
+
+class SemanticAnalyzer:
+    """Advanced semantic analysis for municipal documents."""
+
+    def __init__(self, ontology: MunicipalOntology):
+        self.ontology = ontology
+        if TfidfVectorizer is not None:
+            self.vectorizer = TfidfVectorizer(
+                max_features=1000,
+                stop_words='english',
+                ngram_range=(1, 3)
+            )
+        else:
+            self.vectorizer = None
+
+    def extract_semantic_cube(self, document_segments: List[str]) -> Dict[str, Any]:
+        """Extract multidimensional semantic cube from document segments."""
+
+        if not document_segments:
+            return self._empty_semantic_cube()
+
+        # Vectorize segments
+        segment_vectors = self._vectorize_segments(document_segments)
+
+        # Initialize semantic cube
+        semantic_cube = {
+            "dimensions": {
+                "value_chain_links": defaultdict(list),
+                "policy_domains": defaultdict(list),
+                "cross_cutting_themes": defaultdict(list)
+            },
+            "measures": {
+                "semantic_density": [],
+                "coherence_scores": [],
+                "complexity_metrics": []
+            },
+            "metadata": {
+                "extraction_timestamp": datetime.now().isoformat(),
+                "total_segments": len(document_segments),
+                "processing_parameters": {}
+            }
+        }
+
+        # Process each segment
+        for idx, segment in enumerate(document_segments):
+            segment_data = self._process_segment(segment, idx, segment_vectors[idx])
+
+            # Classify by value chain links
+            link_scores = self._classify_value_chain_link(segment)
+            for link, score in link_scores.items():
+                if score > 0.3:  # Threshold for inclusion
+                    semantic_cube["dimensions"]["value_chain_links"][link].append(segment_data)
+
+            # Classify by policy domains
+            domain_scores = self._classify_policy_domain(segment)
+            for domain, score in domain_scores.items():
+                if score > 0.3:
+                    semantic_cube["dimensions"]["policy_domains"][domain].append(segment_data)
+
+            # Extract cross-cutting themes
+            theme_scores = self._classify_cross_cutting_themes(segment)
+            for theme, score in theme_scores.items():
+                if score > 0.3:
+                    semantic_cube["dimensions"]["cross_cutting_themes"][theme].append(segment_data)
+
+            # Add measures
+            semantic_cube["measures"]["semantic_density"].append(segment_data["semantic_density"])
+            semantic_cube["measures"]["coherence_scores"].append(segment_data["coherence_score"])
+
+        # Calculate aggregate measures
+        if semantic_cube["measures"]["coherence_scores"]:
+            if np is not None:
+                semantic_cube["measures"]["overall_coherence"] = np.mean(
+                    semantic_cube["measures"]["coherence_scores"]
+                )
+            else:
+                semantic_cube["measures"]["overall_coherence"] = sum(
+                    semantic_cube["measures"]["coherence_scores"]
+                ) / len(semantic_cube["measures"]["coherence_scores"])
+        else:
+            semantic_cube["measures"]["overall_coherence"] = 0.0
+
+        semantic_cube["measures"]["semantic_complexity"] = self._calculate_semantic_complexity(semantic_cube)
+
+        logger.info(f"Extracted semantic cube from {len(document_segments)} segments")
+        return semantic_cube
+
+    def _empty_semantic_cube(self) -> Dict[str, Any]:
+        """Return empty semantic cube structure."""
+        return {
+            "dimensions": {
+                "value_chain_links": {},
+                "policy_domains": {},
+                "cross_cutting_themes": {}
+            },
+            "measures": {
+                "semantic_density": [],
+                "coherence_scores": [],
+                "overall_coherence": 0.0,
+                "semantic_complexity": 0.0
+            },
+            "metadata": {
+                "extraction_timestamp": datetime.now().isoformat(),
+                "total_segments": 0,
+                "processing_parameters": {}
+            }
+        }
+
+    def _vectorize_segments(self, segments: List[str]) -> np.ndarray:
+        """Vectorize document segments using TF-IDF."""
+        if self.vectorizer is not None:
+            try:
+                return self.vectorizer.fit_transform(segments).toarray()
+            except Exception as e:
+                logger.warning(f"Vectorization failed: {e}")
+        
+        # Fallback
+        if np is not None:
+            return np.zeros((len(segments), 100))
+        else:
+            # Return list of lists if numpy is not available
+            return [[0.0] * 100 for _ in range(len(segments))]
+
+    def _process_segment(self, segment: str, idx: int, vector) -> Dict[str, Any]:
+        """Process individual segment and extract features."""
+
+        # Basic text statistics
+        words = segment.split()
+        
+        # Calculate sentence count
+        if sent_tokenize is not None:
+            try:
+                sentences = sent_tokenize(segment)
+            except:
+                # Fallback to simple splitting
+                sentences = [s.strip() for s in re.split(r'[.!?]+', segment) if len(s.strip()) > 10]
+        else:
+            # Fallback to simple splitting
+            sentences = [s.strip() for s in re.split(r'[.!?]+', segment) if len(s.strip()) > 10]
+
+        # Calculate semantic density (simplified)
+        semantic_density = len(set(words)) / len(words) if words else 0.0
+
+        # Calculate coherence score (simplified)
+        coherence_score = min(1.0, len(sentences) / 10) if sentences else 0.0
+
+        # Convert vector to list if it's a numpy array
+        if np is not None and isinstance(vector, np.ndarray):
+            vector = vector.tolist()
+
+        return {
+            "segment_id": idx,
+            "text": segment,
+            "vector": vector,
+            "word_count": len(words),
+            "sentence_count": len(sentences),
+            "semantic_density": semantic_density,
+            "coherence_score": coherence_score
+        }
+
+    def _classify_value_chain_link(self, segment: str) -> Dict[str, float]:
+        """Classify segment by value chain link using keyword matching."""
+        link_scores = {}
+        segment_lower = segment.lower()
+
+        for link_name, link_obj in self.ontology.value_chain_links.items():
+            score = 0.0
+            total_keywords = 0
+
+            # Check all link components
+            all_keywords = (link_obj.instruments + link_obj.mediators +
+                            link_obj.outputs + link_obj.outcomes)
+
+            for keyword in all_keywords:
+                total_keywords += 1
+                if keyword.lower().replace("_", " ") in segment_lower:
+                    score += 1.0
+
+            # Normalize score
+            link_scores[link_name] = score / total_keywords if total_keywords > 0 else 0.0
+
+        return link_scores
+
+    def _classify_policy_domain(self, segment: str) -> Dict[str, float]:
+        """Classify segment by policy domain using keyword matching."""
+        domain_scores = {}
+        segment_lower = segment.lower()
+
+        for domain, keywords in self.ontology.policy_domains.items():
+            score = 0.0
+            for keyword in keywords:
+                if keyword.lower() in segment_lower:
+                    score += 1.0
+
+            domain_scores[domain] = score / len(keywords) if keywords else 0.0
+
+        return domain_scores
+
+    def _classify_cross_cutting_themes(self, segment: str) -> Dict[str, float]:
+        """Classify segment by cross-cutting themes."""
+        theme_scores = {}
+        segment_lower = segment.lower()
+
+        for theme, keywords in self.ontology.cross_cutting_themes.items():
+            score = 0.0
+            for keyword in keywords:
+                if keyword.lower().replace("_", " ") in segment_lower:
+                    score += 1.0
+
+            theme_scores[theme] = score / len(keywords) if keywords else 0.0
+
+        return theme_scores
+
+    def _calculate_semantic_complexity(self, semantic_cube: Dict[str, Any]) -> float:
+        """Calculate semantic complexity of the cube."""
+
+        # Count unique concepts across dimensions
+        unique_concepts = set()
+        for dimension_data in semantic_cube["dimensions"].values():
+            for category in dimension_data.keys():
+                unique_concepts.add(category)
+
+        # Normalize complexity
+        max_expected_concepts = 20
+        return min(1.0, len(unique_concepts) / max_expected_concepts)
+
+
+# ---------------------------------------------------------------------------
+# 3. PERFORMANCE ANALYZER
+# ---------------------------------------------------------------------------
+
+class PerformanceAnalyzer:
+    """Analyze value chain performance with operational loss functions."""
+
+    def __init__(self, ontology: MunicipalOntology):
+        self.ontology = ontology
+        if IsolationForest is not None:
+            self.bottleneck_detector = IsolationForest(contamination=0.1, random_state=RANDOM_SEED)
+        else:
+            self.bottleneck_detector = None
+
+    def analyze_performance(self, semantic_cube: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze performance indicators across value chain links."""
+
+        performance_analysis = {
+            "value_chain_metrics": {},
+            "bottleneck_analysis": {},
+            "operational_loss_functions": {},
+            "optimization_recommendations": []
+        }
+
+        # Analyze each value chain link
+        for link_name, link_config in self.ontology.value_chain_links.items():
+            link_segments = semantic_cube["dimensions"]["value_chain_links"].get(link_name, [])
+
+            # Calculate metrics
+            metrics = self._calculate_throughput_metrics(link_segments, link_config)
+            bottlenecks = self._detect_bottlenecks(link_segments, link_config)
+            loss_functions = self._calculate_loss_functions(metrics, link_config)
+
+            performance_analysis["value_chain_metrics"][link_name] = metrics
+            performance_analysis["bottleneck_analysis"][link_name] = bottlenecks
+            performance_analysis["operational_loss_functions"][link_name] = loss_functions
+
+        # Generate recommendations
+        performance_analysis["optimization_recommendations"] = self._generate_recommendations(
+            performance_analysis
+        )
+
+        logger.info(f"Performance analysis completed for {len(performance_analysis['value_chain_metrics'])} links")
+        return performance_analysis
+
+    def _calculate_throughput_metrics(self, segments: List[Dict], link_config: ValueChainLink) -> Dict[str, Any]:
+        """Calculate throughput metrics for a value chain link."""
+
+        if not segments:
+            return {
+                "throughput": 0.0,
+                "efficiency_score": 0.0,
+                "capacity_utilization": 0.0
+            }
+
+        # Calculate semantic throughput
+        total_semantic_content = sum(seg["semantic_density"] for seg in segments)
+        
+        if np is not None:
+            avg_coherence = np.mean([seg["coherence_score"] for seg in segments])
+        else:
+            avg_coherence = sum(seg["coherence_score"] for seg in segments) / len(segments)
+
+        # Capacity utilization
+        theoretical_max_segments = 50
+        capacity_utilization = len(segments) / theoretical_max_segments
+
+        # Efficiency score
+        efficiency_score = (total_semantic_content / len(segments)) * avg_coherence
+
+        # Throughput calculation
+        if np is not None:
+            throughput = len(segments) * avg_coherence * np.mean(list(link_config.conversion_rates.values()))
+        else:
+            throughput = len(segments) * avg_coherence * sum(link_config.conversion_rates.values()) / len(link_config.conversion_rates)
+
+        return {
+            "throughput": float(throughput),
+            "efficiency_score": float(efficiency_score),
+            "capacity_utilization": float(capacity_utilization),
+            "segment_count": len(segments)
+        }
+
+    def _detect_bottlenecks(self, segments: List[Dict], link_config: ValueChainLink) -> Dict[str, Any]:
+        """Detect bottlenecks in value chain link."""
+
+        bottleneck_analysis = {
+            "capacity_constraints": {},
+            "bottleneck_scores": {}
+        }
+
+        # Analyze capacity constraints
+        for constraint_type, constraint_value in link_config.capacity_constraints.items():
+            if constraint_value < 0.7:
+                bottleneck_analysis["capacity_constraints"][constraint_type] = {
+                    "current_capacity": constraint_value,
+                    "severity": "high" if constraint_value < 0.5 else "medium"
+                }
+
+        # Calculate bottleneck scores
+        for bottleneck_type in link_config.bottlenecks:
+            score = 0.0
+            if segments:
+                # Count mentions of bottleneck in segments
+                mentions = sum(
+                    1 for seg in segments
+                    if bottleneck_type.replace("_", " ").lower() in seg["text"].lower()
+                )
+                score = mentions / len(segments)
+
+            bottleneck_analysis["bottleneck_scores"][bottleneck_type] = {
+                "score": score,
+                "severity": "high" if score > 0.2 else "medium" if score > 0.1 else "low"
+            }
+
+        return bottleneck_analysis
+
+    def _calculate_loss_functions(self, metrics: Dict[str, Any], link_config: ValueChainLink) -> Dict[str, Any]:
+        """Calculate operational loss functions."""
+
+        # Throughput loss (quadratic)
+        target_throughput = 50.0
+        throughput_gap = max(0, target_throughput - metrics["throughput"])
+        throughput_loss = throughput_gap ** 2
+
+        # Efficiency loss (exponential)
+        target_efficiency = 0.8
+        efficiency_gap = max(0, target_efficiency - metrics["efficiency_score"])
+        
+        if np is not None:
+            efficiency_loss = np.exp(efficiency_gap * 2) - 1
+        else:
+            # Approximate exponential function
+            efficiency_loss = (1 + efficiency_gap) ** 2 - 1
+
+        # Time loss (linear)
+        baseline_time = link_config.lead_time_days
+        capacity_utilization = metrics["capacity_utilization"]
+        time_multiplier = 1 + (1 - capacity_utilization) * 0.5
+        time_loss = baseline_time * (time_multiplier - 1)
+
+        # Composite loss
+        composite_loss = 0.4 * throughput_loss + 0.4 * efficiency_loss + 0.2 * time_loss
+
+        return {
+            "throughput_loss": float(throughput_loss),
+            "efficiency_loss": float(efficiency_loss),
+            "time_loss": float(time_loss),
+            "composite_loss": float(composite_loss)
+        }
+
+    def _generate_recommendations(self, performance_analysis: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Generate optimization recommendations."""
+
+        recommendations = []
+
+        for link_name, metrics in performance_analysis["value_chain_metrics"].items():
+            if metrics["efficiency_score"] < 0.5:
+                recommendations.append({
+                    "link": link_name,
+                    "type": "efficiency_improvement",
+                    "priority": "high",
+                    "description": f"Critical efficiency improvement needed for {link_name}"
+                })
+
+            if metrics["throughput"] < 20:
+                recommendations.append({
+                    "link": link_name,
+                    "type": "throughput_optimization",
+                    "priority": "medium",
+                    "description": f"Throughput optimization required for {link_name}"
+                })
+
+        return recommendations
+
+
+# ---------------------------------------------------------------------------
+# 4. TEXT MINING ENGINE
+# ---------------------------------------------------------------------------
+
+class TextMiningEngine:
+    """Advanced text mining for critical diagnosis."""
+
+    def __init__(self, ontology: MunicipalOntology):
+        self.ontology = ontology
+
+        # Initialize simple keyword extractor
+        self.stop_words = set()
+        if stopwords is not None:
+            try:
+                self.stop_words = set(stopwords.words('spanish'))
+            except LookupError:
+                # Download if not available
+                try:
+                    import nltk
+                    nltk.download('stopwords')
+                    self.stop_words = set(stopwords.words('spanish'))
+                except:
+                    logger.warning("Could not download NLTK stopwords. Using empty set.")
+
+    def diagnose_critical_links(self, semantic_cube: Dict[str, Any],
+                                performance_analysis: Dict[str, Any]) -> Dict[str, Any]:
+        """Diagnose critical value chain links."""
+
+        diagnosis_results = {
+            "critical_links": {},
+            "risk_assessment": {},
+            "intervention_recommendations": {}
+        }
+
+        # Identify critical links
+        critical_links = self._identify_critical_links(performance_analysis)
+
+        # Analyze each critical link
+        for link_name, criticality_score in critical_links.items():
+            link_segments = semantic_cube["dimensions"]["value_chain_links"].get(link_name, [])
+
+            # Text analysis
+            text_analysis = self._analyze_link_text(link_segments)
+
+            # Risk assessment
+            risk_assessment = self._assess_risks(link_segments, text_analysis)
+
+            # Intervention recommendations
+            interventions = self._generate_interventions(link_name, risk_assessment, text_analysis)
+
+            diagnosis_results["critical_links"][link_name] = {
+                "criticality_score": criticality_score,
+                "text_analysis": text_analysis
+            }
+            diagnosis_results["risk_assessment"][link_name] = risk_assessment
+            diagnosis_results["intervention_recommendations"][link_name] = interventions
+
+        logger.info(f"Diagnosed {len(critical_links)} critical links")
+        return diagnosis_results
+
+    def _identify_critical_links(self, performance_analysis: Dict[str, Any]) -> Dict[str, float]:
+        """Identify critical links based on performance metrics."""
+
+        critical_links = {}
+
+        for link_name, metrics in performance_analysis["value_chain_metrics"].items():
+            criticality_score = 0.0
+
+            # Low efficiency indicates criticality
+            if metrics["efficiency_score"] < 0.5:
+                criticality_score += 0.4
+
+            # Low throughput indicates criticality
+            if metrics["throughput"] < 20:
+                criticality_score += 0.3
+
+            # High loss functions indicate criticality
+            if link_name in performance_analysis["operational_loss_functions"]:
+                loss = performance_analysis["operational_loss_functions"][link_name]["composite_loss"]
+                normalized_loss = min(1.0, loss / 100)
+                criticality_score += normalized_loss * 0.3
+
+            if criticality_score > 0.4:
+                critical_links[link_name] = criticality_score
+
+        return critical_links
+
+    def _analyze_link_text(self, segments: List[Dict]) -> Dict[str, Any]:
+        """Analyze text content for a link."""
+
+        if not segments:
+            return {"word_count": 0, "keywords": [], "sentiment": "neutral"}
+
+        # Combine all text
+        combined_text = " ".join([seg["text"] for seg in segments])
+        words = [word.lower() for word in combined_text.split()
+                 if word.lower() not in self.stop_words and len(word) > 2]
+
+        # Extract keywords
+        word_freq = Counter(words)
+        keywords = [word for word, count in word_freq.most_common(10)]
+
+        # Simple sentiment analysis
+        positive_words = ['bueno', 'excelente', 'positivo', 'lograr', 'éxito']
+        negative_words = ['problema', 'dificultad', 'limitación', 'falta', 'déficit']
+
+        positive_count = sum(1 for word in words if word in positive_words)
+        negative_count = sum(1 for word in words if word in negative_words)
+
+        if positive_count > negative_count:
+            sentiment = "positive"
+        elif negative_count > positive_count:
+            sentiment = "negative"
+        else:
+            sentiment = "neutral"
+
+        return {
+            "word_count": len(words),
+            "keywords": keywords,
+            "sentiment": sentiment,
+            "positive_indicators": positive_count,
+            "negative_indicators": negative_count
+        }
+
+    def _assess_risks(self, segments: List[Dict], text_analysis: Dict[str, Any]) -> Dict[str, Any]:
+        """Assess risks for a value chain link."""
+
+        risk_assessment = {
+            "overall_risk": "low",
+            "risk_factors": []
+        }
+
+        # Sentiment-based risk
+        if text_analysis["sentiment"] == "negative":
+            risk_assessment["risk_factors"].append("Negative sentiment detected")
+
+        # Content-based risk
+        if text_analysis["negative_indicators"] > 3:
+            risk_assessment["risk_factors"].append("High frequency of negative indicators")
+
+        # Volume-based risk
+        if text_analysis["word_count"] < 50:
+            risk_assessment["risk_factors"].append("Limited content volume")
+
+        # Overall risk level
+        if len(risk_assessment["risk_factors"]) > 2:
+            risk_assessment["overall_risk"] = "high"
+        elif len(risk_assessment["risk_factors"]) > 0:
+            risk_assessment["overall_risk"] = "medium"
+
+        return risk_assessment
+
+    def _generate_interventions(self, link_name: str, risk_assessment: Dict[str, Any],
+                                text_analysis: Dict[str, Any]) -> List[Dict[str, str]]:
+        """Generate intervention recommendations."""
+
+        interventions = []
+
+        if risk_assessment["overall_risk"] == "high":
+            interventions.append({
+                "type": "immediate",
+                "description": f"Priority intervention required for {link_name}",
+                "timeline": "1-3 months"
+            })
+
+        if text_analysis["sentiment"] == "negative":
+            interventions.append({
+                "type": "stakeholder_engagement",
+                "description": "Address concerns through stakeholder engagement",
+                "timeline": "ongoing"
+            })
+
+        if text_analysis["word_count"] < 50:
+            interventions.append({
+                "type": "documentation",
+                "description": "Improve documentation and content development",
+                "timeline": "3-6 months"
+            })
+
+        return interventions
+
+
+# ---------------------------------------------------------------------------
+# 5. COMPREHENSIVE ANALYZER
+# ---------------------------------------------------------------------------
+
+class MunicipalAnalyzer:
+    """Main analyzer integrating all components."""
+
+    def __init__(self):
+        self.ontology = MunicipalOntology()
+        self.semantic_analyzer = SemanticAnalyzer(self.ontology)
+        self.performance_analyzer = PerformanceAnalyzer(self.ontology)
+        self.text_miner = TextMiningEngine(self.ontology)
+
+        logger.info("MunicipalAnalyzer initialized successfully")
+
+    def analyze_document(self, document_path: str) -> Dict[str, Any]:
+        """Perform comprehensive analysis of a municipal document."""
+
+        start_time = time.time()
+        logger.info(f"Starting analysis of {document_path}")
+
+        try:
+            # Load and process document
+            document_segments = self._load_document(document_path)
+
+            # Semantic analysis
+            logger.info("Performing semantic analysis...")
+            semantic_cube = self.semantic_analyzer.extract_semantic_cube(document_segments)
+
+            # Performance analysis
+            logger.info("Analyzing performance indicators...")
+            performance_analysis = self.performance_analyzer.analyze_performance(semantic_cube)
+
+            # Text mining and diagnosis
+            logger.info("Performing text mining and diagnosis...")
+            critical_diagnosis = self.text_miner.diagnose_critical_links(
+                semantic_cube, performance_analysis
+            )
+
+            # Compile results
+            results = {
+                "document_path": document_path,
+                "analysis_timestamp": datetime.now().isoformat(),
+                "processing_time_seconds": time.time() - start_time,
+                "semantic_cube": semantic_cube,
+                "performance_analysis": performance_analysis,
+                "critical_diagnosis": critical_diagnosis,
+                "summary": self._generate_summary(semantic_cube, performance_analysis, critical_diagnosis)
+            }
+
+            logger.info(f"Analysis completed in {time.time() - start_time:.2f} seconds")
+            return results
+
+        except Exception as e:
+            logger.error(f"Analysis failed: {str(e)}")
+            raise
+
+    def _load_document(self, document_path: str) -> List[str]:
+        """Load and segment document."""
+
+        try:
+            with open(document_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+        except UnicodeDecodeError:
+            with open(document_path, 'r', encoding='latin-1') as f:
+                content = f.read()
+
+        # Simple sentence segmentation
+        sentences = re.split(r'[.!?]+', content)
+
+        # Clean and filter segments
+        segments = []
+        for sentence in sentences:
+            cleaned = sentence.strip()
+            if len(cleaned) > 20 and not cleaned.startswith(('Página', 'Page')):
+                segments.append(cleaned)
+
+        return segments[:100]  # Limit for processing efficiency
+
+    def _generate_summary(self, semantic_cube: Dict[str, Any],
+                          performance_analysis: Dict[str, Any],
+                          critical_diagnosis: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate executive summary of analysis."""
+
+        # Count dimensions
+        total_segments = semantic_cube["metadata"]["total_segments"]
+        value_chain_coverage = len(semantic_cube["dimensions"]["value_chain_links"])
+        policy_domain_coverage = len(semantic_cube["dimensions"]["policy_domains"])
+
+        # Performance summary
+        if performance_analysis["value_chain_metrics"]:
+            if np is not None:
+                avg_efficiency = np.mean([
+                    metrics["efficiency_score"]
+                    for metrics in performance_analysis["value_chain_metrics"].values()
+                ])
+            else:
+                avg_efficiency = sum(
+                    metrics["efficiency_score"]
+                    for metrics in performance_analysis["value_chain_metrics"].values()
+                ) / len(performance_analysis["value_chain_metrics"])
+        else:
+            avg_efficiency = 0.0
+
+        # Critical links count
+        critical_links_count = len(critical_diagnosis["critical_links"])
+
+        return {
+            "document_coverage": {
+                "total_segments_analyzed": total_segments,
+                "value_chain_links_identified": value_chain_coverage,
+                "policy_domains_covered": policy_domain_coverage
+            },
+            "performance_summary": {
+                "average_efficiency_score": float(avg_efficiency),
+                "recommendations_count": len(performance_analysis["optimization_recommendations"])
+            },
+            "risk_assessment": {
+                "critical_links_identified": critical_links_count,
+                "overall_risk_level": "high" if critical_links_count > 2 else "medium" if critical_links_count > 0 else "low"
+            }
+        }
+
+# ---------------------------------------------------------------------------
 # 6. EXAMPLE USAGE AND UTILITIES
 # ---------------------------------------------------------------------------
 
@@ -237,14 +1021,22 @@ class DocumentProcessor:
 
         if method == "sentence":
             # Use NLTK sentence tokenizer if available
-            try:
-                return sent_tokenize(text, language='spanish')
-            except LookupError:
-                # Download if not available
-                import nltk
-                nltk.download('punkt')
-                return sent_tokenize(text, language='spanish')
-            except Exception:
+            if sent_tokenize is not None:
+                try:
+                    return sent_tokenize(text, language='spanish')
+                except LookupError:
+                    # Download if not available
+                    try:
+                        import nltk
+                        nltk.download('punkt')
+                        return sent_tokenize(text, language='spanish')
+                    except:
+                        # Fallback to simple splitting
+                        return [s.strip() for s in re.split(r'[.!?]+', text) if len(s.strip()) > 10]
+                except Exception:
+                    # Fallback to simple splitting
+                    return [s.strip() for s in re.split(r'[.!?]+', text) if len(s.strip()) > 10]
+            else:
                 # Fallback to simple splitting
                 return [s.strip() for s in re.split(r'[.!?]+', text) if len(s.strip()) > 10]
 
@@ -283,6 +1075,10 @@ class ResultsExporter:
     @staticmethod
     def export_to_excel(results: Dict[str, Any], output_path: str) -> None:
         """Export results to Excel file."""
+        if pd is None:
+            logger.warning("pandas not available. Install with: pip install pandas openpyxl")
+            return
+            
         try:
             with pd.ExcelWriter(output_path, engine='openpyxl') as writer:
 
@@ -615,7 +1411,7 @@ def main():
 
     args = parser.parse_args()
 
-    # Initialize analyzer (config_manager unused - removed)
+    # Initialize analyzer
     analyzer = MunicipalAnalyzer()
 
     if args.batch:
@@ -640,726 +1436,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-# 1. CORE DATA STRUCTURES
-# ---------------------------------------------------------------------------
-
-@dataclass
-class ValueChainLink:
-    """Represents a link in the municipal development value chain."""
-    name: str
-    instruments: List[str]
-    mediators: List[str]
-    outputs: List[str]
-    outcomes: List[str]
-    bottlenecks: List[str]
-    lead_time_days: float
-    conversion_rates: Dict[str, float]
-    capacity_constraints: Dict[str, float]
-
-
-class MunicipalOntology:
-    """Core ontology for municipal development domains."""
-
-    def __init__(self):
-        self.value_chain_links = {
-            "diagnostic_planning": ValueChainLink(
-                name="diagnostic_planning",
-                instruments=["territorial_diagnosis", "stakeholder_mapping", "needs_assessment"],
-                mediators=["technical_capacity", "participatory_processes", "information_systems"],
-                outputs=["diagnostic_report", "territorial_profile", "stakeholder_matrix"],
-                outcomes=["shared_territorial_vision", "prioritized_problems"],
-                bottlenecks=["data_availability", "technical_capacity_gaps", "time_constraints"],
-                lead_time_days=90,
-                conversion_rates={"diagnosis_to_strategy": 0.75},
-                capacity_constraints={"technical_staff": 0.8, "financial_resources": 0.6}
-            ),
-            "strategic_planning": ValueChainLink(
-                name="strategic_planning",
-                instruments=["strategic_framework", "theory_of_change", "results_matrix"],
-                mediators=["planning_methodology", "stakeholder_participation", "technical_assistance"],
-                outputs=["development_plan", "sector_strategies", "investment_plan"],
-                outcomes=["strategic_alignment", "resource_optimization", "implementation_readiness"],
-                bottlenecks=["political_changes", "resource_constraints", "coordination_failures"],
-                lead_time_days=120,
-                conversion_rates={"strategy_to_programs": 0.80},
-                capacity_constraints={"planning_expertise": 0.7, "resources": 0.8}
-            ),
-            "implementation": ValueChainLink(
-                name="implementation",
-                instruments=["project_management", "service_delivery", "capacity_building"],
-                mediators=["administrative_systems", "human_resources", "quality_control"],
-                outputs=["services_delivered", "capacities_developed", "results_achieved"],
-                outcomes=["improved_living_conditions", "enhanced_capabilities", "social_cohesion"],
-                bottlenecks=["budget_execution", "capacity_constraints", "coordination_failures"],
-                lead_time_days=365,
-                conversion_rates={"inputs_to_outputs": 0.75},
-                capacity_constraints={"implementation_capacity": 0.65, "coordination": 0.60}
-            )
-        }
-
-        self.policy_domains = {
-            "economic_development": ["competitiveness", "entrepreneurship", "employment"],
-            "social_development": ["education", "health", "housing"],
-            "territorial_development": ["land_use", "infrastructure", "connectivity"],
-            "institutional_development": ["governance", "transparency", "capacity_building"]
-        }
-
-        self.cross_cutting_themes = {
-            "governance": ["transparency", "accountability", "participation"],
-            "equity": ["gender_equality", "social_inclusion", "poverty_reduction"],
-            "sustainability": ["environmental_protection", "climate_adaptation"],
-            "innovation": ["digital_transformation", "process_innovation"]
-        }
-
-
-# ---------------------------------------------------------------------------
-# 2. SEMANTIC ANALYSIS ENGINE
-# ---------------------------------------------------------------------------
-
-class SemanticAnalyzer:
-    """Advanced semantic analysis for municipal documents."""
-
-    def __init__(self, ontology: MunicipalOntology):
-        self.ontology = ontology
-        self.vectorizer = TfidfVectorizer(
-            max_features=1000,
-            stop_words='english',
-            ngram_range=(1, 3)
-        )
-
-    def extract_semantic_cube(self, document_segments: List[str]) -> Dict[str, Any]:
-        """Extract multidimensional semantic cube from document segments."""
-
-        if not document_segments:
-            return self._empty_semantic_cube()
-
-        # Vectorize segments
-        segment_vectors = self._vectorize_segments(document_segments)
-
-        # Initialize semantic cube
-        semantic_cube = {
-            "dimensions": {
-                "value_chain_links": defaultdict(list),
-                "policy_domains": defaultdict(list),
-                "cross_cutting_themes": defaultdict(list)
-            },
-            "measures": {
-                "semantic_density": [],
-                "coherence_scores": [],
-                "complexity_metrics": []
-            },
-            "metadata": {
-                "extraction_timestamp": datetime.now().isoformat(),
-                "total_segments": len(document_segments),
-                "processing_parameters": {}
-            }
-        }
-
-        # Process each segment
-        for idx, segment in enumerate(document_segments):
-            segment_data = self._process_segment(segment, idx, segment_vectors[idx])
-
-            # Classify by value chain links
-            link_scores = self._classify_value_chain_link(segment)
-            for link, score in link_scores.items():
-                if score > 0.3:  # Threshold for inclusion
-                    semantic_cube["dimensions"]["value_chain_links"][link].append(segment_data)
-
-            # Classify by policy domains
-            domain_scores = self._classify_policy_domain(segment)
-            for domain, score in domain_scores.items():
-                if score > 0.3:
-                    semantic_cube["dimensions"]["policy_domains"][domain].append(segment_data)
-
-            # Extract cross-cutting themes
-            theme_scores = self._classify_cross_cutting_themes(segment)
-            for theme, score in theme_scores.items():
-                if score > 0.3:
-                    semantic_cube["dimensions"]["cross_cutting_themes"][theme].append(segment_data)
-
-            # Add measures
-            semantic_cube["measures"]["semantic_density"].append(segment_data["semantic_density"])
-            semantic_cube["measures"]["coherence_scores"].append(segment_data["coherence_score"])
-
-        # Calculate aggregate measures
-        semantic_cube["measures"]["overall_coherence"] = np.mean(
-            semantic_cube["measures"]["coherence_scores"]
-        ) if semantic_cube["measures"]["coherence_scores"] else 0.0
-
-        semantic_cube["measures"]["semantic_complexity"] = self._calculate_semantic_complexity(semantic_cube)
-
-        logger.info(f"Extracted semantic cube from {len(document_segments)} segments")
-        return semantic_cube
-
-    def _empty_semantic_cube(self) -> Dict[str, Any]:
-        """Return empty semantic cube structure."""
-        return {
-            "dimensions": {
-                "value_chain_links": {},
-                "policy_domains": {},
-                "cross_cutting_themes": {}
-            },
-            "measures": {
-                "semantic_density": [],
-                "coherence_scores": [],
-                "overall_coherence": 0.0,
-                "semantic_complexity": 0.0
-            },
-            "metadata": {
-                "extraction_timestamp": datetime.now().isoformat(),
-                "total_segments": 0,
-                "processing_parameters": {}
-            }
-        }
-
-    def _vectorize_segments(self, segments: List[str]) -> np.ndarray:
-        """Vectorize document segments using TF-IDF."""
-        try:
-            return self.vectorizer.fit_transform(segments).toarray()
-        except Exception as e:
-            logger.warning(f"Vectorization failed: {e}")
-            return np.zeros((len(segments), 100))  # Fallback
-
-    def _process_segment(self, segment: str, idx: int, vector: np.ndarray) -> Dict[str, Any]:
-        """Process individual segment and extract features."""
-
-        # Basic text statistics
-        words = segment.split()
-        sentences = sent_tokenize(segment)
-
-        # Calculate semantic density (simplified)
-        semantic_density = len(set(words)) / len(words) if words else 0.0
-
-        # Calculate coherence score (simplified)
-        coherence_score = min(1.0, len(sentences) / 10) if sentences else 0.0
-
-        return {
-            "segment_id": idx,
-            "text": segment,
-            "vector": vector.tolist(),
-            "word_count": len(words),
-            "sentence_count": len(sentences),
-            "semantic_density": semantic_density,
-            "coherence_score": coherence_score
-        }
-
-    def _classify_value_chain_link(self, segment: str) -> Dict[str, float]:
-        """Classify segment by value chain link using keyword matching."""
-        link_scores = {}
-        segment_lower = segment.lower()
-
-        for link_name, link_obj in self.ontology.value_chain_links.items():
-            score = 0.0
-            total_keywords = 0
-
-            # Check all link components
-            all_keywords = (link_obj.instruments + link_obj.mediators +
-                            link_obj.outputs + link_obj.outcomes)
-
-            for keyword in all_keywords:
-                total_keywords += 1
-                if keyword.lower().replace("_", " ") in segment_lower:
-                    score += 1.0
-
-            # Normalize score
-            link_scores[link_name] = score / total_keywords if total_keywords > 0 else 0.0
-
-        return link_scores
-
-    def _classify_policy_domain(self, segment: str) -> Dict[str, float]:
-        """Classify segment by policy domain using keyword matching."""
-        domain_scores = {}
-        segment_lower = segment.lower()
-
-        for domain, keywords in self.ontology.policy_domains.items():
-            score = 0.0
-            for keyword in keywords:
-                if keyword.lower() in segment_lower:
-                    score += 1.0
-
-            domain_scores[domain] = score / len(keywords) if keywords else 0.0
-
-        return domain_scores
-
-    def _classify_cross_cutting_themes(self, segment: str) -> Dict[str, float]:
-        """Classify segment by cross-cutting themes."""
-        theme_scores = {}
-        segment_lower = segment.lower()
-
-        for theme, keywords in self.ontology.cross_cutting_themes.items():
-            score = 0.0
-            for keyword in keywords:
-                if keyword.lower().replace("_", " ") in segment_lower:
-                    score += 1.0
-
-            theme_scores[theme] = score / len(keywords) if keywords else 0.0
-
-        return theme_scores
-
-    def _calculate_semantic_complexity(self, semantic_cube: Dict[str, Any]) -> float:
-        """Calculate semantic complexity of the cube."""
-
-        # Count unique concepts across dimensions
-        unique_concepts = set()
-        for dimension_data in semantic_cube["dimensions"].values():
-            for category in dimension_data.keys():
-                unique_concepts.add(category)
-
-        # Normalize complexity
-        max_expected_concepts = 20
-        return min(1.0, len(unique_concepts) / max_expected_concepts)
-
-
-# ---------------------------------------------------------------------------
-# 3. PERFORMANCE ANALYZER
-# ---------------------------------------------------------------------------
-
-class PerformanceAnalyzer:
-    """Analyze value chain performance with operational loss functions."""
-
-    def __init__(self, ontology: MunicipalOntology):
-        self.ontology = ontology
-        self.bottleneck_detector = IsolationForest(contamination=0.1, random_state=RANDOM_SEED)
-
-    def analyze_performance(self, semantic_cube: Dict[str, Any]) -> Dict[str, Any]:
-        """Analyze performance indicators across value chain links."""
-
-        performance_analysis = {
-            "value_chain_metrics": {},
-            "bottleneck_analysis": {},
-            "operational_loss_functions": {},
-            "optimization_recommendations": []
-        }
-
-        # Analyze each value chain link
-        for link_name, link_config in self.ontology.value_chain_links.items():
-            link_segments = semantic_cube["dimensions"]["value_chain_links"].get(link_name, [])
-
-            # Calculate metrics
-            metrics = self._calculate_throughput_metrics(link_segments, link_config)
-            bottlenecks = self._detect_bottlenecks(link_segments, link_config)
-            loss_functions = self._calculate_loss_functions(metrics, link_config)
-
-            performance_analysis["value_chain_metrics"][link_name] = metrics
-            performance_analysis["bottleneck_analysis"][link_name] = bottlenecks
-            performance_analysis["operational_loss_functions"][link_name] = loss_functions
-
-        # Generate recommendations
-        performance_analysis["optimization_recommendations"] = self._generate_recommendations(
-            performance_analysis
-        )
-
-        logger.info(f"Performance analysis completed for {len(performance_analysis['value_chain_metrics'])} links")
-        return performance_analysis
-
-    def _calculate_throughput_metrics(self, segments: List[Dict], link_config: ValueChainLink) -> Dict[str, Any]:
-        """Calculate throughput metrics for a value chain link."""
-
-        if not segments:
-            return {
-                "throughput": 0.0,
-                "efficiency_score": 0.0,
-                "capacity_utilization": 0.0
-            }
-
-        # Calculate semantic throughput
-        total_semantic_content = sum(seg["semantic_density"] for seg in segments)
-        avg_coherence = np.mean([seg["coherence_score"] for seg in segments])
-
-        # Capacity utilization
-        theoretical_max_segments = 50
-        capacity_utilization = len(segments) / theoretical_max_segments
-
-        # Efficiency score
-        efficiency_score = (total_semantic_content / len(segments)) * avg_coherence
-
-        # Throughput calculation
-        throughput = len(segments) * avg_coherence * np.mean(list(link_config.conversion_rates.values()))
-
-        return {
-            "throughput": float(throughput),
-            "efficiency_score": float(efficiency_score),
-            "capacity_utilization": float(capacity_utilization),
-            "segment_count": len(segments)
-        }
-
-    def _detect_bottlenecks(self, segments: List[Dict], link_config: ValueChainLink) -> Dict[str, Any]:
-        """Detect bottlenecks in value chain link."""
-
-        bottleneck_analysis = {
-            "capacity_constraints": {},
-            "bottleneck_scores": {}
-        }
-
-        # Analyze capacity constraints
-        for constraint_type, constraint_value in link_config.capacity_constraints.items():
-            if constraint_value < 0.7:
-                bottleneck_analysis["capacity_constraints"][constraint_type] = {
-                    "current_capacity": constraint_value,
-                    "severity": "high" if constraint_value < 0.5 else "medium"
-                }
-
-        # Calculate bottleneck scores
-        for bottleneck_type in link_config.bottlenecks:
-            score = 0.0
-            if segments:
-                # Count mentions of bottleneck in segments
-                mentions = sum(
-                    1 for seg in segments
-                    if bottleneck_type.replace("_", " ").lower() in seg["text"].lower()
-                )
-                score = mentions / len(segments)
-
-            bottleneck_analysis["bottleneck_scores"][bottleneck_type] = {
-                "score": score,
-                "severity": "high" if score > 0.2 else "medium" if score > 0.1 else "low"
-            }
-
-        return bottleneck_analysis
-
-    def _calculate_loss_functions(self, metrics: Dict[str, Any], link_config: ValueChainLink) -> Dict[str, Any]:
-        """Calculate operational loss functions."""
-
-        # Throughput loss (quadratic)
-        target_throughput = 50.0
-        throughput_gap = max(0, target_throughput - metrics["throughput"])
-        throughput_loss = throughput_gap ** 2
-
-        # Efficiency loss (exponential)
-        target_efficiency = 0.8
-        efficiency_gap = max(0, target_efficiency - metrics["efficiency_score"])
-        efficiency_loss = np.exp(efficiency_gap * 2) - 1
-
-        # Time loss (linear)
-        baseline_time = link_config.lead_time_days
-        capacity_utilization = metrics["capacity_utilization"]
-        time_multiplier = 1 + (1 - capacity_utilization) * 0.5
-        time_loss = baseline_time * (time_multiplier - 1)
-
-        # Composite loss
-        composite_loss = 0.4 * throughput_loss + 0.4 * efficiency_loss + 0.2 * time_loss
-
-        return {
-            "throughput_loss": float(throughput_loss),
-            "efficiency_loss": float(efficiency_loss),
-            "time_loss": float(time_loss),
-            "composite_loss": float(composite_loss)
-        }
-
-    def _generate_recommendations(self, performance_analysis: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Generate optimization recommendations."""
-
-        recommendations = []
-
-        for link_name, metrics in performance_analysis["value_chain_metrics"].items():
-            if metrics["efficiency_score"] < 0.5:
-                recommendations.append({
-                    "link": link_name,
-                    "type": "efficiency_improvement",
-                    "priority": "high",
-                    "description": f"Critical efficiency improvement needed for {link_name}"
-                })
-
-            if metrics["throughput"] < 20:
-                recommendations.append({
-                    "link": link_name,
-                    "type": "throughput_optimization",
-                    "priority": "medium",
-                    "description": f"Throughput optimization required for {link_name}"
-                })
-
-        return recommendations
-
-
-# ---------------------------------------------------------------------------
-# 4. TEXT MINING ENGINE
-# ---------------------------------------------------------------------------
-
-class TextMiningEngine:
-    """Advanced text mining for critical diagnosis."""
-
-    def __init__(self, ontology: MunicipalOntology):
-        self.ontology = ontology
-
-        # Initialize simple keyword extractor
-        try:
-            self.stop_words = set(stopwords.words('spanish'))
-        except LookupError:
-            # Download if not available
-            import nltk
-            nltk.download('stopwords')
-            self.stop_words = set(stopwords.words('spanish'))
-
-    def diagnose_critical_links(self, semantic_cube: Dict[str, Any],
-                                performance_analysis: Dict[str, Any]) -> Dict[str, Any]:
-        """Diagnose critical value chain links."""
-
-        diagnosis_results = {
-            "critical_links": {},
-            "risk_assessment": {},
-            "intervention_recommendations": {}
-        }
-
-        # Identify critical links
-        critical_links = self._identify_critical_links(performance_analysis)
-
-        # Analyze each critical link
-        for link_name, criticality_score in critical_links.items():
-            link_segments = semantic_cube["dimensions"]["value_chain_links"].get(link_name, [])
-
-            # Text analysis
-            text_analysis = self._analyze_link_text(link_segments)
-
-            # Risk assessment
-            risk_assessment = self._assess_risks(link_segments, text_analysis)
-
-            # Intervention recommendations
-            interventions = self._generate_interventions(link_name, risk_assessment, text_analysis)
-
-            diagnosis_results["critical_links"][link_name] = {
-                "criticality_score": criticality_score,
-                "text_analysis": text_analysis
-            }
-            diagnosis_results["risk_assessment"][link_name] = risk_assessment
-            diagnosis_results["intervention_recommendations"][link_name] = interventions
-
-        logger.info(f"Diagnosed {len(critical_links)} critical links")
-        return diagnosis_results
-
-    def _identify_critical_links(self, performance_analysis: Dict[str, Any]) -> Dict[str, float]:
-        """Identify critical links based on performance metrics."""
-
-        critical_links = {}
-
-        for link_name, metrics in performance_analysis["value_chain_metrics"].items():
-            criticality_score = 0.0
-
-            # Low efficiency indicates criticality
-            if metrics["efficiency_score"] < 0.5:
-                criticality_score += 0.4
-
-            # Low throughput indicates criticality
-            if metrics["throughput"] < 20:
-                criticality_score += 0.3
-
-            # High loss functions indicate criticality
-            if link_name in performance_analysis["operational_loss_functions"]:
-                loss = performance_analysis["operational_loss_functions"][link_name]["composite_loss"]
-                normalized_loss = min(1.0, loss / 100)
-                criticality_score += normalized_loss * 0.3
-
-            if criticality_score > 0.4:
-                critical_links[link_name] = criticality_score
-
-        return critical_links
-
-    def _analyze_link_text(self, segments: List[Dict]) -> Dict[str, Any]:
-        """Analyze text content for a link."""
-
-        if not segments:
-            return {"word_count": 0, "keywords": [], "sentiment": "neutral"}
-
-        # Combine all text
-        combined_text = " ".join([seg["text"] for seg in segments])
-        words = [word.lower() for word in combined_text.split()
-                 if word.lower() not in self.stop_words and len(word) > 2]
-
-        # Extract keywords
-        word_freq = Counter(words)
-        keywords = [word for word, count in word_freq.most_common(10)]
-
-        # Simple sentiment analysis
-        positive_words = ['bueno', 'excelente', 'positivo', 'lograr', 'éxito']
-        negative_words = ['problema', 'dificultad', 'limitación', 'falta', 'déficit']
-
-        positive_count = sum(1 for word in words if word in positive_words)
-        negative_count = sum(1 for word in words if word in negative_words)
-
-        if positive_count > negative_count:
-            sentiment = "positive"
-        elif negative_count > positive_count:
-            sentiment = "negative"
-        else:
-            sentiment = "neutral"
-
-        return {
-            "word_count": len(words),
-            "keywords": keywords,
-            "sentiment": sentiment,
-            "positive_indicators": positive_count,
-            "negative_indicators": negative_count
-        }
-
-    def _assess_risks(self, segments: List[Dict], text_analysis: Dict[str, Any]) -> Dict[str, Any]:
-        """Assess risks for a value chain link."""
-
-        risk_assessment = {
-            "overall_risk": "low",
-            "risk_factors": []
-        }
-
-        # Sentiment-based risk
-        if text_analysis["sentiment"] == "negative":
-            risk_assessment["risk_factors"].append("Negative sentiment detected")
-
-        # Content-based risk
-        if text_analysis["negative_indicators"] > 3:
-            risk_assessment["risk_factors"].append("High frequency of negative indicators")
-
-        # Volume-based risk
-        if text_analysis["word_count"] < 50:
-            risk_assessment["risk_factors"].append("Limited content volume")
-
-        # Overall risk level
-        if len(risk_assessment["risk_factors"]) > 2:
-            risk_assessment["overall_risk"] = "high"
-        elif len(risk_assessment["risk_factors"]) > 0:
-            risk_assessment["overall_risk"] = "medium"
-
-        return risk_assessment
-
-    def _generate_interventions(self, link_name: str, risk_assessment: Dict[str, Any],
-                                text_analysis: Dict[str, Any]) -> List[Dict[str, str]]:
-        """Generate intervention recommendations."""
-
-        interventions = []
-
-        if risk_assessment["overall_risk"] == "high":
-            interventions.append({
-                "type": "immediate",
-                "description": f"Priority intervention required for {link_name}",
-                "timeline": "1-3 months"
-            })
-
-        if text_analysis["sentiment"] == "negative":
-            interventions.append({
-                "type": "stakeholder_engagement",
-                "description": "Address concerns through stakeholder engagement",
-                "timeline": "ongoing"
-            })
-
-        if text_analysis["word_count"] < 50:
-            interventions.append({
-                "type": "documentation",
-                "description": "Improve documentation and content development",
-                "timeline": "3-6 months"
-            })
-
-        return interventions
-
-
-# ---------------------------------------------------------------------------
-# 5. COMPREHENSIVE ANALYZER
-# ---------------------------------------------------------------------------
-
-class MunicipalAnalyzer:
-    """Main analyzer integrating all components."""
-
-    def __init__(self):
-        self.ontology = MunicipalOntology()
-        self.semantic_analyzer = SemanticAnalyzer(self.ontology)
-        self.performance_analyzer = PerformanceAnalyzer(self.ontology)
-        self.text_miner = TextMiningEngine(self.ontology)
-
-        logger.info("MunicipalAnalyzer initialized successfully")
-
-    def analyze_document(self, document_path: str) -> Dict[str, Any]:
-        """Perform comprehensive analysis of a municipal document."""
-
-        start_time = time.time()
-        logger.info(f"Starting analysis of {document_path}")
-
-        try:
-            # Load and process document
-            document_segments = self._load_document(document_path)
-
-            # Semantic analysis
-            logger.info("Performing semantic analysis...")
-            semantic_cube = self.semantic_analyzer.extract_semantic_cube(document_segments)
-
-            # Performance analysis
-            logger.info("Analyzing performance indicators...")
-            performance_analysis = self.performance_analyzer.analyze_performance(semantic_cube)
-
-            # Text mining and diagnosis
-            logger.info("Performing text mining and diagnosis...")
-            critical_diagnosis = self.text_miner.diagnose_critical_links(
-                semantic_cube, performance_analysis
-            )
-
-            # Compile results
-            results = {
-                "document_path": document_path,
-                "analysis_timestamp": datetime.now().isoformat(),
-                "processing_time_seconds": time.time() - start_time,
-                "semantic_cube": semantic_cube,
-                "performance_analysis": performance_analysis,
-                "critical_diagnosis": critical_diagnosis,
-                "summary": self._generate_summary(semantic_cube, performance_analysis, critical_diagnosis)
-            }
-
-            logger.info(f"Analysis completed in {time.time() - start_time:.2f} seconds")
-            return results
-
-        except Exception as e:
-            logger.error(f"Analysis failed: {str(e)}")
-            raise
-
-    def _load_document(self, document_path: str) -> List[str]:
-        """Load and segment document."""
-
-        try:
-            with open(document_path, 'r', encoding='utf-8') as f:
-                content = f.read()
-        except UnicodeDecodeError:
-            with open(document_path, 'r', encoding='latin-1') as f:
-                content = f.read()
-
-        # Simple sentence segmentation
-        sentences = re.split(r'[.!?]+', content)
-
-        # Clean and filter segments
-        segments = []
-        for sentence in sentences:
-            cleaned = sentence.strip()
-            if len(cleaned) > 20 and not cleaned.startswith(('Página', 'Page')):
-                segments.append(cleaned)
-
-        return segments[:100]  # Limit for processing efficiency
-
-    def _generate_summary(self, semantic_cube: Dict[str, Any],
-                          performance_analysis: Dict[str, Any],
-                          critical_diagnosis: Dict[str, Any]) -> Dict[str, Any]:
-        """Generate executive summary of analysis."""
-
-        # Count dimensions
-        total_segments = semantic_cube["metadata"]["total_segments"]
-        value_chain_coverage = len(semantic_cube["dimensions"]["value_chain_links"])
-        policy_domain_coverage = len(semantic_cube["dimensions"]["policy_domains"])
-
-        # Performance summary
-        avg_efficiency = np.mean([
-            metrics["efficiency_score"]
-            for metrics in performance_analysis["value_chain_metrics"].values()
-        ]) if performance_analysis["value_chain_metrics"] else 0.0
-
-        # Critical links count
-        critical_links_count = len(critical_diagnosis["critical_links"])
-
-        return {
-            "document_coverage": {
-                "total_segments_analyzed": total_segments,
-                "value_chain_links_identified": value_chain_coverage,
-                "policy_domains_covered": policy_domain_coverage
-            },
-            "performance_summary": {
-                "average_efficiency_score": float(avg_efficiency),
-                "recommendations_count": len(performance_analysis["optimization_recommendations"])
-            },
-            "risk_assessment": {
-                "critical_links_identified": critical_links_count,
-                "overall_risk_level": "high" if critical_links_count > 2 else "medium" if critical_links_count > 0 else "low"
-            }
-        }
-
-#

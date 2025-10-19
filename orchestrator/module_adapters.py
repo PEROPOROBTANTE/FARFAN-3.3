@@ -1,5 +1,32 @@
 # module_adapters.py - Complete Integration Implementation
 # Production-ready version with all adapters properly implemented
+"""
+Module Adapters Framework
+=========================
+
+This module provides a comprehensive adapter framework for integrating multiple
+analysis modules into a unified system. It standardizes output formats and
+provides consistent interfaces across different analytical tools.
+
+Key Components:
+--------------
+1. ModuleResult: Standardized output format for all modules
+2. ModuleAdapterRegistry: Central registry for all adapters
+3. BaseAdapter: Base class with common functionality
+4. Specialized Adapters:
+   - PolicyProcessorAdapter: DECALOGO framework
+   - AnalyzerOneAdapter: Analysis tools
+   - ContradictionDetectorAdapter: Contradiction detection
+   - DerekBeachAdapter: Derek Beach methodology
+   - EmbeddingPolicyAdapter: Embedding-based policy analysis
+   - FinancialAnalyzerAdapter: Financial analysis tools
+   - CausalProcessorAdapter: Causal analysis
+   - ModulosAdapter: Theory of Change validation framework
+
+Author: System Integration Team
+Version: 2.0.0
+Python: 3.10+
+"""
 
 import logging
 import time
@@ -74,6 +101,7 @@ class ModuleAdapterRegistry:
         self.adapters["decologo_processor"] = DecologoProcessorAdapter()
         self.adapters["embedding_analyzer"] = EmbeddingAnalyzerAdapter()
         self.adapters["causal_validator"] = CausalValidatorAdapter()
+        self.adapters["modulos_teoria_cambio"] = ModulosAdapter()
 
         logger.info(f"Registered {len(self.adapters)} module adapters")
 
@@ -1466,3 +1494,937 @@ class CausalProcessorAdapter(BaseAdapter):
             method_name="construct_causal_dag",
             status="success",
             data={"dag": dag},
+            evidence=evidence,
+            confidence=0.8,
+            execution_time=0.0
+        )
+
+    def _execute_estimate_causal_effects(self, dag, treatment: str, outcome: str, **kwargs) -> ModuleResult:
+        """Execute PDETMunicipalPlanAnalyzer.estimate_causal_effects()"""
+        analyzer = self.PDETMunicipalPlanAnalyzer()
+        effects = analyzer.estimate_causal_effects(dag, treatment, outcome)
+
+        evidence = [{
+            "type": "causal_effects",
+            "treatment": treatment,
+            "outcome": outcome,
+            "effect_count": len(effects) if isinstance(effects, list) else 1
+        }]
+
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="PDETMunicipalPlanAnalyzer",
+            method_name="estimate_causal_effects",
+            status="success",
+            data={"effects": effects, "treatment": treatment, "outcome": outcome},
+            evidence=evidence,
+            confidence=0.7,
+            execution_time=0.0
+        )
+
+    def _execute_generate_counterfactuals(self, dag, intervention: Dict, **kwargs) -> ModuleResult:
+        """Execute PDETMunicipalPlanAnalyzer.generate_counterfactuals()"""
+        analyzer = self.PDETMunicipalPlanAnalyzer()
+        counterfactuals = analyzer.generate_counterfactuals(dag, intervention)
+
+        evidence = [{
+            "type": "counterfactual_analysis",
+            "intervention": intervention,
+            "counterfactual_count": len(counterfactuals) if isinstance(counterfactuals, list) else 1
+        }]
+
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="PDETMunicipalPlanAnalyzer",
+            method_name="generate_counterfactuals",
+            status="success",
+            data={"counterfactuals": counterfactuals, "intervention": intervention},
+            evidence=evidence,
+            confidence=0.75,
+            execution_time=0.0
+        )
+
+# ============================================================================
+# ADAPTER: MODULOS (TEORIA CAMBIO FRAMEWORK)
+# ============================================================================
+
+class ModulosAdapter(BaseAdapter):
+    """
+    Comprehensive adapter for teoria_cambio.py - Framework Unificado para la
+    Validación Causal de Políticas Públicas.
+    
+    This adapter provides access to all classes and functions from the theory
+    of change validation framework including:
+    - TeoriaCambio: Axiomatic change theory engine
+    - AdvancedDAGValidator: Stochastic validation with Monte Carlo
+    - IndustrialGradeValidator: Industrial certification orchestrator
+    - Helper functions and utilities
+    """
+
+    def __init__(self):
+        super().__init__("modulos_teoria_cambio")
+        self._load_module()
+
+    def _load_module(self):
+        """Load the teoria_cambio module and all its components"""
+        try:
+            # Import all necessary components from teoria_cambio
+            from teoria_cambio import (
+                TeoriaCambio,
+                AdvancedDAGValidator,
+                IndustrialGradeValidator,
+                CategoriaCausal,
+                GraphType,
+                ValidacionResultado,
+                ValidationMetric,
+                AdvancedGraphNode,
+                MonteCarloAdvancedResult,
+                create_policy_theory_of_change_graph,
+                _create_advanced_seed,
+                configure_logging
+            )
+            
+            # Store references to classes and functions
+            self.TeoriaCambio = TeoriaCambio
+            self.AdvancedDAGValidator = AdvancedDAGValidator
+            self.IndustrialGradeValidator = IndustrialGradeValidator
+            self.CategoriaCausal = CategoriaCausal
+            self.GraphType = GraphType
+            self.ValidacionResultado = ValidacionResultado
+            self.ValidationMetric = ValidationMetric
+            self.AdvancedGraphNode = AdvancedGraphNode
+            self.MonteCarloAdvancedResult = MonteCarloAdvancedResult
+            self.create_policy_theory_of_change_graph = create_policy_theory_of_change_graph
+            self._create_advanced_seed = _create_advanced_seed
+            self.configure_logging = configure_logging
+            
+            self.available = True
+            self.logger.info(f"✓ {self.module_name} loaded with Theory of Change framework")
+            
+        except ImportError as e:
+            self.logger.warning(f"✗ {self.module_name} NOT available: {e}")
+            self.available = False
+
+    def execute(self, method_name: str, args: List[Any], kwargs: Dict[str, Any]) -> ModuleResult:
+        """
+        Execute a method from the teoria_cambio module.
+        
+        Supported methods:
+        
+        === TeoriaCambio Methods ===
+        - construir_grafo_causal() -> nx.DiGraph
+        - validacion_completa(grafo: nx.DiGraph) -> ValidacionResultado
+        - _es_conexion_valida(origen: CategoriaCausal, destino: CategoriaCausal) -> bool
+        - _extraer_categorias(grafo: nx.DiGraph) -> Set[str]
+        - _validar_orden_causal(grafo: nx.DiGraph) -> List[Tuple[str, str]]
+        - _encontrar_caminos_completos(grafo: nx.DiGraph) -> List[List[str]]
+        - _generar_sugerencias_internas(validacion: ValidacionResultado) -> List[str]
+        
+        === AdvancedDAGValidator Methods ===
+        - add_node(name: str, dependencies: Set[str], metadata: Dict, role: str)
+        - add_edge(from_node: str, to_node: str, weight: float)
+        - calculate_acyclicity_pvalue(plan_name: str, iterations: int) -> MonteCarloAdvancedResult
+        - get_graph_stats() -> Dict[str, Any]
+        - _is_acyclic(nodes: Dict[str, AdvancedGraphNode]) -> bool
+        - _generate_subgraph() -> Dict[str, AdvancedGraphNode]
+        - _perform_sensitivity_analysis_internal(plan_name: str, iterations: int) -> Dict
+        - _calculate_confidence_interval(successes: int, trials: int, confidence: float) -> Tuple
+        - _calculate_statistical_power(s: int, n: int, alpha: float) -> float
+        - _calculate_bayesian_posterior(likelihood: float, prior: float) -> float
+        - _calculate_node_importance() -> Dict[str, float]
+        - _create_empty_result(plan_name: str) -> MonteCarloAdvancedResult
+        
+        === IndustrialGradeValidator Methods ===
+        - execute_suite() -> bool
+        - validate_engine_readiness() -> bool
+        - validate_causal_categories() -> bool
+        - validate_connection_matrix() -> bool
+        - run_performance_benchmarks() -> bool
+        - _benchmark_operation(operation_name: str, callable_obj, threshold: float, *args)
+        - _log_metric(name: str, value: float, unit: str, threshold: float)
+        
+        === Utility Functions ===
+        - create_policy_theory_of_change_graph() -> AdvancedDAGValidator
+        - _create_advanced_seed(plan_name: str, salt: str) -> int
+        - configure_logging() -> None
+        """
+        start_time = time.time()
+
+        if not self.available:
+            return self._create_unavailable_result(method_name, start_time)
+
+        try:
+            # TeoriaCambio methods
+            if method_name == "construir_grafo_causal":
+                result = self._execute_construir_grafo_causal(*args, **kwargs)
+            elif method_name == "validacion_completa":
+                result = self._execute_validacion_completa(*args, **kwargs)
+            elif method_name == "_es_conexion_valida":
+                result = self._execute_es_conexion_valida(*args, **kwargs)
+            elif method_name == "_extraer_categorias":
+                result = self._execute_extraer_categorias(*args, **kwargs)
+            elif method_name == "_validar_orden_causal":
+                result = self._execute_validar_orden_causal(*args, **kwargs)
+            elif method_name == "_encontrar_caminos_completos":
+                result = self._execute_encontrar_caminos_completos(*args, **kwargs)
+            elif method_name == "_generar_sugerencias_internas":
+                result = self._execute_generar_sugerencias_internas(*args, **kwargs)
+            
+            # AdvancedDAGValidator methods
+            elif method_name == "add_node":
+                result = self._execute_add_node(*args, **kwargs)
+            elif method_name == "add_edge":
+                result = self._execute_add_edge(*args, **kwargs)
+            elif method_name == "calculate_acyclicity_pvalue":
+                result = self._execute_calculate_acyclicity_pvalue(*args, **kwargs)
+            elif method_name == "get_graph_stats":
+                result = self._execute_get_graph_stats(*args, **kwargs)
+            elif method_name == "_is_acyclic":
+                result = self._execute_is_acyclic(*args, **kwargs)
+            elif method_name == "_generate_subgraph":
+                result = self._execute_generate_subgraph(*args, **kwargs)
+            elif method_name == "_perform_sensitivity_analysis_internal":
+                result = self._execute_perform_sensitivity_analysis(*args, **kwargs)
+            elif method_name == "_calculate_confidence_interval":
+                result = self._execute_calculate_confidence_interval(*args, **kwargs)
+            elif method_name == "_calculate_statistical_power":
+                result = self._execute_calculate_statistical_power(*args, **kwargs)
+            elif method_name == "_calculate_bayesian_posterior":
+                result = self._execute_calculate_bayesian_posterior(*args, **kwargs)
+            elif method_name == "_calculate_node_importance":
+                result = self._execute_calculate_node_importance(*args, **kwargs)
+            elif method_name == "_create_empty_result":
+                result = self._execute_create_empty_result(*args, **kwargs)
+            
+            # IndustrialGradeValidator methods
+            elif method_name == "execute_suite":
+                result = self._execute_execute_suite(*args, **kwargs)
+            elif method_name == "validate_engine_readiness":
+                result = self._execute_validate_engine_readiness(*args, **kwargs)
+            elif method_name == "validate_causal_categories":
+                result = self._execute_validate_causal_categories(*args, **kwargs)
+            elif method_name == "validate_connection_matrix":
+                result = self._execute_validate_connection_matrix(*args, **kwargs)
+            elif method_name == "run_performance_benchmarks":
+                result = self._execute_run_performance_benchmarks(*args, **kwargs)
+            elif method_name == "_benchmark_operation":
+                result = self._execute_benchmark_operation(*args, **kwargs)
+            elif method_name == "_log_metric":
+                result = self._execute_log_metric(*args, **kwargs)
+            
+            # Utility functions
+            elif method_name == "create_policy_theory_of_change_graph":
+                result = self._execute_create_policy_graph(*args, **kwargs)
+            elif method_name == "_create_advanced_seed":
+                result = self._execute_create_advanced_seed(*args, **kwargs)
+            elif method_name == "configure_logging":
+                result = self._execute_configure_logging(*args, **kwargs)
+            
+            else:
+                raise ValueError(f"Unknown method: {method_name}")
+
+            result.execution_time = time.time() - start_time
+            return result
+
+        except Exception as e:
+            self.logger.error(f"{self.module_name}.{method_name} failed: {e}", exc_info=True)
+            return self._create_error_result(method_name, start_time, e)
+
+    # ========================================================================
+    # TeoriaCambio Method Implementations
+    # ========================================================================
+
+    def _execute_construir_grafo_causal(self, **kwargs) -> ModuleResult:
+        """Execute TeoriaCambio.construir_grafo_causal()"""
+        teoria = self.TeoriaCambio()
+        grafo = teoria.construir_grafo_causal()
+
+        evidence = [{
+            "type": "causal_graph_construction",
+            "node_count": len(grafo.nodes()),
+            "edge_count": len(grafo.edges()),
+            "categories": list(self.CategoriaCausal.__members__.keys())
+        }]
+
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="TeoriaCambio",
+            method_name="construir_grafo_causal",
+            status="success",
+            data={"grafo": grafo, "node_count": len(grafo.nodes()), "edge_count": len(grafo.edges())},
+            evidence=evidence,
+            confidence=1.0,
+            execution_time=0.0
+        )
+
+    def _execute_validacion_completa(self, grafo, **kwargs) -> ModuleResult:
+        """Execute TeoriaCambio.validacion_completa()"""
+        teoria = self.TeoriaCambio()
+        resultado = teoria.validacion_completa(grafo)
+
+        evidence = [{
+            "type": "complete_validation",
+            "es_valida": resultado.es_valida,
+            "violation_count": len(resultado.violaciones_orden),
+            "complete_path_count": len(resultado.caminos_completos),
+            "missing_category_count": len(resultado.categorias_faltantes)
+        }]
+
+        confidence = 1.0 if resultado.es_valida else 0.5
+
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="TeoriaCambio",
+            method_name="validacion_completa",
+            status="success",
+            data={
+                "resultado": resultado,
+                "es_valida": resultado.es_valida,
+                "violaciones_orden": resultado.violaciones_orden,
+                "caminos_completos": resultado.caminos_completos,
+                "categorias_faltantes": [cat.name for cat in resultado.categorias_faltantes],
+                "sugerencias": resultado.sugerencias
+            },
+            evidence=evidence,
+            confidence=confidence,
+            execution_time=0.0
+        )
+
+    def _execute_es_conexion_valida(self, origen, destino, **kwargs) -> ModuleResult:
+        """Execute TeoriaCambio._es_conexion_valida()"""
+        teoria = self.TeoriaCambio()
+        es_valida = teoria._es_conexion_valida(origen, destino)
+
+        evidence = [{
+            "type": "connection_validation",
+            "origen": origen.name if hasattr(origen, 'name') else str(origen),
+            "destino": destino.name if hasattr(destino, 'name') else str(destino),
+            "es_valida": es_valida
+        }]
+
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="TeoriaCambio",
+            method_name="_es_conexion_valida",
+            status="success",
+            data={"es_valida": es_valida, "origen": str(origen), "destino": str(destino)},
+            evidence=evidence,
+            confidence=1.0,
+            execution_time=0.0
+        )
+
+    def _execute_extraer_categorias(self, grafo, **kwargs) -> ModuleResult:
+        """Execute TeoriaCambio._extraer_categorias()"""
+        teoria = self.TeoriaCambio()
+        categorias = teoria._extraer_categorias(grafo)
+
+        evidence = [{
+            "type": "category_extraction",
+            "category_count": len(categorias),
+            "categories": list(categorias)
+        }]
+
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="TeoriaCambio",
+            method_name="_extraer_categorias",
+            status="success",
+            data={"categorias": list(categorias)},
+            evidence=evidence,
+            confidence=1.0,
+            execution_time=0.0
+        )
+
+    def _execute_validar_orden_causal(self, grafo, **kwargs) -> ModuleResult:
+        """Execute TeoriaCambio._validar_orden_causal()"""
+        teoria = self.TeoriaCambio()
+        violaciones = teoria._validar_orden_causal(grafo)
+
+        evidence = [{
+            "type": "causal_order_validation",
+            "violation_count": len(violaciones),
+            "violations": violaciones[:5]  # First 5 violations
+        }]
+
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="TeoriaCambio",
+            method_name="_validar_orden_causal",
+            status="success",
+            data={"violaciones": violaciones, "violation_count": len(violaciones)},
+            evidence=evidence,
+            confidence=1.0 if len(violaciones) == 0 else 0.5,
+            execution_time=0.0
+        )
+
+    def _execute_encontrar_caminos_completos(self, grafo, **kwargs) -> ModuleResult:
+        """Execute TeoriaCambio._encontrar_caminos_completos()"""
+        teoria = self.TeoriaCambio()
+        caminos = teoria._encontrar_caminos_completos(grafo)
+
+        evidence = [{
+            "type": "complete_path_detection",
+            "path_count": len(caminos),
+            "paths": caminos[:3]  # First 3 paths
+        }]
+
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="TeoriaCambio",
+            method_name="_encontrar_caminos_completos",
+            status="success",
+            data={"caminos": caminos, "path_count": len(caminos)},
+            evidence=evidence,
+            confidence=0.9,
+            execution_time=0.0
+        )
+
+    def _execute_generar_sugerencias_internas(self, validacion, **kwargs) -> ModuleResult:
+        """Execute TeoriaCambio._generar_sugerencias_internas()"""
+        teoria = self.TeoriaCambio()
+        sugerencias = teoria._generar_sugerencias_internas(validacion)
+
+        evidence = [{
+            "type": "suggestion_generation",
+            "suggestion_count": len(sugerencias),
+            "suggestions": sugerencias
+        }]
+
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="TeoriaCambio",
+            method_name="_generar_sugerencias_internas",
+            status="success",
+            data={"sugerencias": sugerencias},
+            evidence=evidence,
+            confidence=0.8,
+            execution_time=0.0
+        )
+
+    # ========================================================================
+    # AdvancedDAGValidator Method Implementations
+    # ========================================================================
+
+    def _execute_add_node(self, name: str, dependencies=None, metadata=None, role="variable", **kwargs) -> ModuleResult:
+        """Execute AdvancedDAGValidator.add_node()"""
+        validator = self.AdvancedDAGValidator()
+        dependencies = dependencies or set()
+        metadata = metadata or {}
+        
+        validator.add_node(name, dependencies, metadata, role)
+
+        evidence = [{
+            "type": "node_addition",
+            "node_name": name,
+            "dependency_count": len(dependencies),
+            "role": role
+        }]
+
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="AdvancedDAGValidator",
+            method_name="add_node",
+            status="success",
+            data={"node_added": name, "dependencies": list(dependencies), "role": role},
+            evidence=evidence,
+            confidence=1.0,
+            execution_time=0.0
+        )
+
+    def _execute_add_edge(self, from_node: str, to_node: str, weight: float = 1.0, **kwargs) -> ModuleResult:
+        """Execute AdvancedDAGValidator.add_edge()"""
+        validator = self.AdvancedDAGValidator()
+        validator.add_edge(from_node, to_node, weight)
+
+        evidence = [{
+            "type": "edge_addition",
+            "from_node": from_node,
+            "to_node": to_node,
+            "weight": weight
+        }]
+
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="AdvancedDAGValidator",
+            method_name="add_edge",
+            status="success",
+            data={"edge_added": f"{from_node} -> {to_node}", "weight": weight},
+            evidence=evidence,
+            confidence=1.0,
+            execution_time=0.0
+        )
+
+    def _execute_calculate_acyclicity_pvalue(self, plan_name: str, iterations: int = 10000, **kwargs) -> ModuleResult:
+        """Execute AdvancedDAGValidator.calculate_acyclicity_pvalue()"""
+        validator = self.create_policy_theory_of_change_graph()  # Use demo graph
+        monte_carlo_result = validator.calculate_acyclicity_pvalue(plan_name, iterations)
+
+        evidence = [{
+            "type": "monte_carlo_validation",
+            "total_iterations": monte_carlo_result.total_iterations,
+            "acyclic_count": monte_carlo_result.acyclic_count,
+            "p_value": monte_carlo_result.p_value,
+            "bayesian_posterior": monte_carlo_result.bayesian_posterior,
+            "statistical_power": monte_carlo_result.statistical_power,
+            "robustness_score": monte_carlo_result.robustness_score,
+            "convergence_achieved": monte_carlo_result.convergence_achieved,
+            "adequate_power": monte_carlo_result.adequate_power
+        }]
+
+        confidence = monte_carlo_result.bayesian_posterior
+
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="AdvancedDAGValidator",
+            method_name="calculate_acyclicity_pvalue",
+            status="success",
+            data={
+                "result": monte_carlo_result,
+                "p_value": monte_carlo_result.p_value,
+                "posterior": monte_carlo_result.bayesian_posterior,
+                "power": monte_carlo_result.statistical_power,
+                "robustness": monte_carlo_result.robustness_score
+            },
+            evidence=evidence,
+            confidence=confidence,
+            execution_time=monte_carlo_result.computation_time
+        )
+
+    def _execute_get_graph_stats(self, **kwargs) -> ModuleResult:
+        """Execute AdvancedDAGValidator.get_graph_stats()"""
+        validator = self.create_policy_theory_of_change_graph()
+        stats = validator.get_graph_stats()
+
+        evidence = [{
+            "type": "graph_statistics",
+            "node_count": stats.get("node_count", 0),
+            "edge_count": stats.get("edge_count", 0),
+            "density": stats.get("density", 0.0)
+        }]
+
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="AdvancedDAGValidator",
+            method_name="get_graph_stats",
+            status="success",
+            data=stats,
+            evidence=evidence,
+            confidence=1.0,
+            execution_time=0.0
+        )
+
+    def _execute_is_acyclic(self, nodes, **kwargs) -> ModuleResult:
+        """Execute AdvancedDAGValidator._is_acyclic()"""
+        is_acyclic = self.AdvancedDAGValidator._is_acyclic(nodes)
+
+        evidence = [{
+            "type": "acyclicity_check",
+            "node_count": len(nodes),
+            "is_acyclic": is_acyclic
+        }]
+
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="AdvancedDAGValidator",
+            method_name="_is_acyclic",
+            status="success",
+            data={"is_acyclic": is_acyclic},
+            evidence=evidence,
+            confidence=1.0,
+            execution_time=0.0
+        )
+
+    def _execute_generate_subgraph(self, **kwargs) -> ModuleResult:
+        """Execute AdvancedDAGValidator._generate_subgraph()"""
+        validator = self.create_policy_theory_of_change_graph()
+        subgraph = validator._generate_subgraph()
+
+        evidence = [{
+            "type": "subgraph_generation",
+            "node_count": len(subgraph)
+        }]
+
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="AdvancedDAGValidator",
+            method_name="_generate_subgraph",
+            status="success",
+            data={"subgraph": subgraph, "node_count": len(subgraph)},
+            evidence=evidence,
+            confidence=0.8,
+            execution_time=0.0
+        )
+
+    def _execute_perform_sensitivity_analysis(self, plan_name: str, iterations: int = 10000, **kwargs) -> ModuleResult:
+        """Execute AdvancedDAGValidator._perform_sensitivity_analysis_internal()"""
+        validator = self.create_policy_theory_of_change_graph()
+        sensitivity = validator._perform_sensitivity_analysis_internal(plan_name, iterations)
+
+        evidence = [{
+            "type": "sensitivity_analysis",
+            "edge_count": len(sensitivity.get("edge_sensitivity", {})),
+            "node_count": len(sensitivity.get("node_importance", {}))
+        }]
+
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="AdvancedDAGValidator",
+            method_name="_perform_sensitivity_analysis_internal",
+            status="success",
+            data=sensitivity,
+            evidence=evidence,
+            confidence=0.85,
+            execution_time=0.0
+        )
+
+    def _execute_calculate_confidence_interval(self, successes: int, trials: int, confidence: float = 0.95, **kwargs) -> ModuleResult:
+        """Execute AdvancedDAGValidator._calculate_confidence_interval()"""
+        ci = self.AdvancedDAGValidator._calculate_confidence_interval(successes, trials, confidence)
+
+        evidence = [{
+            "type": "confidence_interval",
+            "successes": successes,
+            "trials": trials,
+            "confidence_level": confidence,
+            "interval": ci
+        }]
+
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="AdvancedDAGValidator",
+            method_name="_calculate_confidence_interval",
+            status="success",
+            data={"confidence_interval": ci, "lower": ci[0], "upper": ci[1]},
+            evidence=evidence,
+            confidence=confidence,
+            execution_time=0.0
+        )
+
+    def _execute_calculate_statistical_power(self, s: int, n: int, alpha: float = 0.05, **kwargs) -> ModuleResult:
+        """Execute AdvancedDAGValidator._calculate_statistical_power()"""
+        power = self.AdvancedDAGValidator._calculate_statistical_power(s, n, alpha)
+
+        evidence = [{
+            "type": "statistical_power",
+            "successes": s,
+            "trials": n,
+            "alpha": alpha,
+            "power": power
+        }]
+
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="AdvancedDAGValidator",
+            method_name="_calculate_statistical_power",
+            status="success",
+            data={"statistical_power": power},
+            evidence=evidence,
+            confidence=0.9,
+            execution_time=0.0
+        )
+
+    def _execute_calculate_bayesian_posterior(self, likelihood: float, prior: float = 0.5, **kwargs) -> ModuleResult:
+        """Execute AdvancedDAGValidator._calculate_bayesian_posterior()"""
+        posterior = self.AdvancedDAGValidator._calculate_bayesian_posterior(likelihood, prior)
+
+        evidence = [{
+            "type": "bayesian_posterior",
+            "likelihood": likelihood,
+            "prior": prior,
+            "posterior": posterior
+        }]
+
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="AdvancedDAGValidator",
+            method_name="_calculate_bayesian_posterior",
+            status="success",
+            data={"bayesian_posterior": posterior, "likelihood": likelihood, "prior": prior},
+            evidence=evidence,
+            confidence=0.85,
+            execution_time=0.0
+        )
+
+    def _execute_calculate_node_importance(self, **kwargs) -> ModuleResult:
+        """Execute AdvancedDAGValidator._calculate_node_importance()"""
+        validator = self.create_policy_theory_of_change_graph()
+        importance = validator._calculate_node_importance()
+
+        evidence = [{
+            "type": "node_importance",
+            "node_count": len(importance),
+            "top_nodes": sorted(importance.items(), key=lambda x: x[1], reverse=True)[:5]
+        }]
+
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="AdvancedDAGValidator",
+            method_name="_calculate_node_importance",
+            status="success",
+            data={"node_importance": importance},
+            evidence=evidence,
+            confidence=0.8,
+            execution_time=0.0
+        )
+
+    def _execute_create_empty_result(self, plan_name: str, **kwargs) -> ModuleResult:
+        """Execute AdvancedDAGValidator._create_empty_result()"""
+        validator = self.create_policy_theory_of_change_graph()
+        empty_result = validator._create_empty_result(plan_name)
+
+        evidence = [{
+            "type": "empty_result_creation",
+            "plan_name": plan_name
+        }]
+
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="AdvancedDAGValidator",
+            method_name="_create_empty_result",
+            status="success",
+            data={"result": empty_result},
+            evidence=evidence,
+            confidence=1.0,
+            execution_time=0.0
+        )
+
+    # ========================================================================
+    # IndustrialGradeValidator Method Implementations
+    # ========================================================================
+
+    def _execute_execute_suite(self, **kwargs) -> ModuleResult:
+        """Execute IndustrialGradeValidator.execute_suite()"""
+        industrial_validator = self.IndustrialGradeValidator()
+        success = industrial_validator.execute_suite()
+
+        evidence = [{
+            "type": "industrial_validation_suite",
+            "success": success,
+            "metrics": [{"name": m.name, "value": m.value, "status": m.status} 
+                       for m in industrial_validator.metrics]
+        }]
+
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="IndustrialGradeValidator",
+            method_name="execute_suite",
+            status="success" if success else "failed",
+            data={"validation_passed": success, "metrics": industrial_validator.metrics},
+            evidence=evidence,
+            confidence=1.0 if success else 0.3,
+            execution_time=0.0
+        )
+
+    def _execute_validate_engine_readiness(self, **kwargs) -> ModuleResult:
+        """Execute IndustrialGradeValidator.validate_engine_readiness()"""
+        industrial_validator = self.IndustrialGradeValidator()
+        is_ready = industrial_validator.validate_engine_readiness()
+
+        evidence = [{
+            "type": "engine_readiness",
+            "is_ready": is_ready
+        }]
+
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="IndustrialGradeValidator",
+            method_name="validate_engine_readiness",
+            status="success" if is_ready else "failed",
+            data={"engine_ready": is_ready},
+            evidence=evidence,
+            confidence=1.0 if is_ready else 0.0,
+            execution_time=0.0
+        )
+
+    def _execute_validate_causal_categories(self, **kwargs) -> ModuleResult:
+        """Execute IndustrialGradeValidator.validate_causal_categories()"""
+        industrial_validator = self.IndustrialGradeValidator()
+        is_valid = industrial_validator.validate_causal_categories()
+
+        evidence = [{
+            "type": "causal_categories_validation",
+            "is_valid": is_valid,
+            "category_count": len(self.CategoriaCausal)
+        }]
+
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="IndustrialGradeValidator",
+            method_name="validate_causal_categories",
+            status="success" if is_valid else "failed",
+            data={"categories_valid": is_valid},
+            evidence=evidence,
+            confidence=1.0 if is_valid else 0.0,
+            execution_time=0.0
+        )
+
+    def _execute_validate_connection_matrix(self, **kwargs) -> ModuleResult:
+        """Execute IndustrialGradeValidator.validate_connection_matrix()"""
+        industrial_validator = self.IndustrialGradeValidator()
+        is_valid = industrial_validator.validate_connection_matrix()
+
+        evidence = [{
+            "type": "connection_matrix_validation",
+            "is_valid": is_valid
+        }]
+
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="IndustrialGradeValidator",
+            method_name="validate_connection_matrix",
+            status="success" if is_valid else "failed",
+            data={"matrix_valid": is_valid},
+            evidence=evidence,
+            confidence=1.0 if is_valid else 0.0,
+            execution_time=0.0
+        )
+
+    def _execute_run_performance_benchmarks(self, **kwargs) -> ModuleResult:
+        """Execute IndustrialGradeValidator.run_performance_benchmarks()"""
+        industrial_validator = self.IndustrialGradeValidator()
+        benchmarks_passed = industrial_validator.run_performance_benchmarks()
+
+        evidence = [{
+            "type": "performance_benchmarks",
+            "passed": benchmarks_passed,
+            "benchmark_metrics": [{"name": m.name, "value": m.value, "threshold": m.threshold} 
+                                 for m in industrial_validator.metrics if "Benchmark" in m.name or "Construcción" in m.name or "Detección" in m.name or "Validación" in m.name]
+        }]
+
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="IndustrialGradeValidator",
+            method_name="run_performance_benchmarks",
+            status="success" if benchmarks_passed else "partial",
+            data={"benchmarks_passed": benchmarks_passed},
+            evidence=evidence,
+            confidence=1.0 if benchmarks_passed else 0.6,
+            execution_time=0.0
+        )
+
+    def _execute_benchmark_operation(self, operation_name: str, callable_obj, threshold: float, *args, **kwargs) -> ModuleResult:
+        """Execute IndustrialGradeValidator._benchmark_operation()"""
+        industrial_validator = self.IndustrialGradeValidator()
+        result = industrial_validator._benchmark_operation(operation_name, callable_obj, threshold, *args)
+
+        evidence = [{
+            "type": "benchmark_operation",
+            "operation": operation_name,
+            "threshold": threshold
+        }]
+
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="IndustrialGradeValidator",
+            method_name="_benchmark_operation",
+            status="success",
+            data={"result": result, "operation": operation_name},
+            evidence=evidence,
+            confidence=0.9,
+            execution_time=0.0
+        )
+
+    def _execute_log_metric(self, name: str, value: float, unit: str, threshold: float, **kwargs) -> ModuleResult:
+        """Execute IndustrialGradeValidator._log_metric()"""
+        industrial_validator = self.IndustrialGradeValidator()
+        metric = industrial_validator._log_metric(name, value, unit, threshold)
+
+        evidence = [{
+            "type": "metric_logging",
+            "name": name,
+            "value": value,
+            "unit": unit,
+            "threshold": threshold,
+            "status": metric.status
+        }]
+
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="IndustrialGradeValidator",
+            method_name="_log_metric",
+            status="success",
+            data={"metric": metric},
+            evidence=evidence,
+            confidence=1.0,
+            execution_time=0.0
+        )
+
+    # ========================================================================
+    # Utility Function Implementations
+    # ========================================================================
+
+    def _execute_create_policy_graph(self, **kwargs) -> ModuleResult:
+        """Execute create_policy_theory_of_change_graph()"""
+        validator = self.create_policy_theory_of_change_graph()
+        stats = validator.get_graph_stats()
+
+        evidence = [{
+            "type": "policy_graph_creation",
+            "node_count": stats.get("node_count", 0),
+            "edge_count": stats.get("edge_count", 0)
+        }]
+
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="UtilityFunction",
+            method_name="create_policy_theory_of_change_graph",
+            status="success",
+            data={"validator": validator, "graph_stats": stats},
+            evidence=evidence,
+            confidence=1.0,
+            execution_time=0.0
+        )
+
+    def _execute_create_advanced_seed(self, plan_name: str, salt: str = "", **kwargs) -> ModuleResult:
+        """Execute _create_advanced_seed()"""
+        seed = self._create_advanced_seed(plan_name, salt)
+
+        evidence = [{
+            "type": "seed_generation",
+            "plan_name": plan_name,
+            "salt": salt,
+            "seed": seed
+        }]
+
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="UtilityFunction",
+            method_name="_create_advanced_seed",
+            status="success",
+            data={"seed": seed, "plan_name": plan_name},
+            evidence=evidence,
+            confidence=1.0,
+            execution_time=0.0
+        )
+
+    def _execute_configure_logging(self, **kwargs) -> ModuleResult:
+        """Execute configure_logging()"""
+        self.configure_logging()
+
+        evidence = [{
+            "type": "logging_configuration",
+            "configured": True
+        }]
+
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="UtilityFunction",
+            method_name="configure_logging",
+            status="success",
+            data={"logging_configured": True},
+            evidence=evidence,
+            confidence=1.0,
+            execution_time=0.0
+        )
+
+
+# ============================================================================
+# UPDATE REGISTRY TO INCLUDE MODULOS ADAPTER
+# ============================================================================
+
+# Update the registry registration to include ModulosAdapter
+def _update_registry_with_modulos():
+    """Helper to update registry - call this after ModulosAdapter definition"""
+    # This will be called automatically when the module loads
+    pass
+
