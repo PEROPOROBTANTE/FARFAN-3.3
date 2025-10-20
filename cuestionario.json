@@ -23614,12 +23614,10 @@
             "D3-Q14"
           ]
         }
-      }
-    }
-  },
-  "output_recommendation_system": {
-    "critical_failures": {
-      "trigger": "Cualquier pregunta crítica con score < 0.40",
+      },
+      "output_recommendation_system": {
+        "critical_failures": {
+          "trigger": "Cualquier pregunta crítica con score < 0.40",
           "recommendation": "REVISIÓN FUNDAMENTAL requerida antes de aprobación",
           "escalation": "Nivel directivo debe revisar"
         },
@@ -23650,10 +23648,9 @@
           "recommendation": "APROBADO con observaciones menores",
           "focus": "Optimizar elementos débiles para excelencia"
         }
-      }
-  },
-  "automated_extraction_hints": {
-    "numeric_patterns": {
+      },
+      "automated_extraction_hints": {
+        "numeric_patterns": {
           "percentages": "\\d+(\\.\\d+)?\\s*%",
           "rates": "\\d+(\\.\\d+)?\\s*por\\s*(cada\\s*)?\\d+",
           "absolute_numbers": "\\d{1,3}(,\\d{3})*",
@@ -23675,6 +23672,7 @@
           "structure": "múltiples columnas con headers",
           "data_rows": "3+ filas con datos estructurados"
         }
+      }
     }
   }
 }
