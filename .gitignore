@@ -57,6 +57,12 @@ coverage.xml
 *.cover
 *.py,cover
 .hypothesis/
+test_data/
+
+# Dependency tracking
+dependency_graph.json
+dependency_graph_baseline.json
+dependency_graph_current.json
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -115,6 +121,8 @@ models/
 # Output files
 output/
 results/
+artifact/
+temp/
 
 # Sphinx documentation
 docs/_build/

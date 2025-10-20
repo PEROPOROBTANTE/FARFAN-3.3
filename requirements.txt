@@ -36,7 +36,8 @@ pysentimiento==0.6.6
 freeling==4.2
 
 # === Herramientas de desarrollo ===
-pytest==7.4.2
+pytest
+pytest-watch==7.4.2
 black==23.9.1
 flake8==6.1.0
 isort==5.12.0
