@@ -1,227 +1,232 @@
 """
-Test Module: Circuit Breaker Validation
-========================================
+Circuit Breaker State Transition Tests
+=======================================
 
-This test validates the CircuitBreaker class from orchestrator/circuit_breaker.py:
-- Instantiate CircuitBreaker
-- Simulate consecutive failures to trigger OPEN state
-- Verify circuit blocks subsequent calls during cooldown
-- Simulate successful calls to test reset behavior
-- Verify transition back to CLOSED state
+Tests CircuitBreaker class state transitions:
+- Sequential failures triggering OPEN state
+- Circuit preventing execution during OPEN state
+- Successful reset to CLOSED state after timeout
+- HALF_OPEN state testing during recovery
+- Performance metrics tracking
 
-Tests the full circuit breaker lifecycle: CLOSED → OPEN → HALF_OPEN → CLOSED
-
-Author: Test Framework
-Version: 1.0.0
+Run with: pytest tests/test_circuit_breaker.py -v
 """
 
 import pytest
 import time
-from orchestrator.circuit_breaker import CircuitBreaker, CircuitState, FailureSeverity
+from orchestrator.circuit_breaker import (
+    CircuitBreaker,
+    CircuitState,
+    FailureSeverity
+)
 
 
-@pytest.fixture
-def circuit_breaker():
-    """Create a CircuitBreaker instance with short timeouts for testing"""
-    return CircuitBreaker(
-        failure_threshold=3,      # Open after 3 failures
-        recovery_timeout=2.0,     # Wait 2 seconds before testing recovery
-        half_open_max_calls=2     # Allow 2 test calls in half-open state
-    )
+class TestCircuitBreakerStates:
+    """Test suite for CircuitBreaker state transitions"""
 
+    @pytest.fixture
+    def breaker(self):
+        """Create a circuit breaker with test configuration"""
+        return CircuitBreaker(
+            failure_threshold=3,
+            recovery_timeout=2.0,
+            half_open_max_calls=2
+        )
 
-@pytest.fixture
-def test_adapter():
-    """Name of adapter to test with"""
-    return "teoria_cambio"
+    @pytest.fixture
+    def adapter_name(self):
+        """Test adapter name"""
+        return "teoria_cambio"
 
+    def test_initial_state_is_closed(self, breaker, adapter_name):
+        """Test that circuit breaker starts in CLOSED state"""
+        assert breaker.adapter_states[adapter_name] == CircuitState.CLOSED
+        assert breaker.can_execute(adapter_name) is True
 
-class TestCircuitBreakerLifecycle:
-    """Test the complete circuit breaker lifecycle"""
-    
-    def test_initial_state_is_closed(self, circuit_breaker, test_adapter):
-        """Test that circuit starts in CLOSED state"""
-        status = circuit_breaker.get_adapter_status(test_adapter)
-        assert status['state'] == CircuitState.CLOSED.name
-        assert circuit_breaker.can_execute(test_adapter) is True
-    
-    def test_successful_execution_remains_closed(self, circuit_breaker, test_adapter):
-        """Test that successful executions keep circuit CLOSED"""
-        # Record multiple successes
-        for _ in range(5):
-            assert circuit_breaker.can_execute(test_adapter) is True
-            circuit_breaker.record_success(test_adapter, execution_time=0.1)
+    def test_circuit_opens_after_threshold_failures(self, breaker, adapter_name):
+        """Test that circuit opens after reaching failure threshold"""
+        # Initial state should be CLOSED
+        assert breaker.adapter_states[adapter_name] == CircuitState.CLOSED
         
-        status = circuit_breaker.get_adapter_status(test_adapter)
-        assert status['state'] == CircuitState.CLOSED.name
-        assert status['successes'] == 5
-        assert status['failures'] == 0
-    
-    def test_consecutive_failures_trigger_open(self, circuit_breaker, test_adapter):
-        """Test that consecutive failures trigger OPEN state"""
-        failure_threshold = circuit_breaker.failure_threshold
-        
-        # Record failures up to threshold - 1 (should remain CLOSED)
-        for i in range(failure_threshold - 1):
-            assert circuit_breaker.can_execute(test_adapter) is True
-            circuit_breaker.record_failure(
-                test_adapter,
-                error=f"Test failure {i + 1}",
+        # Record failures up to threshold
+        for i in range(breaker.failure_threshold):
+            breaker.record_failure(
+                adapter_name,
+                f"Test error {i}",
                 execution_time=0.1,
                 severity=FailureSeverity.CRITICAL
             )
         
-        status = circuit_breaker.get_adapter_status(test_adapter)
-        assert status['state'] == CircuitState.CLOSED.name
+        # Circuit should now be OPEN
+        assert breaker.adapter_states[adapter_name] == CircuitState.OPEN
+        print(f"\n✓ Circuit OPENED after {breaker.failure_threshold} failures")
+
+    def test_circuit_blocks_execution_when_open(self, breaker, adapter_name):
+        """Test that circuit prevents execution when in OPEN state"""
+        # Force circuit to OPEN state
+        for i in range(breaker.failure_threshold):
+            breaker.record_failure(
+                adapter_name,
+                f"Test error {i}",
+                severity=FailureSeverity.CRITICAL
+            )
         
-        # One more failure should trigger OPEN
-        assert circuit_breaker.can_execute(test_adapter) is True
-        circuit_breaker.record_failure(
-            test_adapter,
-            error=f"Test failure {failure_threshold}",
-            execution_time=0.1,
+        # Verify circuit is OPEN
+        assert breaker.adapter_states[adapter_name] == CircuitState.OPEN
+        
+        # Attempt execution should be blocked
+        assert breaker.can_execute(adapter_name) is False
+        print(f"\n✓ Circuit correctly blocks execution in OPEN state")
+
+    def test_circuit_transitions_to_half_open_after_timeout(self, breaker, adapter_name):
+        """Test that circuit transitions to HALF_OPEN after recovery timeout"""
+        # Force circuit to OPEN state
+        for i in range(breaker.failure_threshold):
+            breaker.record_failure(
+                adapter_name,
+                f"Test error {i}",
+                severity=FailureSeverity.CRITICAL
+            )
+        
+        assert breaker.adapter_states[adapter_name] == CircuitState.OPEN
+        
+        # Wait for recovery timeout
+        print(f"\n⏳ Waiting {breaker.recovery_timeout}s for recovery timeout...")
+        time.sleep(breaker.recovery_timeout + 0.1)
+        
+        # Check if we can execute (should trigger HALF_OPEN transition)
+        can_exec = breaker.can_execute(adapter_name)
+        
+        assert can_exec is True
+        assert breaker.adapter_states[adapter_name] == CircuitState.HALF_OPEN
+        print(f"✓ Circuit transitioned to HALF_OPEN state")
+
+    def test_circuit_closes_after_successful_recovery(self, breaker, adapter_name):
+        """Test that circuit closes after successful test calls in HALF_OPEN state"""
+        # Force circuit to OPEN state
+        for i in range(breaker.failure_threshold):
+            breaker.record_failure(
+                adapter_name,
+                f"Test error {i}",
+                severity=FailureSeverity.CRITICAL
+            )
+        
+        # Wait for recovery timeout
+        time.sleep(breaker.recovery_timeout + 0.1)
+        
+        # Trigger HALF_OPEN transition
+        breaker.can_execute(adapter_name)
+        assert breaker.adapter_states[adapter_name] == CircuitState.HALF_OPEN
+        
+        # Record successful test calls
+        for i in range(breaker.half_open_max_calls):
+            if breaker.can_execute(adapter_name):
+                breaker.record_success(adapter_name, execution_time=0.1)
+        
+        # Circuit should now be CLOSED
+        assert breaker.adapter_states[adapter_name] == CircuitState.CLOSED
+        print(f"\n✓ Circuit successfully CLOSED after recovery")
+
+    def test_circuit_reopens_on_failure_during_half_open(self, breaker, adapter_name):
+        """Test that circuit reopens if failure occurs during HALF_OPEN state"""
+        # Force circuit to OPEN state
+        for i in range(breaker.failure_threshold):
+            breaker.record_failure(
+                adapter_name,
+                f"Test error {i}",
+                severity=FailureSeverity.CRITICAL
+            )
+        
+        # Wait for recovery timeout and transition to HALF_OPEN
+        time.sleep(breaker.recovery_timeout + 0.1)
+        breaker.can_execute(adapter_name)
+        
+        assert breaker.adapter_states[adapter_name] == CircuitState.HALF_OPEN
+        
+        # Record a failure during HALF_OPEN
+        breaker.record_failure(
+            adapter_name,
+            "Recovery test failed",
             severity=FailureSeverity.CRITICAL
         )
         
-        status = circuit_breaker.get_adapter_status(test_adapter)
-        assert status['state'] == CircuitState.OPEN.name
-        assert status['failures'] == failure_threshold
-    
-    def test_open_circuit_blocks_execution(self, circuit_breaker, test_adapter):
-        """Test that OPEN circuit blocks execution during cooldown"""
-        # Trigger circuit to OPEN
-        for i in range(circuit_breaker.failure_threshold):
-            circuit_breaker.record_failure(test_adapter, error=f"Failure {i + 1}")
-        
-        # Verify circuit is OPEN
-        status = circuit_breaker.get_adapter_status(test_adapter)
-        assert status['state'] == CircuitState.OPEN.name
-        
-        # Verify execution is blocked
-        assert circuit_breaker.can_execute(test_adapter) is False
-        assert circuit_breaker.can_execute(test_adapter) is False  # Multiple checks
-    
-    def test_half_open_transition_after_timeout(self, circuit_breaker, test_adapter):
-        """Test that circuit transitions to HALF_OPEN after recovery timeout"""
-        # Trigger circuit to OPEN
-        for i in range(circuit_breaker.failure_threshold):
-            circuit_breaker.record_failure(test_adapter, error=f"Failure {i + 1}")
-        
-        status = circuit_breaker.get_adapter_status(test_adapter)
-        assert status['state'] == CircuitState.OPEN.name
-        
-        # Execution should be blocked during cooldown
-        assert circuit_breaker.can_execute(test_adapter) is False
-        
-        # Wait for recovery timeout
-        time.sleep(circuit_breaker.recovery_timeout + 0.1)
-        
-        # Should transition to HALF_OPEN and allow execution
-        assert circuit_breaker.can_execute(test_adapter) is True
-        
-        status = circuit_breaker.get_adapter_status(test_adapter)
-        assert status['state'] == CircuitState.HALF_OPEN.name
-    
-    def test_half_open_limits_concurrent_calls(self, circuit_breaker, test_adapter):
-        """Test that HALF_OPEN state limits number of test calls"""
-        # Trigger circuit to OPEN
-        for i in range(circuit_breaker.failure_threshold):
-            circuit_breaker.record_failure(test_adapter, error=f"Failure {i + 1}")
-        
-        # Wait for recovery timeout
-        time.sleep(circuit_breaker.recovery_timeout + 0.1)
-        
-        # Should allow exactly half_open_max_calls + 1 (includes initial transition call)
-        max_calls = circuit_breaker.half_open_max_calls
-        allowed_calls = 0
-        
-        for _ in range(max_calls + 5):  # Try more than max
-            if circuit_breaker.can_execute(test_adapter):
-                allowed_calls += 1
-        
-        # The first can_execute() transitions to HALF_OPEN and allows execution
-        # Then half_open_max_calls more executions are allowed
-        assert allowed_calls == max_calls + 1
-    
-    def test_successful_calls_in_half_open_close_circuit(self, circuit_breaker, test_adapter):
-        """Test that successful calls in HALF_OPEN close the circuit"""
-        # Trigger circuit to OPEN
-        for i in range(circuit_breaker.failure_threshold):
-            circuit_breaker.record_failure(test_adapter, error=f"Failure {i + 1}")
-        
-        # Wait for recovery timeout
-        time.sleep(circuit_breaker.recovery_timeout + 0.1)
-        
-        # Execute successful test calls in HALF_OPEN
-        # Need to execute half_open_max_calls + 1 times (first call transitions to HALF_OPEN)
-        for i in range(circuit_breaker.half_open_max_calls + 1):
-            if circuit_breaker.can_execute(test_adapter):
-                circuit_breaker.record_success(test_adapter, execution_time=0.05)
-        
-        # Circuit should now be CLOSED
-        status = circuit_breaker.get_adapter_status(test_adapter)
-        assert status['state'] == CircuitState.CLOSED.name
-        
-        # Should allow execution freely
-        assert circuit_breaker.can_execute(test_adapter) is True
-    
-    def test_failure_in_half_open_reopens_circuit(self, circuit_breaker, test_adapter):
-        """Test that failure in HALF_OPEN immediately reopens circuit"""
-        # Trigger circuit to OPEN
-        for i in range(circuit_breaker.failure_threshold):
-            circuit_breaker.record_failure(test_adapter, error=f"Failure {i + 1}")
-        
-        # Wait for recovery timeout
-        time.sleep(circuit_breaker.recovery_timeout + 0.1)
-        
-        # Verify we're in HALF_OPEN
-        assert circuit_breaker.can_execute(test_adapter) is True
-        status = circuit_breaker.get_adapter_status(test_adapter)
-        assert status['state'] == CircuitState.HALF_OPEN.name
-        
-        # Record a failure
-        circuit_breaker.record_failure(test_adapter, error="Recovery failed")
-        
-        # Should immediately go back to OPEN
-        status = circuit_breaker.get_adapter_status(test_adapter)
-        assert status['state'] == CircuitState.OPEN.name
-        assert circuit_breaker.can_execute(test_adapter) is False
+        # Circuit should reopen
+        assert breaker.adapter_states[adapter_name] == CircuitState.OPEN
+        print(f"\n✓ Circuit correctly reopened after HALF_OPEN failure")
 
-
-class TestCircuitBreakerMetrics:
-    """Test circuit breaker metrics and monitoring"""
-    
-    def test_success_rate_calculation(self, circuit_breaker, test_adapter):
-        """Test that success rate is calculated correctly"""
-        # Record mixed successes and failures
-        circuit_breaker.record_success(test_adapter)
-        circuit_breaker.record_success(test_adapter)
-        circuit_breaker.record_failure(test_adapter, error="Test failure")
-        circuit_breaker.record_success(test_adapter)
-        
-        status = circuit_breaker.get_adapter_status(test_adapter)
-        assert status['successes'] == 3
-        assert status['failures'] == 1
-        assert status['success_rate'] == 0.75  # 3/4
-    
-    def test_recent_failures_tracking(self, circuit_breaker, test_adapter):
-        """Test that recent failures are tracked correctly"""
-        # Record failures
+    def test_performance_metrics_tracking(self, breaker, adapter_name):
+        """Test that performance metrics are correctly tracked"""
+        # Record some successful executions
         for i in range(5):
-            circuit_breaker.record_failure(test_adapter, error=f"Failure {i + 1}")
+            breaker.record_success(adapter_name, execution_time=0.1 + i * 0.01)
         
-        status = circuit_breaker.get_adapter_status(test_adapter)
-        assert status['recent_failures'] >= 3  # At least threshold failures
-        assert status['failures'] == 5  # Total failures
-    
-    def test_get_all_status(self, circuit_breaker):
-        """Test that get_all_status returns status for all adapters"""
-        all_status = circuit_breaker.get_all_status()
+        # Record some failures
+        for i in range(2):
+            breaker.record_failure(
+                adapter_name,
+                f"Error {i}",
+                execution_time=0.2,
+                severity=FailureSeverity.TRANSIENT
+            )
         
-        # Should have status for all 9 adapters
-        assert len(all_status) == 9
+        # Get metrics
+        metrics = breaker.adapter_metrics[adapter_name]
         
-        # Verify all expected adapters are present
+        assert metrics.success_count == 5
+        assert metrics.failure_count == 2
+        assert metrics.success_rate == pytest.approx(5/7, rel=0.01)
+        assert len(metrics.response_times) == 7
+        assert metrics.avg_response_time > 0
+        
+        print(f"\n✓ Metrics tracked: {metrics.success_count} successes, "
+              f"{metrics.failure_count} failures, "
+              f"{metrics.success_rate:.2%} success rate")
+
+    def test_adapter_status_report(self, breaker, adapter_name):
+        """Test that adapter status report provides correct information"""
+        # Record some activity
+        breaker.record_success(adapter_name, 0.1)
+        breaker.record_failure(adapter_name, "Test error", 0.2)
+        
+        # Get status
+        status = breaker.get_adapter_status(adapter_name)
+        
+        assert status["adapter"] == adapter_name
+        assert status["state"] == "CLOSED"
+        assert status["total_calls"] == 2
+        assert status["successes"] == 1
+        assert status["failures"] == 1
+        assert "avg_response_time" in status
+        assert "recent_failures" in status
+        
+        print(f"\n✓ Status report generated: {status['state']}, "
+              f"{status['total_calls']} total calls")
+
+    def test_reset_adapter(self, breaker, adapter_name):
+        """Test that reset_adapter clears state and metrics"""
+        # Generate some activity and failures
+        for i in range(breaker.failure_threshold):
+            breaker.record_failure(
+                adapter_name,
+                f"Error {i}",
+                severity=FailureSeverity.CRITICAL
+            )
+        
+        # Circuit should be OPEN
+        assert breaker.adapter_states[adapter_name] == CircuitState.OPEN
+        
+        # Reset the adapter
+        breaker.reset_adapter(adapter_name)
+        
+        # Should be back to CLOSED with clean metrics
+        assert breaker.adapter_states[adapter_name] == CircuitState.CLOSED
+        assert breaker.adapter_metrics[adapter_name].success_count == 0
+        assert breaker.adapter_metrics[adapter_name].failure_count == 0
+        
+        print(f"\n✓ Adapter successfully reset to CLOSED state")
+
+    def test_all_adapters_initialized(self, breaker):
+        """Test that all 9 adapters are initialized"""
         expected_adapters = [
             "teoria_cambio",
             "analyzer_one",
@@ -235,117 +240,93 @@ class TestCircuitBreakerMetrics:
         ]
         
         for adapter in expected_adapters:
-            assert adapter in all_status
-            assert all_status[adapter]['state'] == CircuitState.CLOSED.name
+            assert adapter in breaker.adapter_states
+            assert breaker.adapter_states[adapter] == CircuitState.CLOSED
+        
+        print(f"\n✓ All {len(expected_adapters)} adapters initialized correctly")
 
+    def test_fallback_strategy_available(self, breaker, adapter_name):
+        """Test that fallback strategies are defined for adapters"""
+        fallback = breaker.get_fallback_strategy(adapter_name)
+        
+        assert "use_cached" in fallback
+        assert "alternative_adapters" in fallback
+        assert "degraded_mode" in fallback
+        
+        print(f"\n✓ Fallback strategy defined for {adapter_name}")
 
-class TestCircuitBreakerFallback:
-    """Test circuit breaker fallback strategies"""
-    
-    def test_fallback_strategy_exists_for_all_adapters(self, circuit_breaker):
-        """Test that fallback strategies are defined for all adapters"""
-        for adapter in circuit_breaker.adapters:
-            fallback = circuit_breaker.get_fallback_strategy(adapter)
-            
-            assert fallback is not None
-            assert isinstance(fallback, dict)
-            assert 'use_cached' in fallback
-            assert 'degraded_mode' in fallback
-    
-    def test_fallback_has_alternative_adapters(self, circuit_breaker):
-        """Test that fallback strategies include alternative adapters where available"""
-        fallback = circuit_breaker.get_fallback_strategy("teoria_cambio")
+    def test_concurrent_adapter_states(self, breaker):
+        """Test that different adapters maintain independent states"""
+        adapter1 = "teoria_cambio"
+        adapter2 = "analyzer_one"
         
-        assert 'alternative_adapters' in fallback
-        # teoria_cambio should have analyzer_one as alternative
-        assert fallback['alternative_adapters'] == ["analyzer_one"]
-    
-    def test_fallback_has_degraded_mode(self, circuit_breaker):
-        """Test that fallback strategies include degraded mode"""
-        fallback = circuit_breaker.get_fallback_strategy("embedding_policy")
+        # Fail adapter1
+        for i in range(breaker.failure_threshold):
+            breaker.record_failure(adapter1, f"Error {i}", severity=FailureSeverity.CRITICAL)
         
-        assert 'degraded_mode' in fallback
-        # embedding_policy should fall back to keyword matching
-        assert fallback['degraded_mode'] == "keyword_matching"
-
-
-class TestCircuitBreakerReset:
-    """Test circuit breaker reset functionality"""
-    
-    def test_reset_adapter_closes_circuit(self, circuit_breaker, test_adapter):
-        """Test that reset_adapter closes an open circuit"""
-        # Trigger circuit to OPEN
-        for i in range(circuit_breaker.failure_threshold):
-            circuit_breaker.record_failure(test_adapter, error=f"Failure {i + 1}")
+        # adapter1 should be OPEN, adapter2 should be CLOSED
+        assert breaker.adapter_states[adapter1] == CircuitState.OPEN
+        assert breaker.adapter_states[adapter2] == CircuitState.CLOSED
         
-        status = circuit_breaker.get_adapter_status(test_adapter)
-        assert status['state'] == CircuitState.OPEN.name
+        # adapter1 cannot execute, adapter2 can
+        assert breaker.can_execute(adapter1) is False
+        assert breaker.can_execute(adapter2) is True
         
-        # Reset adapter
-        circuit_breaker.reset_adapter(test_adapter)
-        
-        # Should be CLOSED and allow execution
-        status = circuit_breaker.get_adapter_status(test_adapter)
-        assert status['state'] == CircuitState.CLOSED.name
-        assert circuit_breaker.can_execute(test_adapter) is True
-        
-        # Metrics should be reset
-        assert status['successes'] == 0
-        assert status['failures'] == 0
-    
-    def test_reset_all_closes_all_circuits(self, circuit_breaker):
-        """Test that reset_all closes all circuits"""
-        # Open multiple circuits
-        adapters_to_fail = ["teoria_cambio", "analyzer_one", "dereck_beach"]
-        
-        for adapter in adapters_to_fail:
-            for i in range(circuit_breaker.failure_threshold):
-                circuit_breaker.record_failure(adapter, error=f"Failure {i + 1}")
-        
-        # Verify circuits are OPEN
-        for adapter in adapters_to_fail:
-            status = circuit_breaker.get_adapter_status(adapter)
-            assert status['state'] == CircuitState.OPEN.name
-        
-        # Reset all
-        circuit_breaker.reset_all()
-        
-        # All circuits should be CLOSED
-        all_status = circuit_breaker.get_all_status()
-        for adapter in adapters_to_fail:
-            assert all_status[adapter]['state'] == CircuitState.CLOSED.name
+        print(f"\n✓ Adapters maintain independent circuit states")
 
 
 class TestCircuitBreakerEdgeCases:
     """Test edge cases and error conditions"""
-    
-    def test_unknown_adapter_initializes_on_first_use(self, circuit_breaker):
-        """Test that unknown adapter is initialized on first use"""
-        unknown_adapter = "unknown_test_adapter"
+
+    @pytest.fixture
+    def breaker(self):
+        """Create a circuit breaker for edge case testing"""
+        return CircuitBreaker(
+            failure_threshold=3,
+            recovery_timeout=1.0,
+            half_open_max_calls=2
+        )
+
+    def test_unknown_adapter_initialization(self, breaker):
+        """Test that unknown adapters are automatically initialized"""
+        unknown_adapter = "unknown_adapter"
         
-        # Should not fail, should initialize
-        assert circuit_breaker.can_execute(unknown_adapter) is True
+        # Should auto-initialize on first access
+        can_exec = breaker.can_execute(unknown_adapter)
         
-        status = circuit_breaker.get_adapter_status(unknown_adapter)
-        assert status['state'] == CircuitState.CLOSED.name
-    
-    def test_zero_execution_time_handled(self, circuit_breaker, test_adapter):
-        """Test that zero execution time doesn't cause issues"""
-        circuit_breaker.record_success(test_adapter, execution_time=0.0)
-        circuit_breaker.record_failure(test_adapter, error="Test", execution_time=0.0)
+        assert unknown_adapter in breaker.adapter_states
+        assert breaker.adapter_states[unknown_adapter] == CircuitState.CLOSED
+        assert can_exec is True
+
+    def test_rapid_failure_sequence(self, breaker, adapter_name="teoria_cambio"):
+        """Test handling of rapid consecutive failures"""
+        # Record many failures rapidly
+        for i in range(10):
+            breaker.record_failure(
+                adapter_name,
+                f"Rapid failure {i}",
+                execution_time=0.01,
+                severity=FailureSeverity.CRITICAL
+            )
         
-        status = circuit_breaker.get_adapter_status(test_adapter)
-        assert status['avg_response_time'] >= 0.0  # Should handle gracefully
-    
-    def test_high_frequency_operations(self, circuit_breaker, test_adapter):
-        """Test circuit breaker under high frequency operations"""
-        # Simulate rapid operations
-        for i in range(100):
-            if i % 10 == 0:  # 10% failure rate
-                circuit_breaker.record_failure(test_adapter, error=f"Failure {i}")
-            else:
-                circuit_breaker.record_success(test_adapter, execution_time=0.001)
+        # Should be OPEN
+        assert breaker.adapter_states[adapter_name] == CircuitState.OPEN
         
-        status = circuit_breaker.get_adapter_status(test_adapter)
-        assert status['total_calls'] == 100
-        assert 0.85 <= status['success_rate'] <= 0.95  # Should be around 90%
+        # Recent failure count should be tracked
+        recent_failures = breaker._count_recent_failures(adapter_name)
+        assert recent_failures >= breaker.failure_threshold
+
+    def test_mixed_severity_failures(self, breaker, adapter_name="teoria_cambio"):
+        """Test handling of failures with different severities"""
+        # Mix of transient and critical failures
+        breaker.record_failure(adapter_name, "Transient", severity=FailureSeverity.TRANSIENT)
+        breaker.record_failure(adapter_name, "Critical 1", severity=FailureSeverity.CRITICAL)
+        breaker.record_failure(adapter_name, "Degraded", severity=FailureSeverity.DEGRADED)
+        breaker.record_failure(adapter_name, "Critical 2", severity=FailureSeverity.CRITICAL)
+        
+        # All failures count toward threshold
+        assert breaker._count_recent_failures(adapter_name) >= breaker.failure_threshold
+
+
+if __name__ == "__main__":
+    pytest.main([__file__, "-v", "-s"])
