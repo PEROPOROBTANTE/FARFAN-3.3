@@ -4810,10 +4810,10 @@ class DerekBeachAdapter(BaseAdapter):
     result = auditor.audit_sequence_logic(nodes, links)
 
     def _execute_bayesian_counterfactual_audit(self, nodes, links, **kwargs) -> ModuleResult:
-    """Execute OperationalizationAuditor.bayesian_counterfactual_audit()"""
-    config = kwargs.get('config', {}}
-    auditor = self.OperationalizationAuditor(config)
-    result = auditor.bayesian_counterfactual_audit(nodes, links)
+        """Execute OperationalizationAuditor.bayesian_counterfactual_audit()"""
+        config = kwargs.get('config', {})
+        auditor = self.OperationalizationAuditor(config)
+        result = auditor.bayesian_counterfactual_audit(nodes, links)
 
     def _execute_build_normative_dag(self, **kwargs) -> ModuleResult:
     """Execute OperationalizationAuditor._build_normative_dag()"""
