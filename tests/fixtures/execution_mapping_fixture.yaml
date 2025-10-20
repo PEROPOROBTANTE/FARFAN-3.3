@@ -1,0 +1,93 @@
+version: "3.0"
+last_updated: "2025-01-19"
+total_adapters: 9
+total_methods: 413
+
+adapters:
+  teoria_cambio:
+    adapter_class: ModulosAdapter
+    methods: 51
+    
+  analyzer_one:
+    adapter_class: AnalyzerOneAdapter
+    methods: 39
+    
+  policy_processor:
+    adapter_class: PolicyProcessorAdapter
+    methods: 34
+
+D1_INSUMOS:
+  description: "Evaluación de línea base, recursos disponibles"
+  question_count: 50
+
+  Q1_Baseline_Identification:
+    description: "Identify and analyze baseline conditions"
+    execution_chain:
+      - step: 1
+        adapter: policy_segmenter
+        adapter_class: PolicySegmenterAdapter
+        method: segment
+        args:
+          - name: text
+            type: str
+            source: plan_text
+        returns:
+          type: List[Dict[str, Any]]
+          binding: document_segments
+        purpose: "Segment document into analyzable chunks"
+        confidence_expected: 0.85
+
+      - step: 2
+        adapter: policy_processor
+        adapter_class: PolicyProcessorAdapter
+        method: normalize_unicode
+        args:
+          - name: text
+            type: str
+            source: plan_text
+        returns:
+          type: str
+          binding: normalized_text
+        purpose: "Normalize text encoding"
+        confidence_expected: 0.95
+
+  Q2_Gap_Analysis:
+    description: "Analyze gaps and deficits"
+    execution_chain:
+      - step: 1
+        adapter: analyzer_one
+        adapter_class: AnalyzerOneAdapter
+        method: analyze_plan
+        args:
+          - name: plan_text
+            type: str
+            source: plan_text
+        returns:
+          type: Dict[str, Any]
+          binding: analysis_result
+        purpose: "Analyze plan content"
+        confidence_expected: 0.80
+
+D2_ACTIVIDADES:
+  description: "Evaluación de diseño de intervención"
+  question_count: 50
+
+  Q1_Activity_Structure:
+    description: "Validate activity structure"
+    execution_chain:
+      - step: 1
+        adapter: policy_processor
+        adapter_class: PolicyProcessorAdapter
+        method: extract_patterns
+        args:
+          - name: text
+            type: str
+            source: plan_text
+          - name: patterns
+            type: List[str]
+            source: verification_patterns
+        returns:
+          type: List[Dict[str, Any]]
+          binding: pattern_matches
+        purpose: "Extract activity patterns"
+        confidence_expected: 0.75
