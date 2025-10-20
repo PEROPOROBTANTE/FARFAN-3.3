@@ -1910,11 +1910,11 @@ class AnalyzerOneAdapter(BaseAdapter):
             execution_time=0.0
         )
 
-    def _execute_calculate_semantic_complexity(self, segment: str, **kwargs) -> ModuleResult:
+    def _execute_calculate_semantic_complexity(self, semantic_cube: Dict, **kwargs) -> ModuleResult:
         """Execute SemanticAnalyzer._calculate_semantic_complexity()"""
         ontology = self.MunicipalOntology()
         analyzer = self.SemanticAnalyzer(ontology)
-        complexity = analyzer._calculate_semantic_complexity(segment)
+        complexity = analyzer._calculate_semantic_complexity(semantic_cube)
 
         return ModuleResult(
             module_name=self.module_name,
@@ -1933,7 +1933,8 @@ class AnalyzerOneAdapter(BaseAdapter):
 
     def _execute_analyze_performance(self, value_chain_data: Dict, **kwargs) -> ModuleResult:
         """Execute PerformanceAnalyzer.analyze_performance()"""
-        analyzer = self.PerformanceAnalyzer()
+        ontology = self.MunicipalOntology()
+        analyzer = self.PerformanceAnalyzer(ontology)
         performance = analyzer.analyze_performance(value_chain_data)
 
         evidence = [{
@@ -1955,7 +1956,8 @@ class AnalyzerOneAdapter(BaseAdapter):
 
     def _execute_calculate_throughput_metrics(self, link_data: Dict, **kwargs) -> ModuleResult:
         """Execute PerformanceAnalyzer._calculate_throughput_metrics()"""
-        analyzer = self.PerformanceAnalyzer()
+        ontology = self.MunicipalOntology()
+        analyzer = self.PerformanceAnalyzer(ontology)
         throughput = analyzer._calculate_throughput_metrics(link_data)
 
         return ModuleResult(
@@ -1971,7 +1973,8 @@ class AnalyzerOneAdapter(BaseAdapter):
 
     def _execute_detect_bottlenecks(self, link_data: Dict, **kwargs) -> ModuleResult:
         """Execute PerformanceAnalyzer._detect_bottlenecks()"""
-        analyzer = self.PerformanceAnalyzer()
+        ontology = self.MunicipalOntology()
+        analyzer = self.PerformanceAnalyzer(ontology)
         bottlenecks = analyzer._detect_bottlenecks(link_data)
 
         return ModuleResult(
@@ -1987,7 +1990,8 @@ class AnalyzerOneAdapter(BaseAdapter):
 
     def _execute_calculate_loss_functions(self, link_data: Dict, **kwargs) -> ModuleResult:
         """Execute PerformanceAnalyzer._calculate_loss_functions()"""
-        analyzer = self.PerformanceAnalyzer()
+        ontology = self.MunicipalOntology()
+        analyzer = self.PerformanceAnalyzer(ontology)
         losses = analyzer._calculate_loss_functions(link_data)
 
         return ModuleResult(
@@ -2003,7 +2007,8 @@ class AnalyzerOneAdapter(BaseAdapter):
 
     def _execute_generate_recommendations(self, performance_data: Dict, **kwargs) -> ModuleResult:
         """Execute PerformanceAnalyzer._generate_recommendations()"""
-        analyzer = self.PerformanceAnalyzer()
+        ontology = self.MunicipalOntology()
+        analyzer = self.PerformanceAnalyzer(ontology)
         recommendations = analyzer._generate_recommendations(performance_data)
 
         return ModuleResult(
@@ -2019,7 +2024,8 @@ class AnalyzerOneAdapter(BaseAdapter):
 
     def _execute_diagnose_critical_links_performance(self, value_chain: Dict, **kwargs) -> ModuleResult:
         """Execute PerformanceAnalyzer.diagnose_critical_links()"""
-        analyzer = self.PerformanceAnalyzer()
+        ontology = self.MunicipalOntology()
+        analyzer = self.PerformanceAnalyzer(ontology)
         diagnosis = analyzer.diagnose_critical_links(value_chain)
 
         return ModuleResult(
@@ -2039,7 +2045,8 @@ class AnalyzerOneAdapter(BaseAdapter):
 
     def _execute_diagnose_critical_links_textmining(self, value_chain: Dict, **kwargs) -> ModuleResult:
         """Execute TextMiningEngine.diagnose_critical_links()"""
-        analyzer = self.TextMiningEngine()
+        ontology = self.MunicipalOntology()
+        analyzer = self.TextMiningEngine(ontology)
         diagnosis = analyzer.diagnose_critical_links(value_chain)
 
         return ModuleResult(
@@ -2055,7 +2062,8 @@ class AnalyzerOneAdapter(BaseAdapter):
 
     def _execute_identify_critical_links(self, value_chain: Dict, **kwargs) -> ModuleResult:
         """Execute TextMiningEngine._identify_critical_links()"""
-        analyzer = self.TextMiningEngine()
+        ontology = self.MunicipalOntology()
+        analyzer = self.TextMiningEngine(ontology)
         critical_links = analyzer._identify_critical_links(value_chain)
 
         return ModuleResult(
@@ -2071,7 +2079,8 @@ class AnalyzerOneAdapter(BaseAdapter):
 
     def _execute_analyze_link_text(self, link_name: str, text: str, **kwargs) -> ModuleResult:
         """Execute TextMiningEngine._analyze_link_text()"""
-        analyzer = self.TextMiningEngine()
+        ontology = self.MunicipalOntology()
+        analyzer = self.TextMiningEngine(ontology)
         analysis = analyzer._analyze_link_text(link_name, text)
 
         return ModuleResult(
@@ -2087,7 +2096,8 @@ class AnalyzerOneAdapter(BaseAdapter):
 
     def _execute_assess_risks(self, link_data: Dict, **kwargs) -> ModuleResult:
         """Execute TextMiningEngine._assess_risks()"""
-        analyzer = self.TextMiningEngine()
+        ontology = self.MunicipalOntology()
+        analyzer = self.TextMiningEngine(ontology)
         risks = analyzer._assess_risks(link_data)
 
         return ModuleResult(
@@ -2103,7 +2113,8 @@ class AnalyzerOneAdapter(BaseAdapter):
 
     def _execute_generate_interventions(self, risks: List[Dict], **kwargs) -> ModuleResult:
         """Execute TextMiningEngine._generate_interventions()"""
-        analyzer = self.TextMiningEngine()
+        ontology = self.MunicipalOntology()
+        analyzer = self.TextMiningEngine(ontology)
         interventions = analyzer._generate_interventions(risks)
 
         return ModuleResult(
@@ -2123,8 +2134,7 @@ class AnalyzerOneAdapter(BaseAdapter):
 
     def _execute_load_pdf(self, file_path: str, **kwargs) -> ModuleResult:
         """Execute DocumentProcessor.load_pdf()"""
-        processor = self.DocumentProcessor()
-        text = processor.load_pdf(file_path)
+        text = self.DocumentProcessor.load_pdf(file_path)
 
         return ModuleResult(
             module_name=self.module_name,
@@ -2139,8 +2149,7 @@ class AnalyzerOneAdapter(BaseAdapter):
 
     def _execute_load_docx(self, file_path: str, **kwargs) -> ModuleResult:
         """Execute DocumentProcessor.load_docx()"""
-        processor = self.DocumentProcessor()
-        text = processor.load_docx(file_path)
+        text = self.DocumentProcessor.load_docx(file_path)
 
         return ModuleResult(
             module_name=self.module_name,
@@ -2155,8 +2164,7 @@ class AnalyzerOneAdapter(BaseAdapter):
 
     def _execute_segment_text(self, text: str, method: str = "sentence", **kwargs) -> ModuleResult:
         """Execute DocumentProcessor.segment_text()"""
-        processor = self.DocumentProcessor()
-        segments = processor.segment_text(text, method)
+        segments = self.DocumentProcessor.segment_text(text, method)
 
         return ModuleResult(
             module_name=self.module_name,
