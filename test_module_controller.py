@@ -1,320 +1,470 @@
 """
-Test Module Controller Implementation
-======================================
+Tests for Module Controller - Contract Enforcement and Pipeline Validation
+===========================================================================
 
-Tests for the ModuleController class to verify:
-- Dependency injection of adapters
-- Dynamic module registration
-- Question-to-handler mapping
-- Document processing pipelines
-- Execution tracing
-- Diagnostic reporting
-
-Author: Integration Team
-Version: 3.0.0
-Python: 3.10+
+Tests:
+- Stage sequencing and ordering
+- Contract validation (input/output)
+- Flow composition and topology
+- Pipeline execution enforcement
+- Exception handling for violations
 """
 
-import json
-import logging
-import time
-from pathlib import Path
-from typing import Any, Dict, List
-
 import pytest
+from orchestrator.module_controller import (
+    ModuleController,
+    FlowComposition,
+    PipelineStage,
+    StageContract,
+    PDFProcessingOutput,
+    SemanticChunkingOutput,
+    EmbeddingGenerationOutput,
+    PolicyAnalysisOutput,
+    ContradictionDetectionOutput,
+    FinancialViabilityOutput,
+    ReportingOutput,
+    ContractViolationError,
+    StageSequenceError,
+    MissingStageImplementationError
+)
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+
+class TestPipelineStage:
+    """Test PipelineStage enum and ordering"""
+    
+    def test_stage_ordering(self):
+        """Test stages are in correct order"""
+        order = PipelineStage.get_execution_order()
+        
+        assert len(order) == 7
+        assert order[0] == PipelineStage.PDF_PROCESSING
+        assert order[1] == PipelineStage.SEMANTIC_CHUNKING
+        assert order[2] == PipelineStage.EMBEDDING_GENERATION
+        assert order[3] == PipelineStage.POLICY_ANALYSIS
+        assert order[4] == PipelineStage.CONTRADICTION_DETECTION
+        assert order[5] == PipelineStage.FINANCIAL_VIABILITY
+        assert order[6] == PipelineStage.REPORTING
+    
+    def test_stage_comparison(self):
+        """Test stage comparison operators"""
+        assert PipelineStage.PDF_PROCESSING < PipelineStage.SEMANTIC_CHUNKING
+        assert PipelineStage.EMBEDDING_GENERATION < PipelineStage.POLICY_ANALYSIS
+        assert PipelineStage.REPORTING > PipelineStage.FINANCIAL_VIABILITY
 
 
-# ============================================================================
-# MOCK ADAPTERS FOR TESTING
-# ============================================================================
-
-
-class MockAdapter:
-    """Mock adapter for testing"""
-
-    def __init__(self, name: str):
-        self.name = name
-        self.available = True
-        self.execution_history = []
-
-    def execute(self, method_name: str, args: List[Any], kwargs: Dict[str, Any]):
-        """Mock execute method"""
-        self.execution_history.append(
-            {"method": method_name, "args": args, "kwargs": kwargs}
+class TestContractValidation:
+    """Test contract validation for each stage"""
+    
+    def test_pdf_processing_contract_valid(self):
+        """Test valid PDF processing output"""
+        output = PDFProcessingOutput(
+            plan_text="A" * 200,
+            page_count=10,
+            metadata={"title": "Test Plan"},
+            extraction_method="PyPDF2"
         )
-
-        # Return mock ModuleResult
-        from orchestrator.module_adapters import ModuleResult
-
-        return ModuleResult(
-            module_name=self.name,
-            class_name="MockAdapter",
-            method_name=method_name,
-            status="success",
-            data={"mock_result": f"Executed {method_name}"},
-            evidence=[{"type": "mock_evidence"}],
-            confidence=0.85,
-            execution_time=0.01,
+        assert output.plan_text == "A" * 200
+        assert output.page_count == 10
+    
+    def test_pdf_processing_contract_invalid_text_length(self):
+        """Test PDF contract rejects short text"""
+        with pytest.raises(ContractViolationError) as exc:
+            PDFProcessingOutput(
+                plan_text="short",
+                page_count=1,
+                metadata={},
+                extraction_method="PyPDF2"
+            )
+        assert exc.value.stage == PipelineStage.PDF_PROCESSING
+        assert "plan_text" in exc.value.field
+    
+    def test_pdf_processing_contract_invalid_page_count(self):
+        """Test PDF contract rejects invalid page count"""
+        with pytest.raises(ContractViolationError) as exc:
+            PDFProcessingOutput(
+                plan_text="A" * 200,
+                page_count=0,
+                metadata={},
+                extraction_method="PyPDF2"
+            )
+        assert "page_count" in exc.value.field
+    
+    def test_semantic_chunking_contract_valid(self):
+        """Test valid semantic chunking output"""
+        chunks = ("chunk1", "chunk2", "chunk3")
+        metadata = ({"pos": 0}, {"pos": 1}, {"pos": 2})
+        
+        output = SemanticChunkingOutput(
+            chunks=chunks,
+            chunk_metadata=metadata,
+            chunking_strategy="semantic",
+            total_chunks=3
         )
+        assert output.total_chunks == 3
+        assert len(output.chunks) == 3
+    
+    def test_semantic_chunking_contract_mismatch(self):
+        """Test semantic chunking rejects count mismatch"""
+        with pytest.raises(ContractViolationError) as exc:
+            SemanticChunkingOutput(
+                chunks=("chunk1", "chunk2"),
+                chunk_metadata=({"pos": 0}, {"pos": 1}),
+                chunking_strategy="semantic",
+                total_chunks=5
+            )
+        assert "total_chunks" in exc.value.field
+    
+    def test_embedding_generation_contract_valid(self):
+        """Test valid embedding generation output"""
+        embeddings = ([0.1, 0.2], [0.3, 0.4], [0.5, 0.6])
+        indices = (0, 1, 2)
+        
+        output = EmbeddingGenerationOutput(
+            embeddings=embeddings,
+            embedding_model="sentence-transformers",
+            embedding_dimension=384,
+            chunk_indices=indices
+        )
+        assert output.embedding_dimension == 384
+        assert len(output.embeddings) == 3
+    
+    def test_embedding_generation_contract_dimension_invalid(self):
+        """Test embedding contract rejects invalid dimension"""
+        with pytest.raises(ContractViolationError) as exc:
+            EmbeddingGenerationOutput(
+                embeddings=([0.1],),
+                embedding_model="test",
+                embedding_dimension=0,
+                chunk_indices=(0,)
+            )
+        assert "embedding_dimension" in exc.value.field
+    
+    def test_policy_analysis_contract_valid(self):
+        """Test valid policy analysis output"""
+        output = PolicyAnalysisOutput(
+            policy_segments=("seg1", "seg2"),
+            alignment_scores={"decalogo": 0.8, "sdg": 0.7},
+            policy_areas={"P1": {}, "P2": {}},
+            dimensions={"D1": {}, "D2": {}, "D3": {}, "D4": {}, "D5": {}, "D6": {}}
+        )
+        assert len(output.policy_segments) == 2
+    
+    def test_policy_analysis_contract_missing_dimensions(self):
+        """Test policy analysis rejects missing dimensions"""
+        with pytest.raises(ContractViolationError) as exc:
+            PolicyAnalysisOutput(
+                policy_segments=("seg1",),
+                alignment_scores={},
+                policy_areas={},
+                dimensions={"D1": {}, "D2": {}}
+            )
+        assert "dimensions" in exc.value.field
+    
+    def test_contradiction_detection_contract_valid(self):
+        """Test valid contradiction detection output"""
+        output = ContradictionDetectionOutput(
+            contradictions=({"type": "logical"}, {"type": "factual"}),
+            contradiction_scores=(0.8, 0.6),
+            contradiction_pairs=(("seg1", "seg2"), ("seg3", "seg4")),
+            total_contradictions=2
+        )
+        assert output.total_contradictions == 2
+    
+    def test_financial_viability_contract_valid(self):
+        """Test valid financial viability output"""
+        output = FinancialViabilityOutput(
+            viability_score=75.5,
+            budget_analysis={"total": 1000000, "allocated": 800000},
+            financial_risks=("risk1", "risk2"),
+            recommendations=("rec1", "rec2")
+        )
+        assert 0 <= output.viability_score <= 100
+    
+    def test_financial_viability_contract_invalid_score(self):
+        """Test financial viability rejects invalid score"""
+        with pytest.raises(ContractViolationError) as exc:
+            FinancialViabilityOutput(
+                viability_score=150.0,
+                budget_analysis={"total": 1000},
+                financial_risks=(),
+                recommendations=()
+            )
+        assert "viability_score" in exc.value.field
+    
+    def test_reporting_contract_valid(self):
+        """Test valid reporting output"""
+        output = ReportingOutput(
+            micro_report={"questions": []},
+            meso_report={"clusters": []},
+            macro_report={"score": 80},
+            report_path="/tmp/report.json"
+        )
+        assert output.report_path.endswith('.json')
 
-    def mock_method_1(self):
-        """Mock method 1"""
-        return "method_1_result"
 
-    def mock_method_2(self):
-        """Mock method 2"""
-        return "method_2_result"
-
-
-# ============================================================================
-# TESTS
-# ============================================================================
+class TestFlowComposition:
+    """Test flow composition and topology validation"""
+    
+    def test_flow_initialization(self):
+        """Test flow initializes with default topology"""
+        flow = FlowComposition()
+        
+        assert len(flow.stage_contracts) == 7
+        assert len(flow.stage_dependencies) == 7
+    
+    def test_flow_completeness_validation(self):
+        """Test flow validates all stages present"""
+        flow = FlowComposition()
+        assert flow.validate_flow_completeness() is True
+    
+    def test_flow_missing_stage(self):
+        """Test flow detects missing stage"""
+        flow = FlowComposition()
+        del flow.stage_contracts[PipelineStage.POLICY_ANALYSIS]
+        
+        with pytest.raises(MissingStageImplementationError) as exc:
+            flow.validate_flow_completeness()
+        assert exc.value.stage == PipelineStage.POLICY_ANALYSIS
+    
+    def test_flow_dependency_validation(self):
+        """Test flow validates dependencies"""
+        flow = FlowComposition()
+        assert flow.validate_stage_dependencies() is True
+    
+    def test_flow_get_contract(self):
+        """Test getting stage contract"""
+        flow = FlowComposition()
+        contract = flow.get_contract(PipelineStage.PDF_PROCESSING)
+        
+        assert contract.stage == PipelineStage.PDF_PROCESSING
+        assert contract.output_type == PDFProcessingOutput
+    
+    def test_flow_get_dependencies(self):
+        """Test getting stage dependencies"""
+        flow = FlowComposition()
+        
+        deps = flow.get_dependencies(PipelineStage.PDF_PROCESSING)
+        assert deps == []
+        
+        deps = flow.get_dependencies(PipelineStage.SEMANTIC_CHUNKING)
+        assert PipelineStage.PDF_PROCESSING in deps
+    
+    def test_flow_register_transformation(self):
+        """Test registering data transformation"""
+        flow = FlowComposition()
+        
+        def transform(data):
+            return data
+        
+        flow.register_transformation(
+            PipelineStage.PDF_PROCESSING,
+            PipelineStage.SEMANTIC_CHUNKING,
+            transform
+        )
+        
+        result = flow.get_transformation(
+            PipelineStage.PDF_PROCESSING,
+            PipelineStage.SEMANTIC_CHUNKING
+        )
+        assert result == transform
 
 
 class TestModuleController:
-    """Test suite for ModuleController"""
-
-    def test_module_controller_imports(self):
-        """Test that all required classes can be imported"""
-        from orchestrator.module_controller import (ExecutionTrace,
-                                                    ModuleController,
-                                                    ModuleMetadata,
-                                                    ModuleStatus,
-                                                    ProcessingResult)
-
-        assert ModuleController is not None
-        assert ModuleMetadata is not None
-        assert ExecutionTrace is not None
-        assert ProcessingResult is not None
-        assert ModuleStatus is not None
-
-        logger.info("✓ All ModuleController imports successful")
-
-    def test_module_controller_instantiation(self):
-        """Test ModuleController can be instantiated with dependency injection"""
-        from orchestrator.module_controller import ModuleController
-
-        # Create mock adapters
-        contradiction_detector = MockAdapter("contradiction_detection")
-        financial_analyzer = MockAdapter("financial_viability")
-        analyzer_one = MockAdapter("analyzer_one")
-        policy_processor = MockAdapter("policy_processor")
-        policy_segmenter = MockAdapter("policy_segmenter")
-        semantic_chunking = MockAdapter("semantic_chunking_policy")
-        embedding_policy = MockAdapter("embedding_policy")
-
-        embedders = {"model_1": "mock_embedder_1", "model_2": "mock_embedder_2"}
-
-        # Instantiate controller
-        controller = ModuleController(
-            contradiction_detector=contradiction_detector,
-            financial_viability_analyzer=financial_analyzer,
-            analyzer_one=analyzer_one,
-            policy_processor=policy_processor,
-            policy_segmenter=policy_segmenter,
-            semantic_chunking_adapter=semantic_chunking,
-            embedding_policy_adapter=embedding_policy,
-            embedders=embedders,
-            pdf_processor=None,
-            cuestionario_path="cuestionario.json",
-            responsibility_map_path="orchestrator/execution_mapping.yaml",
+    """Test module controller execution and enforcement"""
+    
+    def test_controller_initialization(self):
+        """Test controller initializes correctly"""
+        controller = ModuleController()
+        
+        assert controller.flow is not None
+        assert len(controller.registered_modules) == 0
+    
+    def test_module_registration(self):
+        """Test registering module for stage"""
+        controller = ModuleController()
+        
+        class MockModule:
+            def load_plan(self, **kwargs):
+                return PDFProcessingOutput(
+                    plan_text="A" * 200,
+                    page_count=5,
+                    metadata={},
+                    extraction_method="mock"
+                )
+        
+        module = MockModule()
+        controller.register_module(
+            PipelineStage.PDF_PROCESSING,
+            module,
+            validate=True
         )
-
-        assert controller is not None
-        assert controller.contradiction_detector == contradiction_detector
-        assert controller.financial_viability_analyzer == financial_analyzer
-        assert controller.analyzer_one == analyzer_one
-        assert controller.policy_processor == policy_processor
-        assert controller.embedders == embedders
-
-        logger.info("✓ ModuleController instantiation successful")
-
-    def test_register_module(self):
-        """Test dynamic module registration"""
-        from orchestrator.module_controller import ModuleController
-
+        
+        assert PipelineStage.PDF_PROCESSING in controller.registered_modules
+    
+    def test_module_registration_missing_method(self):
+        """Test registration fails if method missing"""
         controller = ModuleController()
+        
+        class BadModule:
+            pass
+        
+        with pytest.raises(ValueError) as exc:
+            controller.register_module(
+                PipelineStage.PDF_PROCESSING,
+                BadModule(),
+                validate=True
+            )
+        assert "does not implement" in str(exc.value)
+    
+    def test_pipeline_validation_success(self):
+        """Test pipeline validates when all modules registered"""
+        controller = ModuleController()
+        
+        # Register all stages with mock modules
+        for stage in PipelineStage.get_execution_order():
+            contract = controller.flow.get_contract(stage)
+            
+            class MockModule:
+                pass
+            
+            mock = MockModule()
+            setattr(mock, contract.method_name, lambda *args, **kwargs: None)
+            
+            controller.register_module(stage, mock, validate=False)
+        
+        assert controller.validate_pipeline() is True
+    
+    def test_pipeline_validation_missing_module(self):
+        """Test pipeline validation fails if module missing"""
+        controller = ModuleController()
+        
+        with pytest.raises(MissingStageImplementationError):
+            controller.validate_pipeline()
+    
+    def test_stage_execution_valid(self):
+        """Test executing stage with valid input/output"""
+        controller = ModuleController()
+        
+        class PDFModule:
+            def load_plan(self, **kwargs):
+                return PDFProcessingOutput(
+                    plan_text="A" * 200,
+                    page_count=5,
+                    metadata={"test": True},
+                    extraction_method="mock"
+                )
+        
+        controller.register_module(PipelineStage.PDF_PROCESSING, PDFModule())
+        
+        output = controller.execute_stage(PipelineStage.PDF_PROCESSING)
+        
+        assert isinstance(output, PDFProcessingOutput)
+        assert output.page_count == 5
+        assert PipelineStage.PDF_PROCESSING in controller.execution_state["completed_stages"]
+    
+    def test_stage_execution_sequence_violation(self):
+        """Test stage execution enforces sequence"""
+        controller = ModuleController()
+        
+        class MockModule:
+            def chunk_text(self, data, **kwargs):
+                return SemanticChunkingOutput(
+                    chunks=("c1",),
+                    chunk_metadata=({"pos": 0},),
+                    chunking_strategy="mock",
+                    total_chunks=1
+                )
+        
+        controller.register_module(PipelineStage.SEMANTIC_CHUNKING, MockModule())
+        
+        with pytest.raises(StageSequenceError) as exc:
+            controller.execute_stage(PipelineStage.SEMANTIC_CHUNKING)
+        
+        assert exc.value.attempted_stage == PipelineStage.SEMANTIC_CHUNKING
+        assert exc.value.expected_stage == PipelineStage.PDF_PROCESSING
+    
+    def test_stage_execution_contract_violation(self):
+        """Test stage execution validates output contract"""
+        controller = ModuleController()
+        
+        class BadModule:
+            def load_plan(self, **kwargs):
+                # Return invalid output (wrong type)
+                return "not a PDFProcessingOutput"
+        
+        controller.register_module(PipelineStage.PDF_PROCESSING, BadModule())
+        
+        with pytest.raises(ContractViolationError) as exc:
+            controller.execute_stage(PipelineStage.PDF_PROCESSING)
+        
+        assert exc.value.stage == PipelineStage.PDF_PROCESSING
+    
+    def test_execution_status(self):
+        """Test getting execution status"""
+        controller = ModuleController()
+        
+        status = controller.get_execution_status()
+        
+        assert status["current_stage"] is None
+        assert len(status["completed_stages"]) == 0
+        assert status["progress_percentage"] == 0.0
+    
+    def test_reset_execution_state(self):
+        """Test resetting execution state"""
+        controller = ModuleController()
+        
+        controller.execution_state["completed_stages"].add(PipelineStage.PDF_PROCESSING)
+        controller.reset_execution_state()
+        
+        assert len(controller.execution_state["completed_stages"]) == 0
+    
+    def test_get_stage_output(self):
+        """Test retrieving stage output"""
+        controller = ModuleController()
+        
+        class PDFModule:
+            def load_plan(self, **kwargs):
+                return PDFProcessingOutput(
+                    plan_text="A" * 200,
+                    page_count=1,
+                    metadata={},
+                    extraction_method="mock"
+                )
+        
+        controller.register_module(PipelineStage.PDF_PROCESSING, PDFModule())
+        output = controller.execute_stage(PipelineStage.PDF_PROCESSING)
+        
+        retrieved = controller.get_stage_output(PipelineStage.PDF_PROCESSING)
+        assert retrieved == output
 
-        # Register a mock module
-        mock_adapter = MockAdapter("test_module")
-        success = controller.register_module(
-            module_name="test_module",
-            adapter_class_name="MockAdapter",
-            adapter_instance=mock_adapter,
-            specialization="Testing module",
+
+class TestContractImmutability:
+    """Test contract immutability guarantees"""
+    
+    def test_pdf_output_immutable(self):
+        """Test PDFProcessingOutput is immutable"""
+        output = PDFProcessingOutput(
+            plan_text="A" * 200,
+            page_count=1,
+            metadata={},
+            extraction_method="test"
         )
-
-        assert success is True
-        assert "test_module" in controller._modules
-
-        metadata = controller._modules["test_module"]
-        assert metadata.module_name == "test_module"
-        assert metadata.adapter_class_name == "MockAdapter"
-        assert metadata.specialization == "Testing module"
-
-        logger.info("✓ Module registration successful")
-
-    def test_unregister_module(self):
-        """Test module unregistration"""
-        from orchestrator.module_controller import ModuleController
-
-        controller = ModuleController()
-
-        # Register and then unregister
-        mock_adapter = MockAdapter("test_module")
-        controller.register_module("test_module", "MockAdapter", mock_adapter)
-
-        assert "test_module" in controller._modules
-
-        success = controller.unregister_module("test_module")
-        assert success is True
-        assert "test_module" not in controller._modules
-
-        logger.info("✓ Module unregistration successful")
-
-    def test_get_module_diagnostics(self):
-        """Test module diagnostics reporting"""
-        from orchestrator.module_controller import ModuleController
-
-        mock_adapter = MockAdapter("test_module")
-        controller = ModuleController(policy_processor=mock_adapter)
-
-        diagnostics = controller.get_module_diagnostics()
-
-        assert diagnostics is not None
-        assert "total_modules" in diagnostics
-        assert "total_questions" in diagnostics
-        assert "modules" in diagnostics
-        assert "question_coverage" in diagnostics
-
-        logger.info(f"✓ Module diagnostics: {diagnostics['total_modules']} modules")
-
-    def test_get_question_coverage_report(self):
-        """Test question coverage reporting"""
-        from orchestrator.module_controller import ModuleController
-
-        controller = ModuleController()
-
-        coverage = controller.get_question_coverage_report()
-
-        assert coverage is not None
-        assert "total_questions" in coverage
-        assert "questions_with_handlers" in coverage
-        assert "average_modules_per_question" in coverage
-
-        logger.info(
-            f"✓ Question coverage: {coverage['total_questions']} total questions"
+        
+        with pytest.raises(AttributeError):
+            output.plan_text = "modified"
+    
+    def test_semantic_chunking_uses_tuples(self):
+        """Test SemanticChunkingOutput uses tuples for immutability"""
+        output = SemanticChunkingOutput(
+            chunks=("c1", "c2"),
+            chunk_metadata=({"pos": 0}, {"pos": 1}),
+            chunking_strategy="test",
+            total_chunks=2
         )
+        
+        assert isinstance(output.chunks, tuple)
+        assert isinstance(output.chunk_metadata, tuple)
 
-    def test_get_execution_traces(self):
-        """Test execution trace retrieval"""
-        from orchestrator.module_controller import ModuleController
-
-        controller = ModuleController()
-
-        traces = controller.get_execution_traces()
-        assert traces is not None
-        assert isinstance(traces, list)
-
-        logger.info(f"✓ Retrieved {len(traces)} execution traces")
-
-    def test_clear_traces(self):
-        """Test clearing execution traces"""
-        from orchestrator.module_controller import ModuleController
-
-        controller = ModuleController()
-
-        controller.clear_traces()
-        traces = controller.get_execution_traces()
-        assert len(traces) == 0
-
-        logger.info("✓ Traces cleared successfully")
-
-    def test_export_diagnostics(self, tmp_path):
-        """Test exporting diagnostics to file"""
-        from orchestrator.module_controller import ModuleController
-
-        controller = ModuleController()
-
-        output_path = tmp_path / "diagnostics.json"
-        success = controller.export_diagnostics(str(output_path))
-
-        assert success is True
-        assert output_path.exists()
-
-        # Verify content
-        with open(output_path, "r") as f:
-            data = json.load(f)
-            assert "module_diagnostics" in data
-            assert "question_coverage" in data
-            assert "recent_traces" in data
-
-        logger.info(f"✓ Diagnostics exported to {output_path}")
-
-    def test_map_question_to_handler(self):
-        """Test question ID to handler mapping"""
-        from orchestrator.module_controller import ModuleController
-
-        controller = ModuleController()
-
-        # Try to get a handler (may be None if mappings not loaded)
-        handler = controller.map_question_to_handler(
-            "D1_INSUMOS.Q1_Baseline_Identification"
-        )
-
-        # Just check that method doesn't error
-        assert handler is None or callable(handler)
-
-        logger.info("✓ Question to handler mapping works")
-
-    def test_get_questions_for_module(self):
-        """Test retrieving questions for a specific module"""
-        from orchestrator.module_controller import ModuleController
-
-        controller = ModuleController()
-
-        questions = controller.get_questions_for_module("policy_processor")
-
-        assert questions is not None
-        assert isinstance(questions, list)
-
-        logger.info(
-            f"✓ Retrieved {len(questions)} questions for policy_processor module"
-        )
-
-    def test_controller_has_all_required_methods(self):
-        """Test that ModuleController has all required methods"""
-        from orchestrator.module_controller import ModuleController
-
-        required_methods = [
-            "register_module",
-            "unregister_module",
-            "map_question_to_handler",
-            "get_questions_for_module",
-            "process_document",
-            "get_execution_traces",
-            "clear_traces",
-            "get_module_diagnostics",
-            "get_question_coverage_report",
-            "export_diagnostics",
-        ]
-
-        for method_name in required_methods:
-            assert hasattr(
-                ModuleController, method_name
-            ), f"Missing method: {method_name}"
-            assert callable(getattr(ModuleController, method_name))
-
-        logger.info(f"✓ All {len(required_methods)} required methods present")
-
-
-# ============================================================================
-# MAIN
-# ============================================================================
 
 if __name__ == "__main__":
-    pytest.main([__file__, "-v", "--tb=short"])
+    pytest.main([__file__, "-v"])
