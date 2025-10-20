@@ -1,1178 +1,498 @@
-# circuit_breaker.py - Updated for module_adapters.py compatibility
+# circuit_breaker.py - COMPLETE UPDATE FOR 9 ADAPTERS
+# coding=utf-8
 """
-Advanced Circuit Breaker with AI-driven failure prediction and adaptive thresholds
-Implements cutting-edge fault tolerance with predictive analytics and self-healing
-Compatible with ModuleResult standardized format from module_adapters.py
+Advanced Circuit Breaker with Fault Tolerance
+==============================================
+
+Updated for complete integration with:
+- module_adapters_COMPLETE_MERGED.py (9 adapters, 413 methods)
+- ModuleResult standardized format
+- ExecutionChoreographer orchestration
+
+Implements:
+- Per-adapter circuit breaking
+- Failure tracking and analysis
+- Graceful degradation
+- Self-healing strategies
+- Fallback mechanisms
+
+Author: Integration Team
+Version: 3.0.0 - Complete Adapter Alignment
+Python: 3.10+
 """
+
 import logging
 import time
-import asyncio
-import numpy as np
-import pandas as pd
 from enum import Enum, IntEnum
-from typing import Dict, List, Any, Optional, Callable, Union, Tuple
+from typing import Dict, List, Any, Optional, Callable, Tuple
 from dataclasses import dataclass, field
 from collections import deque, defaultdict
-from concurrent.futures import ThreadPoolExecutor
-from threading import Thread, RLock
-import json
 from datetime import datetime, timedelta
-import warnings
-from scipy import stats
-from sklearn.ensemble import IsolationForest
-from sklearn.preprocessing import StandardScaler
-import pickle
-import hashlib
-
-from .config import CONFIG
+import statistics
 
 logger = logging.getLogger(__name__)
 
 
+# ============================================================================
+# CIRCUIT STATES AND FAILURE TRACKING
+# ============================================================================
+
 class CircuitState(IntEnum):
-    """Enhanced circuit states with numeric values for ML processing"""
-    CLOSED = 0
-    OPEN = 1
-    HALF_OPEN = 2
-    ISOLATED = 3  # New state for critical failures
-    RECOVERING = 4  # New state for active recovery
+    """Circuit breaker states"""
+    CLOSED = 0      # Normal operation
+    OPEN = 1        # Blocking requests
+    HALF_OPEN = 2   # Testing recovery
+    ISOLATED = 3    # Critical failures
+    RECOVERING = 4  # Active recovery
 
 
 class FailureSeverity(Enum):
-    """Classification of failure types"""
-    TRANSIENT = "transient"  # Temporary network issues, timeouts
-    DEGRADED = "degraded"  # Slow responses, partial failures
-    CRITICAL = "critical"  # Complete failures, exceptions
-    CATASTROPHIC = "catastrophic"  # System-wide failures
+    """Failure severity classification"""
+    TRANSIENT = "transient"      # Temporary issues
+    DEGRADED = "degraded"         # Partial failures
+    CRITICAL = "critical"         # Complete failures
+    CATASTROPHIC = "catastrophic" # System-wide failures
 
 
 @dataclass
 class FailureEvent:
-    """Detailed failure event tracking"""
+    """Individual failure event"""
     timestamp: float
     severity: FailureSeverity
     error_type: str
     error_message: str
     execution_time: float
-    context: Dict[str, Any]
-    stack_trace: Optional[str] = None
+    adapter_name: str
+    method_name: str = ""
     recovery_attempt: int = 0
 
 
 @dataclass
 class PerformanceMetrics:
-    """Comprehensive performance metrics"""
-    response_times: deque = field(default_factory=lambda: deque(maxlen=1000))
-    success_rates: deque = field(default_factory=lambda: deque(maxlen=100))
-    error_rates: deque = field(default_factory=lambda: deque(maxlen=100))
-    throughput: deque = field(default_factory=lambda: deque(maxlen=100))
-    resource_usage: deque = field(default_factory=lambda: deque(maxlen=100))
-
-    def add_measurement(self, response_time: float, success: bool,
-                        timestamp: float, resource_usage: float = 0.0):
-        """Add new performance measurement"""
+    """Performance tracking for an adapter"""
+    response_times: deque = field(default_factory=lambda: deque(maxlen=100))
+    success_count: int = 0
+    failure_count: int = 0
+    last_success: Optional[float] = None
+    last_failure: Optional[float] = None
+    
+    def add_success(self, response_time: float):
+        """Record successful execution"""
         self.response_times.append(response_time)
-        self.success_rates.append(1.0 if success else 0.0)
-        self.error_rates.append(0.0 if success else 1.0)
-
-        # Calculate throughput (requests per second)
-        if len(self.response_times) > 1:
-            time_window = timestamp - (self.response_times[0] if self.response_times else timestamp)
-            if time_window > 0:
-                self.throughput.append(len(self.response_times) / time_window)
-
-        self.resource_usage.append(resource_usage)
-
-
-@dataclass
-class AdaptiveThresholds:
-    """Dynamic thresholds that adapt based on historical performance"""
-    failure_threshold: float = 3.0
-    timeout_seconds: float = 60.0
-    half_open_max_calls: int = 5
-    success_threshold: int = 3
-
-    # Adaptive parameters
-    baseline_error_rate: float = 0.05
-    baseline_response_time: float = 1.0
-    adaptation_factor: float = 0.1
-    min_threshold: float = 1.0
-    max_threshold: float = 10.0
-
-    def adapt(self, metrics: PerformanceMetrics):
-        """Adapt thresholds based on recent performance"""
-        if len(metrics.error_rates) >= 10:
-            recent_error_rate = np.mean(list(metrics.error_rates)[-10:])
-            recent_response_time = np.mean(list(metrics.response_times)[-10:])
-
-            # Adjust failure threshold based on error rate deviation
-            error_deviation = recent_error_rate - self.baseline_error_rate
-            if error_deviation > 0.02:  # Error rate increased significantly
-                self.failure_threshold = max(
-                    self.min_threshold,
-                    self.failure_threshold * (1 - self.adaptation_factor)
-                )
-            elif error_deviation < -0.01:  # Error rate improved
-                self.failure_threshold = min(
-                    self.max_threshold,
-                    self.failure_threshold * (1 + self.adaptation_factor * 0.5)
-                )
-
-            # Adjust timeout based on response time
-            response_deviation = recent_response_time - self.baseline_response_time
-            if response_deviation > 0.5:  # Responses slower than baseline
-                self.timeout_seconds = min(300, self.timeout_seconds * 1.2)
-            elif response_deviation < -0.2:  # Responses faster than baseline
-                self.timeout_seconds = max(30, self.timeout_seconds * 0.9)
-
-
-class PredictiveFailureDetector:
-    """ML-based failure prediction system"""
-
-    def __init__(self):
-        self.isolation_forest = IsolationForest(
-            contamination=0.1,
-            random_state=42,
-            n_estimators=100
-        )
-        self.scaler = StandardScaler()
-        self.is_trained = False
-        self.feature_history = deque(maxlen=1000)
-        self.prediction_window = 20  # Number of recent measurements to consider
-
-    def extract_features(self, metrics: PerformanceMetrics) -> np.ndarray:
-        """Extract features for ML prediction"""
-        if len(metrics.response_times) < self.prediction_window:
-            return np.array([])
-
-        recent_rt = list(metrics.response_times)[-self.prediction_window:]
-        recent_er = list(metrics.error_rates)[-self.prediction_window:]
-        recent_thr = list(metrics.throughput)[-self.prediction_window:]
-
-        features = [
-            np.mean(recent_rt),
-            np.std(recent_rt),
-            np.max(recent_rt),
-            np.min(recent_rt),
-            np.mean(recent_er),
-            np.std(recent_er),
-            np.max(recent_er),
-            np.mean(recent_thr) if recent_thr else 0,
-            np.std(recent_thr) if recent_thr else 0,
-            # Trend features
-            np.polyfit(range(len(recent_rt)), recent_rt, 1)[0] if len(recent_rt) > 1 else 0,
-            np.polyfit(range(len(recent_er)), recent_er, 1)[0] if len(recent_er) > 1 else 0,
-        ]
-
-        return np.array(features)
-
-    def train(self, historical_data: List[np.ndarray]):
-        """Train the failure prediction model"""
-        if len(historical_data) < 50:
-            logger.warning("Insufficient data for training failure predictor")
-            return
-
-        X = np.array(historical_data)
-        X_scaled = self.scaler.fit_transform(X)
-        self.isolation_forest.fit(X_scaled)
-        self.is_trained = True
-        logger.info("Failure prediction model trained successfully")
-
-    def predict_failure(self, metrics: PerformanceMetrics) -> Tuple[bool, float]:
-        """Predict if failure is imminent"""
-        if not self.is_trained:
-            return False, 0.0
-
-        features = self.extract_features(metrics)
-        if len(features) == 0:
-            return False, 0.0
-
-        features_scaled = self.scaler.transform(features.reshape(1, -1))
-        anomaly_score = self.isolation_forest.decision_function(features_scaled)[0]
-
-        # Lower anomaly score indicates more likely failure
-        failure_probability = 1.0 / (1.0 + np.exp(anomaly_score))
-        is_imminent = failure_probability > 0.7
-
-        return is_imminent, failure_probability
-
-
-class CircuitBreakerMetrics:
-    """Comprehensive metrics for circuit breaker analysis"""
-
-    def __init__(self):
-        self.total_requests = 0
-        self.successful_requests = 0
-        self.failed_requests = 0
-        self.circuit_open_count = 0
-        self.circuit_close_count = 0
-        self.fallback_usage_count = 0
-        self.prediction_accuracy = deque(maxlen=100)
-        self.state_transitions = []
-        self.failure_events = []
-        self.performance_metrics = PerformanceMetrics()
-        self.last_success_time: Optional[float] = None
-        self.last_failure_time: Optional[float] = None
-
-    @property
-    def failure_rate(self) -> float:
-        """Calculate current failure rate"""
-        if self.total_requests == 0:
-            return 0.0
-        return self.failed_requests / self.total_requests
-
+        self.success_count += 1
+        self.last_success = time.time()
+    
+    def add_failure(self, response_time: float):
+        """Record failed execution"""
+        self.response_times.append(response_time)
+        self.failure_count += 1
+        self.last_failure = time.time()
+    
     @property
     def success_rate(self) -> float:
-        """Calculate current success rate"""
-        return 1.0 - self.failure_rate
-
+        """Calculate success rate"""
+        total = self.success_count + self.failure_count
+        if total == 0:
+            return 1.0
+        return self.success_count / total
+    
     @property
     def avg_response_time(self) -> float:
         """Calculate average response time"""
-        if not self.performance_metrics.response_times:
+        if not self.response_times:
             return 0.0
-        return np.mean(list(self.performance_metrics.response_times))
-
-    def add_failure_event(self, event: FailureEvent):
-        """Add a failure event to the history"""
-        self.failure_events.append(event)
-        # Keep only recent events
-        if len(self.failure_events) > 1000:
-            self.failure_events = self.failure_events[-1000:]
-
-    def record_state_transition(self, from_state: CircuitState, to_state: CircuitState,
-                                reason: str, timestamp: float):
-        """Record a state transition"""
-        self.state_transitions.append({
-            "from": from_state.name,
-            "to": to_state.name,
-            "reason": reason,
-            "timestamp": timestamp
-        })
-
-        if to_state == CircuitState.OPEN:
-            self.circuit_open_count += 1
-        elif to_state == CircuitState.CLOSED:
-            self.circuit_close_count += 1
+        return statistics.mean(self.response_times)
 
 
-class AdvancedCircuitBreaker:
+# ============================================================================
+# CIRCUIT BREAKER
+# ============================================================================
+
+class CircuitBreaker:
     """
-    State-of-the-Art Circuit Breaker with:
-    - Adaptive thresholds
-    - Predictive failure detection
-    - Comprehensive observability
-    - Self-healing capabilities
-    - Resource-aware routing
-    - Compatible with ModuleResult format from module_adapters.py
+    Circuit breaker for 9 adapters with fault tolerance
+    
+    Features:
+    - Per-adapter circuit states
+    - Failure threshold monitoring
+    - Automatic recovery testing
+    - Graceful degradation
+    - Fallback strategies
     """
 
     def __init__(
             self,
-            module_name: str,
-            failure_threshold: Optional[float] = None,
-            timeout_seconds: Optional[float] = None,
-            half_open_max_calls: Optional[int] = None,
-            success_threshold: Optional[int] = None,
-            enable_prediction: bool = True,
-            enable_adaptation: bool = True
+            failure_threshold: int = 5,
+            recovery_timeout: float = 60.0,
+            half_open_max_calls: int = 3
     ):
-        self.module_name = module_name
-        self.logger = logging.getLogger(f"{__name__}.{module_name}")
-
-        # Circuit state
-        self.state = CircuitState.CLOSED
-        self.state_lock = RLock()
-
-        # Configuration
-        self.thresholds = AdaptiveThresholds(
-            failure_threshold=failure_threshold or CONFIG.circuit_breaker_failure_threshold,
-            timeout_seconds=timeout_seconds or CONFIG.circuit_breaker_timeout,
-            half_open_max_calls=half_open_max_calls or CONFIG.circuit_breaker_half_open_max_calls,
-            success_threshold=success_threshold or CONFIG.circuit_breaker_success_threshold
-        )
-
-        # Metrics and tracking
-        self.metrics = CircuitBreakerMetrics()
-        self.consecutive_failures = 0
-        self.half_open_calls = 0
-        self.half_open_successes = 0
-
-        # Advanced features
-        self.enable_prediction = enable_prediction
-        self.enable_adaptation = enable_adaptation
-        self.predictor = PredictiveFailureDetector() if enable_prediction else None
-
-        # Recovery mechanisms
-        self.recovery_strategies = []
-        self.active_recovery = None
-        self.recovery_start_time: Optional[float] = None
-
-        # Observability
-        self.observers = []
-        self.event_history = deque(maxlen=10000)
-
-        # Health check
-        self.health_check_interval = 30.0  # seconds
-        self.last_health_check = 0.0
-
-        self.logger.info(f"Advanced Circuit Breaker initialized for {module_name}")
-
-    def call(
-            self,
-            func: Callable,
-            *args,
-            fallback: Optional[Callable] = None,
-            context: Optional[Dict[str, Any]] = None,
-            timeout: Optional[float] = None,
-            **kwargs
-    ) -> Any:
         """
-        Execute a function with advanced circuit breaker protection.
-
+        Initialize circuit breaker
+        
         Args:
-            func: Function to execute
-            *args, **kwargs: Arguments to pass to func
-            fallback: Optional fallback function
-            context: Execution context for observability
-            timeout: Custom timeout for this call
-
-        Returns:
-            Result from func or fallback
+            failure_threshold: Failures before opening circuit
+            recovery_timeout: Seconds before testing recovery
+            half_open_max_calls: Max calls in half-open state
         """
-        start_time = time.time()
-        execution_context = context or {}
-        execution_context["call_id"] = hashlib.md5(
-            f"{self.module_name}_{start_time}".encode()
-        ).hexdigest()[:8]
-
-        try:
-            with self.state_lock:
-                current_state = self.state
-
-                # Check if circuit should transition based on predictions
-                if self.enable_prediction and self.predictor:
-                    is_imminent, probability = self.predictor.predict_failure(
-                        self.metrics.performance_metrics
-                    )
-                    if is_imminent and current_state == CircuitState.CLOSED:
-                        self.logger.warning(
-                            f"Predictive failure detected for {self.module_name} "
-                            f"(probability: {probability:.2f})"
-                        )
-                        self._transition_to_open("predictive_failure")
-                        current_state = CircuitState.OPEN
-
-                # Handle different states
-                if current_state == CircuitState.OPEN:
-                    if self._should_attempt_reset():
-                        self._transition_to_half_open("timeout_expired")
-                    else:
-                        self.metrics.fallback_usage_count += 1
-                        if fallback:
-                            self.logger.info(f"Using fallback for {self.module_name}")
-                            return fallback(*args, **kwargs)
-                        else:
-                            raise CircuitBreakerError(
-                                f"Circuit breaker is OPEN for {self.module_name}"
-                            )
-
-                elif current_state == CircuitState.HALF_OPEN:
-                    if self.half_open_calls >= self.thresholds.half_open_max_calls:
-                        self.metrics.fallback_usage_count += 1
-                        if fallback:
-                            return fallback(*args, **kwargs)
-                        else:
-                            raise CircuitBreakerError(
-                                f"HALF_OPEN call limit exceeded for {self.module_name}"
-                            )
-                    self.half_open_calls += 1
-
-                elif current_state == CircuitState.ISOLATED:
-                    self.metrics.fallback_usage_count += 1
-                    if fallback:
-                        return fallback(*args, **kwargs)
-                    else:
-                        raise CircuitBreakerError(
-                            f"Module {self.module_name} is isolated"
-                        )
-
-            # Execute the function
-            self.metrics.total_requests += 1
-
-            # Monitor resource usage
-            resource_usage_start = self._get_resource_usage()
-
-            # Execute with timeout
-            actual_timeout = timeout or self.thresholds.timeout_seconds
-            result = self._execute_with_timeout(func, actual_timeout, *args, **kwargs)
-
-            # Calculate execution metrics
-            execution_time = time.time() - start_time
-            resource_usage_end = self._get_resource_usage()
-            resource_usage_delta = resource_usage_end - resource_usage_start
-
-            # Record success
-            self._record_success(execution_time, resource_usage_delta, execution_context)
-
-            return result
-
-        except Exception as e:
-            execution_time = time.time() - start_time
-
-            # Classify failure severity
-            severity = self._classify_failure(e, execution_time)
-
-            # Record failure
-            failure_event = FailureEvent(
-                timestamp=start_time,
-                severity=severity,
-                error_type=type(e).__name__,
-                error_message=str(e),
-                execution_time=execution_time,
-                context=execution_context,
-                stack_trace=self._get_stack_trace()
-            )
-
-            self._record_failure(failure_event)
-
-            # Try fallback
-            if fallback:
-                self.logger.info(f"Executing fallback for {self.module_name} after failure")
-                try:
-                    fallback_result = fallback(*args, **kwargs)
-                    self.metrics.fallback_usage_count += 1
-                    return fallback_result
-                except Exception as fallback_error:
-                    self.logger.error(f"Fallback also failed for {self.module_name}: {fallback_error}")
-                    raise
-            else:
-                raise
-
-    def _execute_with_timeout(self, func: Callable, timeout: float, *args, **kwargs) -> Any:
-        """Execute function with timeout handling"""
-        if timeout <= 0:
-            return func(*args, **kwargs)
-
-        # Use asyncio for timeout if function is async
-        if asyncio.iscoroutinefunction(func):
-            try:
-                loop = asyncio.get_event_loop()
-            except RuntimeError:
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-
-            return loop.run_until_complete(
-                asyncio.wait_for(func(*args, **kwargs), timeout=timeout)
-            )
-
-        # For sync functions, use ThreadPoolExecutor
-        with ThreadPoolExecutor(max_workers=1) as executor:
-            future = executor.submit(func, *args, **kwargs)
-            try:
-                return future.result(timeout=timeout)
-            except TimeoutError:
-                future.cancel()
-                raise CircuitBreakerError(f"Timeout after {timeout}s for {self.module_name}")
-
-    def _record_success(self, execution_time: float, resource_usage: float,
-                        context: Dict[str, Any]):
-        """Record a successful execution"""
-        with self.state_lock:
-            self.metrics.successful_requests += 1
-            self.consecutive_failures = 0
-            self.metrics.last_success_time = time.time()
-
-            # Update performance metrics
-            self.metrics.performance_metrics.add_measurement(
-                execution_time, True, time.time(), resource_usage
-            )
-
-            # Handle HALF_OPEN state
-            if self.state == CircuitState.HALF_OPEN:
-                self.half_open_successes += 1
-                if self.half_open_successes >= self.thresholds.success_threshold:
-                    self._transition_to_closed("recovery_confirmed")
-
-            # Adapt thresholds if enabled
-            if self.enable_adaptation:
-                self.thresholds.adapt(self.metrics.performance_metrics)
-
-            # Notify observers
-            self._notify_observers("success", {
-                "execution_time": execution_time,
-                "resource_usage": resource_usage,
-                "context": context
-            })
-
-    def _record_failure(self, event: FailureEvent):
-        """Record a failure event"""
-        with self.state_lock:
-            self.metrics.failed_requests += 1
-            self.consecutive_failures += 1
-            self.metrics.last_failure_time = event.timestamp
-            self.metrics.add_failure_event(event)
-
-            # Update performance metrics
-            self.metrics.performance_metrics.add_measurement(
-                event.execution_time, False, event.timestamp
-            )
-
-            # Check if should open circuit
-            if self.consecutive_failures >= self.thresholds.failure_threshold:
-                if event.severity in [FailureSeverity.CRITICAL, FailureSeverity.CATASTROPHIC]:
-                    self._transition_to_isolated(f"critical_failure_{event.severity.value}")
-                else:
-                    self._transition_to_open("failure_threshold_exceeded")
-
-            # Notify observers
-            self._notify_observers("failure", {
-                "event": event,
-                "consecutive_failures": self.consecutive_failures
-            })
-
-    def _transition_to_open(self, reason: str):
-        """Transition circuit to OPEN state"""
-        old_state = self.state
-        self.state = CircuitState.OPEN
-
-        self.metrics.record_state_transition(
-            old_state, CircuitState.OPEN, reason, time.time()
-        )
-
-        self.logger.warning(
-            f"Circuit OPENED for {self.module_name} "
-            f"({self.consecutive_failures} consecutive failures) - {reason}"
-        )
-
-        # Start recovery timer
-        self._schedule_recovery_attempt()
-
-    def _transition_to_half_open(self, reason: str):
-        """Transition circuit to HALF_OPEN state"""
-        old_state = self.state
-        self.state = CircuitState.HALF_OPEN
-
-        # Reset half-open counters
-        self.half_open_calls = 0
-        self.half_open_successes = 0
-
-        self.metrics.record_state_transition(
-            old_state, CircuitState.HALF_OPEN, reason, time.time()
-        )
-
-        self.logger.info(f"Circuit HALF-OPEN for {self.module_name}, testing recovery - {reason}")
-
-    def _transition_to_closed(self, reason: str):
-        """Transition circuit to CLOSED state"""
-        old_state = self.state
-        self.state = CircuitState.CLOSED
-
-        self.metrics.record_state_transition(
-            old_state, CircuitState.CLOSED, reason, time.time()
-        )
-
-        self.logger.info(f"Circuit CLOSED for {self.module_name}, normal operation resumed - {reason}")
-
-        # Train predictor with new data
-        if self.enable_prediction and self.predictor:
-            self._train_predictor()
-
-    def _transition_to_isolated(self, reason: str):
-        """Transition circuit to ISOLATED state (critical failures)"""
-        old_state = self.state
-        self.state = CircuitState.ISOLATED
-
-        self.metrics.record_state_transition(
-            old_state, CircuitState.ISOLATED, reason, time.time()
-        )
-
-        self.logger.error(
-            f"Circuit ISOLATED for {self.module_name} due to critical failure - {reason}"
-        )
-
-        # Schedule manual intervention notification
-        self._notify_manual_intervention(reason)
-
-    def _should_attempt_reset(self) -> bool:
-        """Check if enough time has passed to attempt reset"""
-        if self.metrics.last_failure_time is None:
-            return True
-
-        time_since_failure = time.time() - self.metrics.last_failure_time
-        return time_since_failure >= self.thresholds.timeout_seconds
-
-    def _classify_failure(self, exception: Exception, execution_time: float) -> FailureSeverity:
-        """Classify the severity of a failure"""
-        if isinstance(exception, TimeoutError):
-            return FailureSeverity.TRANSIENT
-        elif isinstance(exception, ConnectionError):
-            return FailureSeverity.DEGRADED
-        elif execution_time > self.thresholds.timeout_seconds * 2:
-            return FailureSeverity.CRITICAL
-        elif "critical" in str(exception).lower() or "fatal" in str(exception).lower():
-            return FailureSeverity.CRITICAL
-        else:
-            return FailureSeverity.DEGRADED
-
-    def _get_resource_usage(self) -> float:
-        """Get current resource usage (CPU/Memory)"""
-        try:
-            import psutil
-            process = psutil.Process()
-            return process.cpu_percent() + process.memory_percent()
-        except ImportError:
-            return 0.0
-
-    def _get_stack_trace(self) -> Optional[str]:
-        """Get current stack trace"""
-        import traceback
-        return traceback.format_exc()
-
-    def _schedule_recovery_attempt(self):
-        """Schedule an automatic recovery attempt"""
-
-        def recovery_worker():
-            time.sleep(self.thresholds.timeout_seconds)
-            with self.state_lock:
-                if self.state == CircuitState.OPEN:
-                    self._transition_to_half_open("scheduled_recovery")
-
-        Thread(target=recovery_worker, daemon=True).start()
-
-    def _train_predictor(self):
-        """Train the failure prediction model"""
-        if not self.predictor or len(self.metrics.failure_events) < 50:
-            return
-
-        # Extract features from historical data
-        feature_data = []
-        for event in self.metrics.failure_events[-500:]:  # Use last 500 events
-            # Extract features from the time window around the event
-            features = self.predictor.extract_features(self.metrics.performance_metrics)
-            if len(features) > 0:
-                feature_data.append(features)
-
-        if len(feature_data) >= 50:
-            self.predictor.train(feature_data)
-
-    def _notify_observers(self, event_type: str, data: Dict[str, Any]):
-        """Notify all registered observers"""
-        for observer in self.observers:
-            try:
-                observer(self.module_name, event_type, data)
-            except Exception as e:
-                self.logger.error(f"Observer notification failed: {e}")
-
-    def _notify_manual_intervention(self, reason: str):
-        """Notify about need for manual intervention"""
-        self.logger.critical(
-            f"MANUAL INTERVENTION REQUIRED for {self.module_name}: {reason}"
-        )
-        # In production, this would send alerts to monitoring systems
-
-    # Public API methods
-
-    def is_available(self) -> bool:
-        """Check if the circuit is available for calls"""
-        with self.state_lock:
-            return self.state in [CircuitState.CLOSED, CircuitState.HALF_OPEN]
-
-    def force_open(self, reason: str = "manual"):
-        """Manually force the circuit open"""
-        with self.state_lock:
-            self._transition_to_open(reason)
-
-    def force_close(self, reason: str = "manual"):
-        """Manually force the circuit closed"""
-        with self.state_lock:
-            self._transition_to_closed(reason)
-
-    def reset(self):
-        """Reset the circuit breaker to initial state"""
-        with self.state_lock:
-            self.state = CircuitState.CLOSED
-            self.consecutive_failures = 0
-            self.half_open_calls = 0
-            self.half_open_successes = 0
-            self.metrics = CircuitBreakerMetrics()
-            self.logger.info(f"Circuit breaker reset for {self.module_name}")
-
-    def add_observer(self, observer: Callable):
-        """Add an observer for circuit events"""
-        self.observers.append(observer)
-
-    def remove_observer(self, observer: Callable):
-        """Remove an observer"""
-        if observer in self.observers:
-            self.observers.remove(observer)
-
-    def get_health_status(self) -> Dict[str, Any]:
-        """Get comprehensive health status"""
-        with self.state_lock:
-            return {
-                "module": self.module_name,
-                "state": self.state.name,
-                "consecutive_failures": self.consecutive_failures,
-                "total_requests": self.metrics.total_requests,
-                "success_rate": self.metrics.success_rate,
-                "failure_rate": self.metrics.failure_rate,
-                "avg_response_time": self.metrics.avg_response_time,
-                "last_failure": self.metrics.last_failure_time,
-                "last_success": self.metrics.last_success_time,
-                "circuit_opens": self.metrics.circuit_open_count,
-                "circuit_closes": self.metrics.circuit_close_count,
-                "fallback_usage": self.metrics.fallback_usage_count,
-                "thresholds": {
-                    "failure_threshold": self.thresholds.failure_threshold,
-                    "timeout": self.thresholds.timeout_seconds,
-                    "half_open_max_calls": self.thresholds.half_open_max_calls
-                },
-                "predictive_enabled": self.enable_prediction,
-                "adaptive_enabled": self.enable_adaptation
-            }
-
-    def get_detailed_metrics(self) -> Dict[str, Any]:
-        """Get detailed metrics for analysis"""
-        with self.state_lock:
-            recent_failures = [
-                {
-                    "timestamp": f.timestamp,
-                    "severity": f.severity.value,
-                    "error_type": f.error_type,
-                    "execution_time": f.execution_time
-                }
-                for f in list(self.metrics.failure_events)[-10:]
-            ]
-
-            return {
-                "health": self.get_health_status(),
-                "recent_failures": recent_failures,
-                "state_transitions": self.metrics.state_transitions[-20:],
-                "performance": {
-                    "response_times": list(self.metrics.performance_metrics.response_times)[-100:],
-                    "error_rates": list(self.metrics.performance_metrics.error_rates)[-100:],
-                    "throughput": list(self.metrics.performance_metrics.throughput)[-100:]
-                },
-                "prediction": {
-                    "enabled": self.enable_prediction,
-                    "trained": self.predictor.is_trained if self.predictor else False
-                }
-            }
-
-
-class CircuitBreaker:
-    """
-    Simplified Circuit Breaker interface for backward compatibility.
-    Wraps AdvancedCircuitBreaker with a simpler API.
-    """
-
-    def __init__(self):
-        self.circuit_breakers: Dict[str, AdvancedCircuitBreaker] = {}
-        self.global_observers = []
-        self.metrics_aggregator = CircuitBreakerMetricsAggregator()
-        self.logger = logging.getLogger(__name__)
-
-    def call(
-            self,
-            module_name: str,
-            func: Callable,
-            fallback: Optional[Callable] = None,
-            *args,
-            **kwargs
-    ) -> Any:
-        """
-        Execute a function with circuit breaker protection.
-
-        Args:
-            module_name: Name of the module
-            func: Function to execute
-            fallback: Optional fallback function
-            *args, **kwargs: Arguments to pass to func
-
-        Returns:
-            Result from func or fallback
-        """
-        circuit_breaker = self._get_or_create_circuit_breaker(module_name)
-        return circuit_breaker.call(func, *args, fallback=fallback, **kwargs)
-
-    def is_available(self, module_name: str) -> bool:
-        """Check if a module is available (circuit not open)"""
-        if module_name not in self.circuit_breakers:
-            return True
-        return self.circuit_breakers[module_name].is_available()
-
-    def _get_or_create_circuit_breaker(self, module_name: str) -> AdvancedCircuitBreaker:
-        """Get or create a circuit breaker for a module"""
-        if module_name not in self.circuit_breakers:
-            self.circuit_breakers[module_name] = AdvancedCircuitBreaker(
-                module_name,
-                enable_prediction=True,
-                enable_adaptation=True
-            )
-            # Add global observer
-            self.circuit_breakers[module_name].add_observer(
-                self._global_observer
-            )
-            self.logger.info(f"Created circuit breaker for module: {module_name}")
-        return self.circuit_breakers[module_name]
-
-    def _global_observer(self, module_name: str, event_type: str, data: Dict[str, Any]):
-        """Global observer for all circuit events"""
-        self.metrics_aggregator.record_event(module_name, event_type, data)
-
-    def get_health_summary(self) -> Dict[str, Any]:
-        """Get health summary for all circuit breakers"""
-        statuses = {}
-        for module_name, cb in self.circuit_breakers.items():
-            statuses[module_name] = cb.get_health_status()
-
-        total_modules = len(statuses)
-        if total_modules == 0:
-            return {
-                "total_modules": 0,
-                "healthy_modules": 0,
-                "degraded_modules": 0,
-                "unhealthy_modules": 0,
-                "health_percentage": 100.0,
-                "avg_success_rate": 1.0,
-                "timestamp": datetime.now().isoformat()
-            }
-
-        healthy = sum(1 for s in statuses.values() if s["state"] == "CLOSED")
-        degraded = sum(1 for s in statuses.values() if s["state"] == "HALF_OPEN")
-        unhealthy = sum(1 for s in statuses.values() if s["state"] in ["OPEN", "ISOLATED"])
-
-        success_rates = [s["success_rate"] for s in statuses.values() if s["total_requests"] > 0]
-        avg_success_rate = np.mean(success_rates) if success_rates else 1.0
-
-        return {
-            "total_modules": total_modules,
-            "healthy_modules": healthy,
-            "degraded_modules": degraded,
-            "unhealthy_modules": unhealthy,
-            "health_percentage": (healthy / total_modules * 100) if total_modules > 0 else 100,
-            "avg_success_rate": avg_success_rate,
-            "timestamp": datetime.now().isoformat(),
-            "module_statuses": statuses
-        }
-
-    def get_all_metrics(self) -> Dict[str, Dict[str, Any]]:
-        """Get detailed metrics for all circuit breakers"""
-        return {
-            module_name: cb.get_detailed_metrics()
-            for module_name, cb in self.circuit_breakers.items()
-        }
-
-    def reset_all(self):
-        """Reset all circuit breakers"""
-        for cb in self.circuit_breakers.values():
-            cb.reset()
-        self.logger.info("All circuit breakers reset")
-
-    def force_open(self, module_name: str, reason: str = "manual"):
-        """Force open a specific circuit breaker"""
-        if module_name in self.circuit_breakers:
-            self.circuit_breakers[module_name].force_open(reason)
-
-    def force_close(self, module_name: str, reason: str = "manual"):
-        """Force close a specific circuit breaker"""
-        if module_name in self.circuit_breakers:
-            self.circuit_breakers[module_name].force_close(reason)
-
-
-class CircuitBreakerMetricsAggregator:
-    """Aggregates metrics from all circuit breakers"""
-
-    def __init__(self):
-        self.events = deque(maxlen=10000)
-        self.module_metrics = defaultdict(lambda: defaultdict(list))
-
-    def record_event(self, module_name: str, event_type: str, data: Dict[str, Any]):
-        """Record an event from a circuit breaker"""
-        event = {
-            "module": module_name,
-            "event_type": event_type,
-            "timestamp": time.time(),
-            "data": data
-        }
-        self.events.append(event)
-        self.module_metrics[module_name][event_type].append(event)
-
-    def get_failure_patterns(self) -> Dict[str, Any]:
-        """Analyze failure patterns across modules"""
-        failure_events = [
-            e for e in self.events
-            if e["event_type"] == "failure"
+        self.failure_threshold = failure_threshold
+        self.recovery_timeout = recovery_timeout
+        self.half_open_max_calls = half_open_max_calls
+        
+        # Per-adapter state
+        self.adapter_states: Dict[str, CircuitState] = {}
+        self.adapter_failures: Dict[str, deque] = {}
+        self.adapter_metrics: Dict[str, PerformanceMetrics] = {}
+        self.last_state_change: Dict[str, float] = {}
+        self.half_open_calls: Dict[str, int] = {}
+        
+        # Initialize for 9 adapters
+        self.adapters = [
+            "teoria_cambio",
+            "analyzer_one",
+            "dereck_beach",
+            "embedding_policy",
+            "semantic_chunking_policy",
+            "contradiction_detection",
+            "financial_viability",
+            "policy_processor",
+            "policy_segmenter"
         ]
+        
+        for adapter in self.adapters:
+            self._initialize_adapter(adapter)
+        
+        logger.info(
+            f"CircuitBreaker initialized for {len(self.adapters)} adapters "
+            f"(threshold={failure_threshold}, timeout={recovery_timeout}s)"
+        )
 
-        if not failure_events:
-            return {
-                "hourly_pattern": {},
-                "error_types": {},
-                "total_failures": 0
-            }
+    def _initialize_adapter(self, adapter_name: str):
+        """Initialize state for an adapter"""
+        self.adapter_states[adapter_name] = CircuitState.CLOSED
+        self.adapter_failures[adapter_name] = deque(maxlen=self.failure_threshold * 2)
+        self.adapter_metrics[adapter_name] = PerformanceMetrics()
+        self.last_state_change[adapter_name] = time.time()
+        self.half_open_calls[adapter_name] = 0
 
-        # Group by hour
-        hourly_failures = defaultdict(int)
-        for event in failure_events:
-            hour = datetime.fromtimestamp(event["timestamp"]).hour
-            hourly_failures[hour] += 1
+    def can_execute(self, adapter_name: str) -> bool:
+        """
+        Check if adapter can execute
+        
+        Args:
+            adapter_name: Adapter to check
+            
+        Returns:
+            True if adapter can execute
+        """
+        if adapter_name not in self.adapter_states:
+            self._initialize_adapter(adapter_name)
+        
+        state = self.adapter_states[adapter_name]
+        
+        # CLOSED: Normal operation
+        if state == CircuitState.CLOSED:
+            return True
+        
+        # OPEN: Check if recovery timeout passed
+        if state == CircuitState.OPEN:
+            time_since_open = time.time() - self.last_state_change[adapter_name]
+            if time_since_open >= self.recovery_timeout:
+                # Try recovery
+                self._transition_to_half_open(adapter_name)
+                return True
+            return False
+        
+        # HALF_OPEN: Allow limited calls
+        if state == CircuitState.HALF_OPEN:
+            if self.half_open_calls[adapter_name] < self.half_open_max_calls:
+                self.half_open_calls[adapter_name] += 1
+                return True
+            return False
+        
+        # ISOLATED/RECOVERING: Block all
+        return False
 
-        # Group by error type
-        error_types = defaultdict(int)
-        for event in failure_events:
-            if "event" in event["data"]:
-                error_type = event["data"]["event"].error_type
-                error_types[error_type] += 1
+    def record_success(self, adapter_name: str, execution_time: float = 0.0):
+        """
+        Record successful execution
+        
+        Args:
+            adapter_name: Adapter that succeeded
+            execution_time: Execution time in seconds
+        """
+        if adapter_name not in self.adapter_metrics:
+            self._initialize_adapter(adapter_name)
+        
+        # Update metrics
+        self.adapter_metrics[adapter_name].add_success(execution_time)
+        
+        state = self.adapter_states[adapter_name]
+        
+        # HALF_OPEN: Check if we can close circuit
+        if state == CircuitState.HALF_OPEN:
+            if self.half_open_calls[adapter_name] >= self.half_open_max_calls:
+                # All test calls succeeded, close circuit
+                self._transition_to_closed(adapter_name)
+        
+        logger.debug(f"{adapter_name}: Success recorded (state={state.name})")
 
+    def record_failure(
+            self,
+            adapter_name: str,
+            error: str,
+            execution_time: float = 0.0,
+            severity: FailureSeverity = FailureSeverity.CRITICAL
+    ):
+        """
+        Record failed execution
+        
+        Args:
+            adapter_name: Adapter that failed
+            error: Error message
+            execution_time: Execution time in seconds
+            severity: Failure severity
+        """
+        if adapter_name not in self.adapter_metrics:
+            self._initialize_adapter(adapter_name)
+        
+        # Create failure event
+        failure = FailureEvent(
+            timestamp=time.time(),
+            severity=severity,
+            error_type=type(error).__name__ if isinstance(error, Exception) else "Error",
+            error_message=str(error),
+            execution_time=execution_time,
+            adapter_name=adapter_name
+        )
+        
+        # Update metrics
+        self.adapter_metrics[adapter_name].add_failure(execution_time)
+        self.adapter_failures[adapter_name].append(failure)
+        
+        state = self.adapter_states[adapter_name]
+        
+        # CLOSED: Check if we should open
+        if state == CircuitState.CLOSED:
+            recent_failures = self._count_recent_failures(adapter_name)
+            if recent_failures >= self.failure_threshold:
+                self._transition_to_open(adapter_name)
+        
+        # HALF_OPEN: Immediate open on failure
+        elif state == CircuitState.HALF_OPEN:
+            self._transition_to_open(adapter_name)
+        
+        logger.warning(
+            f"{adapter_name}: Failure recorded (state={state.name}, "
+            f"recent_failures={self._count_recent_failures(adapter_name)})"
+        )
+
+    def _count_recent_failures(self, adapter_name: str, window: float = 60.0) -> int:
+        """Count failures in recent time window"""
+        if adapter_name not in self.adapter_failures:
+            return 0
+        
+        cutoff = time.time() - window
+        return sum(
+            1 for f in self.adapter_failures[adapter_name]
+            if f.timestamp >= cutoff
+        )
+
+    def _transition_to_open(self, adapter_name: str):
+        """Transition adapter to OPEN state"""
+        self.adapter_states[adapter_name] = CircuitState.OPEN
+        self.last_state_change[adapter_name] = time.time()
+        self.half_open_calls[adapter_name] = 0
+        logger.warning(f"{adapter_name}: Circuit OPENED")
+
+    def _transition_to_half_open(self, adapter_name: str):
+        """Transition adapter to HALF_OPEN state"""
+        self.adapter_states[adapter_name] = CircuitState.HALF_OPEN
+        self.last_state_change[adapter_name] = time.time()
+        self.half_open_calls[adapter_name] = 0
+        logger.info(f"{adapter_name}: Circuit HALF_OPEN (testing recovery)")
+
+    def _transition_to_closed(self, adapter_name: str):
+        """Transition adapter to CLOSED state"""
+        self.adapter_states[adapter_name] = CircuitState.CLOSED
+        self.last_state_change[adapter_name] = time.time()
+        self.half_open_calls[adapter_name] = 0
+        logger.info(f"{adapter_name}: Circuit CLOSED (recovered)")
+
+    def get_adapter_status(self, adapter_name: str) -> Dict[str, Any]:
+        """Get detailed status for an adapter"""
+        if adapter_name not in self.adapter_states:
+            return {"error": "Adapter not found"}
+        
+        metrics = self.adapter_metrics[adapter_name]
+        
         return {
-            "hourly_pattern": dict(hourly_failures),
-            "error_types": dict(error_types),
-            "total_failures": len(failure_events)
+            "adapter": adapter_name,
+            "state": self.adapter_states[adapter_name].name,
+            "success_rate": metrics.success_rate,
+            "total_calls": metrics.success_count + metrics.failure_count,
+            "successes": metrics.success_count,
+            "failures": metrics.failure_count,
+            "avg_response_time": metrics.avg_response_time,
+            "recent_failures": self._count_recent_failures(adapter_name),
+            "last_success": metrics.last_success,
+            "last_failure": metrics.last_failure,
+            "time_since_state_change": time.time() - self.last_state_change[adapter_name]
         }
 
-    def get_module_statistics(self, module_name: str) -> Dict[str, Any]:
-        """Get statistics for a specific module"""
-        if module_name not in self.module_metrics:
-            return {}
-
-        metrics = self.module_metrics[module_name]
-        total_events = sum(len(events) for events in metrics.values())
-
+    def get_all_status(self) -> Dict[str, Dict[str, Any]]:
+        """Get status for all adapters"""
         return {
-            "total_events": total_events,
-            "success_count": len(metrics.get("success", [])),
-            "failure_count": len(metrics.get("failure", [])),
-            "event_types": {
-                event_type: len(events)
-                for event_type, events in metrics.items()
-            }
+            adapter: self.get_adapter_status(adapter)
+            for adapter in self.adapters
         }
 
-
-class CircuitBreakerError(Exception):
-    """Raised when circuit breaker blocks execution"""
-    pass
-
-
-# Convenience function for creating module-specific fallbacks
-def create_module_specific_fallback(module_name: str) -> Callable:
-    """
-    Create a module-specific fallback function that returns degraded responses
-    compatible with ModuleResult format from module_adapters.py
-    """
-
-    def fallback(*args, **kwargs) -> Dict[str, Any]:
-        logger.warning(f"Using fallback for {module_name}")
-
-        # Return module-specific degraded response compatible with ModuleResult
-        fallback_responses = {
-            "contradiction_detector": {
-                "contradictions": [],
-                "coherence_metrics": {"coherence_score": 0.5},
-                "status": "degraded",
-                "message": "Contradiction detection unavailable, using fallback"
-            },
-            "causal_processor": {
-                "causal_dag": None,
-                "causal_dimensions": {},
-                "information_gain": 0.0,
-                "status": "degraded",
-                "message": "Causal processing unavailable, using fallback"
-            },
-            "dereck_beach": {
-                "causal_hierarchy": None,
-                "mechanism_parts": [],
-                "mechanism_inferences": [],
-                "bayesian_confidence_report": {"mean_confidence": 0.5},
-                "rigor_status": 0.0,
-                "status": "degraded",
-                "message": "Derek Beach analysis unavailable, using fallback"
-            },
-            "policy_processor": {
-                "dimensions": {},
-                "overall_score": 0.5,
-                "status": "degraded",
-                "message": "Policy processing unavailable, using fallback"
+    def get_fallback_strategy(self, adapter_name: str) -> Dict[str, Any]:
+        """
+        Get fallback strategy for failed adapter
+        
+        Returns:
+            Fallback configuration
+        """
+        fallback_strategies = {
+            "teoria_cambio": {
+                "use_cached": True,
+                "alternative_adapters": ["analyzer_one"],
+                "degraded_mode": "basic_causal_analysis"
             },
             "analyzer_one": {
-                "semantic_analysis": {},
-                "value_chain": {},
-                "critical_links": [],
-                "analysis_results": {},
-                "quality_score": 0.5,
-                "status": "degraded",
-                "message": "Municipal analysis unavailable, using fallback"
+                "use_cached": True,
+                "alternative_adapters": ["embedding_policy"],
+                "degraded_mode": "simple_analysis"
+            },
+            "dereck_beach": {
+                "use_cached": True,
+                "alternative_adapters": ["teoria_cambio"],
+                "degraded_mode": "basic_causal_inference"
             },
             "embedding_policy": {
-                "chunks": [],
-                "chunks_processed": 0,
-                "embeddings_generated": False,
-                "status": "degraded",
-                "message": "Embedding analysis unavailable, using fallback"
+                "use_cached": True,
+                "alternative_adapters": ["semantic_chunking_policy"],
+                "degraded_mode": "keyword_matching"
+            },
+            "semantic_chunking_policy": {
+                "use_cached": True,
+                "alternative_adapters": ["policy_processor"],
+                "degraded_mode": "simple_segmentation"
+            },
+            "contradiction_detection": {
+                "use_cached": True,
+                "alternative_adapters": ["analyzer_one"],
+                "degraded_mode": "basic_consistency_check"
+            },
+            "financial_viability": {
+                "use_cached": True,
+                "alternative_adapters": ["analyzer_one"],
+                "degraded_mode": "basic_financial_check"
+            },
+            "policy_processor": {
+                "use_cached": True,
+                "alternative_adapters": None,
+                "degraded_mode": "basic_text_processing"
             },
             "policy_segmenter": {
-                "segments": [],
-                "num_segments": 0,
-                "status": "degraded",
-                "message": "Segmentation unavailable, using fallback"
-            },
-            "semantic_processor": {
-                "semantic_analysis": {},
-                "chunks": [],
-                "status": "degraded",
-                "message": "Semantic processing unavailable, using fallback"
-            },
-            "financial_analyzer": {
-                "budget_analysis": {},
-                "viability_score": 0.5,
-                "financial_indicators": [],
-                "status": "degraded",
-                "message": "Financial analysis unavailable, using fallback"
-            },
-            "bayesian_integrator": {
-                "integrated_evidence": {},
-                "posterior_probability": 0.5,
-                "status": "degraded",
-                "message": "Bayesian integration unavailable, using fallback"
-            },
-            "validation_framework": {
-                "validation_results": {},
-                "is_valid": False,
-                "completeness_score": 0.5,
-                "status": "degraded",
-                "message": "Validation unavailable, using fallback"
-            },
-            "municipal_analyzer": {
-                "municipal_context": {},
-                "institutional_capacity": 0.5,
-                "status": "degraded",
-                "message": "Municipal analysis unavailable, using fallback"
-            },
-            "pdet_analyzer": {
-                "pdet_analysis": {},
-                "financial_feasibility": 0.5,
-                "status": "degraded",
-                "message": "PDET analysis unavailable, using fallback"
-            },
-            "decologo_processor": {
-                "decologo_analysis": {},
-                "alignment_score": 0.5,
-                "status": "degraded",
-                "message": "Decologo processing unavailable, using fallback"
-            },
-            "embedding_analyzer": {
-                "embedding_analysis": {},
-                "semantic_similarity": 0.5,
-                "status": "degraded",
-                "message": "Embedding analysis unavailable, using fallback"
-            },
-            "causal_validator": {
-                "validation_results": {},
-                "is_valid": False,
-                "structural_violations": [],
-                "status": "degraded",
-                "message": "Causal validation unavailable, using fallback"
-            },
-            "modulos_teoria_cambio": {
-                "grafo": None,
-                "validacion": None,
-                "es_valida": False,
-                "monte_carlo_result": None,
-                "p_value": 0.5,
-                "bayesian_posterior": 0.5,
-                "status": "degraded",
-                "message": "Theory of Change validation unavailable, using fallback"
+                "use_cached": True,
+                "alternative_adapters": None,
+                "degraded_mode": "simple_paragraph_split"
             }
         }
+        
+        return fallback_strategies.get(adapter_name, {
+            "use_cached": False,
+            "alternative_adapters": None,
+            "degraded_mode": "skip"
+        })
 
-        return fallback_responses.get(
-            module_name,
-            {
-                "status": "degraded",
-                "message": f"Module {module_name} unavailable, using fallback",
-                "data": {},
-                "confidence": 0.5
-            }
-        )
+    def reset_adapter(self, adapter_name: str):
+        """Manually reset an adapter's circuit"""
+        if adapter_name in self.adapter_states:
+            self._initialize_adapter(adapter_name)
+            logger.info(f"{adapter_name}: Circuit manually reset")
 
+    def reset_all(self):
+        """Reset all adapter circuits"""
+        for adapter in self.adapters:
+            self.reset_adapter(adapter)
+        logger.info("All circuits reset")
+
+
+# ============================================================================
+# FALLBACK CREATION HELPERS
+# ============================================================================
+
+def create_module_specific_fallback(
+        adapter_name: str,
+        method_name: str
+) -> Callable:
+    """
+    Create adapter-specific fallback function
+    
+    Args:
+        adapter_name: Adapter name
+        method_name: Method name
+        
+    Returns:
+        Fallback function
+    """
+    def fallback(*args, **kwargs):
+        """Generic fallback returning safe default"""
+        logger.warning(f"Using fallback for {adapter_name}.{method_name}")
+        
+        return {
+            "status": "degraded",
+            "data": {},
+            "evidence": [],
+            "confidence": 0.0,
+            "message": f"Fallback used for {adapter_name}.{method_name}",
+            "adapter_name": adapter_name,
+            "method_name": method_name
+        }
+    
     return fallback
 
 
-# Global registry instance for backward compatibility
-circuit_breaker_registry = None
-
-
-def get_circuit_breaker_registry():
-    """Get or create the global circuit breaker registry"""
-    global circuit_breaker_registry
-    if circuit_breaker_registry is None:
-        circuit_breaker_registry = CircuitBreaker()
-    return circuit_breaker_registry
-
-
-# Convenience functions for common operations
-def call_with_circuit_breaker(
-        module_name: str,
-        func: Callable,
-        *args,
-        fallback: Optional[Callable] = None,
-        **kwargs
-) -> Any:
+def create_cached_fallback(cache: Dict[str, Any]) -> Callable:
     """
-    Execute a function with circuit breaker protection.
+    Create fallback that uses cached results
     
     Args:
-        module_name: Name of the module
-        func: Function to execute
-        *args, **kwargs: Arguments to pass to func
-        fallback: Optional fallback function
+        cache: Cache dictionary
         
     Returns:
-        Result from func or fallback
+        Fallback function
     """
-    registry = get_circuit_breaker_registry()
-    return registry.call(module_name, func, fallback, *args, **kwargs)
+    def fallback(adapter_name: str, method_name: str, *args, **kwargs):
+        """Cached fallback"""
+        cache_key = f"{adapter_name}.{method_name}"
+        
+        if cache_key in cache:
+            logger.info(f"Using cached result for {cache_key}")
+            return cache[cache_key]
+        
+        logger.warning(f"No cached result for {cache_key}")
+        return create_module_specific_fallback(adapter_name, method_name)(*args, **kwargs)
+    
+    return fallback
 
 
-def is_module_available(module_name: str) -> bool:
-    """Check if a module is available (circuit not open)"""
-    registry = get_circuit_breaker_registry()
-    return registry.is_available(module_name)
+# ============================================================================
+# USAGE EXAMPLE
+# ============================================================================
 
-
-def get_all_circuit_health() -> Dict[str, Any]:
-    """Get health status for all circuit breakers"""
-    registry = get_circuit_breaker_registry()
-    return registry.get_health_summary()
-
-
-def reset_circuit_breaker(module_name: str):
-    """Reset a specific circuit breaker"""
-    registry = get_circuit_breaker_registry()
-    if module_name in registry.circuit_breakers:
-        registry.circuit_breakers[module_name].reset()
-
-
-def reset_all_circuit_breakers():
-    """Reset all circuit breakers"""
-    registry = get_circuit_breaker_registry()
-    registry.reset_all()
-
-
-# Export main classes and functions
-__all__ = [
-    'CircuitBreaker',
-    'AdvancedCircuitBreaker',
-    'CircuitBreakerError',
-    'CircuitState',
-    'FailureSeverity',
-    'create_module_specific_fallback',
-    'call_with_circuit_breaker',
-    'is_module_available',
-    'get_all_circuit_health',
-    'reset_circuit_breaker',
-    'reset_all_circuit_breakers',
-    'get_circuit_breaker_registry'
-]
+if __name__ == "__main__":
+    breaker = CircuitBreaker()
+    
+    print("=" * 80)
+    print("CIRCUIT BREAKER - COMPLETE UPDATE")
+    print("=" * 80)
+    print(f"\nAdapters monitored: {len(breaker.adapters)}")
+    print(f"Failure threshold: {breaker.failure_threshold}")
+    print(f"Recovery timeout: {breaker.recovery_timeout}s")
+    print("\nInitial status:")
+    for adapter, status in breaker.get_all_status().items():
+        print(f"  {adapter}: {status['state']}")
+    print("=" * 80)

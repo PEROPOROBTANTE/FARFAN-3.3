@@ -1,1178 +1,506 @@
-# circuit_breaker.py - Updated for module_adapters.py compatibility
+# coding=utf-8
+# questionnaire_parser.py - Updated for full integration with module_adapters.py
 """
-Advanced Circuit Breaker with AI-driven failure prediction and adaptive thresholds
-Implements cutting-edge fault tolerance with predictive analytics and self-healing
-Compatible with ModuleResult standardized format from module_adapters.py
+Questionnaire Parser - Loads questions from cuestionario.json and maps to execution chains
+Integrates with:
+- execution_mapping.yaml (execution chains)
+- rubric_scoring.json (scoring modalities)
+- module_adapters.py (actual module execution)
 """
-import logging
-import time
-import asyncio
-import numpy as np
-import pandas as pd
-from enum import Enum, IntEnum
-from typing import Dict, List, Any, Optional, Callable, Union, Tuple
-from dataclasses import dataclass, field
-from collections import deque, defaultdict
-from concurrent.futures import ThreadPoolExecutor
-from threading import Thread, RLock
+import re
 import json
-from datetime import datetime, timedelta
-import warnings
-from scipy import stats
-from sklearn.ensemble import IsolationForest
-from sklearn.preprocessing import StandardScaler
-import pickle
-import hashlib
-
-from .config import CONFIG
+import yaml
+import logging
+from pathlib import Path
+from typing import Dict, List, Optional, Any, Tuple
+from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
 
 
-class CircuitState(IntEnum):
-    """Enhanced circuit states with numeric values for ML processing"""
-    CLOSED = 0
-    OPEN = 1
-    HALF_OPEN = 2
-    ISOLATED = 3  # New state for critical failures
-    RECOVERING = 4  # New state for active recovery
-
-
-class FailureSeverity(Enum):
-    """Classification of failure types"""
-    TRANSIENT = "transient"  # Temporary network issues, timeouts
-    DEGRADED = "degraded"  # Slow responses, partial failures
-    CRITICAL = "critical"  # Complete failures, exceptions
-    CATASTROPHIC = "catastrophic"  # System-wide failures
+@dataclass
+class ScoringModality:
+    """Scoring modality from rubric_scoring.json"""
+    id: str
+    description: str
+    formula: str
+    max_score: float
+    expected_elements: Optional[int] = None
+    conversion_table: Optional[Dict[str, float]] = None
+    uses_thresholds: bool = False
+    uses_quantitative_data: bool = False
+    uses_custom_logic: bool = False
+    uses_semantic_matching: bool = False
+    similarity_threshold: float = 0.6
 
 
 @dataclass
-class FailureEvent:
-    """Detailed failure event tracking"""
-    timestamp: float
-    severity: FailureSeverity
-    error_type: str
-    error_message: str
-    execution_time: float
-    context: Dict[str, Any]
-    stack_trace: Optional[str] = None
-    recovery_attempt: int = 0
+class ExecutionChain:
+    """Execution chain from execution_mapping.yaml"""
+    description: str
+    steps: List[Dict[str, Any]]
+    aggregation: Dict[str, Any]
 
 
 @dataclass
-class PerformanceMetrics:
-    """Comprehensive performance metrics"""
-    response_times: deque = field(default_factory=lambda: deque(maxlen=1000))
-    success_rates: deque = field(default_factory=lambda: deque(maxlen=100))
-    error_rates: deque = field(default_factory=lambda: deque(maxlen=100))
-    throughput: deque = field(default_factory=lambda: deque(maxlen=100))
-    resource_usage: deque = field(default_factory=lambda: deque(maxlen=100))
-
-    def add_measurement(self, response_time: float, success: bool,
-                        timestamp: float, resource_usage: float = 0.0):
-        """Add new performance measurement"""
-        self.response_times.append(response_time)
-        self.success_rates.append(1.0 if success else 0.0)
-        self.error_rates.append(0.0 if success else 1.0)
-
-        # Calculate throughput (requests per second)
-        if len(self.response_times) > 1:
-            time_window = timestamp - (self.response_times[0] if self.response_times else timestamp)
-            if time_window > 0:
-                self.throughput.append(len(self.response_times) / time_window)
-
-        self.resource_usage.append(resource_usage)
-
-
-@dataclass
-class AdaptiveThresholds:
-    """Dynamic thresholds that adapt based on historical performance"""
-    failure_threshold: float = 3.0
-    timeout_seconds: float = 60.0
-    half_open_max_calls: int = 5
-    success_threshold: int = 3
-
-    # Adaptive parameters
-    baseline_error_rate: float = 0.05
-    baseline_response_time: float = 1.0
-    adaptation_factor: float = 0.1
-    min_threshold: float = 1.0
-    max_threshold: float = 10.0
-
-    def adapt(self, metrics: PerformanceMetrics):
-        """Adapt thresholds based on recent performance"""
-        if len(metrics.error_rates) >= 10:
-            recent_error_rate = np.mean(list(metrics.error_rates)[-10:])
-            recent_response_time = np.mean(list(metrics.response_times)[-10:])
-
-            # Adjust failure threshold based on error rate deviation
-            error_deviation = recent_error_rate - self.baseline_error_rate
-            if error_deviation > 0.02:  # Error rate increased significantly
-                self.failure_threshold = max(
-                    self.min_threshold,
-                    self.failure_threshold * (1 - self.adaptation_factor)
-                )
-            elif error_deviation < -0.01:  # Error rate improved
-                self.failure_threshold = min(
-                    self.max_threshold,
-                    self.failure_threshold * (1 + self.adaptation_factor * 0.5)
-                )
-
-            # Adjust timeout based on response time
-            response_deviation = recent_response_time - self.baseline_response_time
-            if response_deviation > 0.5:  # Responses slower than baseline
-                self.timeout_seconds = min(300, self.timeout_seconds * 1.2)
-            elif response_deviation < -0.2:  # Responses faster than baseline
-                self.timeout_seconds = max(30, self.timeout_seconds * 0.9)
-
-
-class PredictiveFailureDetector:
-    """ML-based failure prediction system"""
-
-    def __init__(self):
-        self.isolation_forest = IsolationForest(
-            contamination=0.1,
-            random_state=42,
-            n_estimators=100
-        )
-        self.scaler = StandardScaler()
-        self.is_trained = False
-        self.feature_history = deque(maxlen=1000)
-        self.prediction_window = 20  # Number of recent measurements to consider
-
-    def extract_features(self, metrics: PerformanceMetrics) -> np.ndarray:
-        """Extract features for ML prediction"""
-        if len(metrics.response_times) < self.prediction_window:
-            return np.array([])
-
-        recent_rt = list(metrics.response_times)[-self.prediction_window:]
-        recent_er = list(metrics.error_rates)[-self.prediction_window:]
-        recent_thr = list(metrics.throughput)[-self.prediction_window:]
-
-        features = [
-            np.mean(recent_rt),
-            np.std(recent_rt),
-            np.max(recent_rt),
-            np.min(recent_rt),
-            np.mean(recent_er),
-            np.std(recent_er),
-            np.max(recent_er),
-            np.mean(recent_thr) if recent_thr else 0,
-            np.std(recent_thr) if recent_thr else 0,
-            # Trend features
-            np.polyfit(range(len(recent_rt)), recent_rt, 1)[0] if len(recent_rt) > 1 else 0,
-            np.polyfit(range(len(recent_er)), recent_er, 1)[0] if len(recent_er) > 1 else 0,
-        ]
-
-        return np.array(features)
-
-    def train(self, historical_data: List[np.ndarray]):
-        """Train the failure prediction model"""
-        if len(historical_data) < 50:
-            logger.warning("Insufficient data for training failure predictor")
-            return
-
-        X = np.array(historical_data)
-        X_scaled = self.scaler.fit_transform(X)
-        self.isolation_forest.fit(X_scaled)
-        self.is_trained = True
-        logger.info("Failure prediction model trained successfully")
-
-    def predict_failure(self, metrics: PerformanceMetrics) -> Tuple[bool, float]:
-        """Predict if failure is imminent"""
-        if not self.is_trained:
-            return False, 0.0
-
-        features = self.extract_features(metrics)
-        if len(features) == 0:
-            return False, 0.0
-
-        features_scaled = self.scaler.transform(features.reshape(1, -1))
-        anomaly_score = self.isolation_forest.decision_function(features_scaled)[0]
-
-        # Lower anomaly score indicates more likely failure
-        failure_probability = 1.0 / (1.0 + np.exp(anomaly_score))
-        is_imminent = failure_probability > 0.7
-
-        return is_imminent, failure_probability
-
-
-class CircuitBreakerMetrics:
-    """Comprehensive metrics for circuit breaker analysis"""
-
-    def __init__(self):
-        self.total_requests = 0
-        self.successful_requests = 0
-        self.failed_requests = 0
-        self.circuit_open_count = 0
-        self.circuit_close_count = 0
-        self.fallback_usage_count = 0
-        self.prediction_accuracy = deque(maxlen=100)
-        self.state_transitions = []
-        self.failure_events = []
-        self.performance_metrics = PerformanceMetrics()
-        self.last_success_time: Optional[float] = None
-        self.last_failure_time: Optional[float] = None
+class QuestionSpec:
+    """Complete specification for a single question"""
+    # Basic identifiers
+    question_id: str  # D1-Q1, D2-Q2, etc.
+    dimension: str  # D1, D2, etc.
+    question_no: int  # 1-5
+    policy_area: str  # P1-P10
+    
+    # Question content
+    template: str  # Question template
+    text: str  # Fully interpolated question text
+    
+    # Scoring
+    scoring_modality: str  # TYPE_A, TYPE_B, etc.
+    max_score: float  # 0-3
+    expected_elements: List[str]
+    search_patterns: Dict[str, Any]
+    
+    # Execution mapping
+    execution_chain: Optional[ExecutionChain] = None
+    required_modules: List[str] = field(default_factory=list)
+    primary_module: str = "policy_processor"
+    supporting_modules: List[str] = field(default_factory=list)
+    
+    # Evidence and verification
+    evidence_sources: Dict[str, Any] = field(default_factory=dict)
+    verification_patterns: List[str] = field(default_factory=list)
+    rubric_levels: Dict[str, float] = field(default_factory=dict)
+    
+    # Metadata
+    weight: float = 1.0
+    evidence_requirements: Dict[str, Any] = field(default_factory=dict)
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
     @property
-    def failure_rate(self) -> float:
-        """Calculate current failure rate"""
-        if self.total_requests == 0:
-            return 0.0
-        return self.failed_requests / self.total_requests
-
-    @property
-    def success_rate(self) -> float:
-        """Calculate current success rate"""
-        return 1.0 - self.failure_rate
-
-    @property
-    def avg_response_time(self) -> float:
-        """Calculate average response time"""
-        if not self.performance_metrics.response_times:
-            return 0.0
-        return np.mean(list(self.performance_metrics.response_times))
-
-    def add_failure_event(self, event: FailureEvent):
-        """Add a failure event to the history"""
-        self.failure_events.append(event)
-        # Keep only recent events
-        if len(self.failure_events) > 1000:
-            self.failure_events = self.failure_events[-1000:]
-
-    def record_state_transition(self, from_state: CircuitState, to_state: CircuitState,
-                                reason: str, timestamp: float):
-        """Record a state transition"""
-        self.state_transitions.append({
-            "from": from_state.name,
-            "to": to_state.name,
-            "reason": reason,
-            "timestamp": timestamp
-        })
-
-        if to_state == CircuitState.OPEN:
-            self.circuit_open_count += 1
-        elif to_state == CircuitState.CLOSED:
-            self.circuit_close_count += 1
+    def canonical_id(self) -> str:
+        """Returns P#-D#-Q# notation"""
+        return f"{self.policy_area}-{self.dimension}-Q{self.question_no}"
 
 
-class AdvancedCircuitBreaker:
+class QuestionnaireParser:
     """
-    State-of-the-Art Circuit Breaker with:
-    - Adaptive thresholds
-    - Predictive failure detection
-    - Comprehensive observability
-    - Self-healing capabilities
-    - Resource-aware routing
-    - Compatible with ModuleResult format from module_adapters.py
+    Comprehensive parser that integrates:
+    1. cuestionario.json - Question templates and scoring
+    2. execution_mapping.yaml - Execution chains
+    3. rubric_scoring.json - Scoring modalities
     """
 
     def __init__(
             self,
-            module_name: str,
-            failure_threshold: Optional[float] = None,
-            timeout_seconds: Optional[float] = None,
-            half_open_max_calls: Optional[int] = None,
-            success_threshold: Optional[int] = None,
-            enable_prediction: bool = True,
-            enable_adaptation: bool = True
+            cuestionario_path: Path,
+            execution_mapping_path: Optional[Path] = None,
+            rubric_scoring_path: Optional[Path] = None
     ):
-        self.module_name = module_name
-        self.logger = logging.getLogger(f"{__name__}.{module_name}")
+        self.cuestionario_path = cuestionario_path
+        self.execution_mapping_path = execution_mapping_path or Path("config/execution_mapping.yaml")
+        self.rubric_scoring_path = rubric_scoring_path or Path("config/rubric_scoring.json")
+        
+        # Storage
+        self._questions = {}
+        self._dimensions = {}
+        self._policy_areas = {}
+        self._scoring_modalities = {}
+        self._execution_chains = {}
+        
+        # Default rubric mapping
+        self._rubric_mapping = {
+            "EXCELENTE": 0.85,
+            "BUENO": 0.70,
+            "ACEPTABLE": 0.55,
+            "INSUFICIENTE": 0.0
+        }
+        
+        # Load all configurations
+        self._load_all()
 
-        # Circuit state
-        self.state = CircuitState.CLOSED
-        self.state_lock = RLock()
+    def _load_all(self):
+        """Load all configuration files"""
+        logger.info("Loading questionnaire configurations...")
+        
+        # Load rubric scoring modalities first
+        self._load_rubric_scoring()
+        
+        # Load execution chains
+        self._load_execution_mapping()
+        
+        # Load questions from cuestionario.json
+        self._load_cuestionario()
+        
+        logger.info(f"Loaded {len(self._questions)} questions across {len(self._dimensions)} dimensions")
 
-        # Configuration
-        self.thresholds = AdaptiveThresholds(
-            failure_threshold=failure_threshold or CONFIG.circuit_breaker_failure_threshold,
-            timeout_seconds=timeout_seconds or CONFIG.circuit_breaker_timeout,
-            half_open_max_calls=half_open_max_calls or CONFIG.circuit_breaker_half_open_max_calls,
-            success_threshold=success_threshold or CONFIG.circuit_breaker_success_threshold
-        )
-
-        # Metrics and tracking
-        self.metrics = CircuitBreakerMetrics()
-        self.consecutive_failures = 0
-        self.half_open_calls = 0
-        self.half_open_successes = 0
-
-        # Advanced features
-        self.enable_prediction = enable_prediction
-        self.enable_adaptation = enable_adaptation
-        self.predictor = PredictiveFailureDetector() if enable_prediction else None
-
-        # Recovery mechanisms
-        self.recovery_strategies = []
-        self.active_recovery = None
-        self.recovery_start_time: Optional[float] = None
-
-        # Observability
-        self.observers = []
-        self.event_history = deque(maxlen=10000)
-
-        # Health check
-        self.health_check_interval = 30.0  # seconds
-        self.last_health_check = 0.0
-
-        self.logger.info(f"Advanced Circuit Breaker initialized for {module_name}")
-
-    def call(
-            self,
-            func: Callable,
-            *args,
-            fallback: Optional[Callable] = None,
-            context: Optional[Dict[str, Any]] = None,
-            timeout: Optional[float] = None,
-            **kwargs
-    ) -> Any:
-        """
-        Execute a function with advanced circuit breaker protection.
-
-        Args:
-            func: Function to execute
-            *args, **kwargs: Arguments to pass to func
-            fallback: Optional fallback function
-            context: Execution context for observability
-            timeout: Custom timeout for this call
-
-        Returns:
-            Result from func or fallback
-        """
-        start_time = time.time()
-        execution_context = context or {}
-        execution_context["call_id"] = hashlib.md5(
-            f"{self.module_name}_{start_time}".encode()
-        ).hexdigest()[:8]
-
+    def _load_rubric_scoring(self):
+        """Load scoring modalities from rubric_scoring.json"""
         try:
-            with self.state_lock:
-                current_state = self.state
-
-                # Check if circuit should transition based on predictions
-                if self.enable_prediction and self.predictor:
-                    is_imminent, probability = self.predictor.predict_failure(
-                        self.metrics.performance_metrics
-                    )
-                    if is_imminent and current_state == CircuitState.CLOSED:
-                        self.logger.warning(
-                            f"Predictive failure detected for {self.module_name} "
-                            f"(probability: {probability:.2f})"
-                        )
-                        self._transition_to_open("predictive_failure")
-                        current_state = CircuitState.OPEN
-
-                # Handle different states
-                if current_state == CircuitState.OPEN:
-                    if self._should_attempt_reset():
-                        self._transition_to_half_open("timeout_expired")
-                    else:
-                        self.metrics.fallback_usage_count += 1
-                        if fallback:
-                            self.logger.info(f"Using fallback for {self.module_name}")
-                            return fallback(*args, **kwargs)
-                        else:
-                            raise CircuitBreakerError(
-                                f"Circuit breaker is OPEN for {self.module_name}"
-                            )
-
-                elif current_state == CircuitState.HALF_OPEN:
-                    if self.half_open_calls >= self.thresholds.half_open_max_calls:
-                        self.metrics.fallback_usage_count += 1
-                        if fallback:
-                            return fallback(*args, **kwargs)
-                        else:
-                            raise CircuitBreakerError(
-                                f"HALF_OPEN call limit exceeded for {self.module_name}"
-                            )
-                    self.half_open_calls += 1
-
-                elif current_state == CircuitState.ISOLATED:
-                    self.metrics.fallback_usage_count += 1
-                    if fallback:
-                        return fallback(*args, **kwargs)
-                    else:
-                        raise CircuitBreakerError(
-                            f"Module {self.module_name} is isolated"
-                        )
-
-            # Execute the function
-            self.metrics.total_requests += 1
-
-            # Monitor resource usage
-            resource_usage_start = self._get_resource_usage()
-
-            # Execute with timeout
-            actual_timeout = timeout or self.thresholds.timeout_seconds
-            result = self._execute_with_timeout(func, actual_timeout, *args, **kwargs)
-
-            # Calculate execution metrics
-            execution_time = time.time() - start_time
-            resource_usage_end = self._get_resource_usage()
-            resource_usage_delta = resource_usage_end - resource_usage_start
-
-            # Record success
-            self._record_success(execution_time, resource_usage_delta, execution_context)
-
-            return result
-
+            with open(self.rubric_scoring_path, 'r', encoding='utf-8') as f:
+                rubric_data = json.load(f)
+            
+            # Load scoring modalities
+            for modality_id, modality_data in rubric_data.get("scoring_modalities", {}).items():
+                self._scoring_modalities[modality_id] = ScoringModality(
+                    id=modality_id,
+                    description=modality_data["description"],
+                    formula=modality_data["formula"],
+                    max_score=modality_data["max_score"],
+                    expected_elements=modality_data.get("expected_elements"),
+                    conversion_table=modality_data.get("conversion_table"),
+                    uses_thresholds=modality_data.get("uses_thresholds", False),
+                    uses_quantitative_data=modality_data.get("uses_quantitative_data", False),
+                    uses_custom_logic=modality_data.get("uses_custom_logic", False),
+                    uses_semantic_matching=modality_data.get("uses_semantic_matching", False),
+                    similarity_threshold=modality_data.get("similarity_threshold", 0.6)
+                )
+            
+            # Load dimensions
+            for dim_id, dim_data in rubric_data.get("dimensions", {}).items():
+                self._dimensions[dim_id] = {
+                    "id": dim_id,
+                    "name": dim_data["name"],
+                    "description": dim_data["description"],
+                    "questions": dim_data["questions"],
+                    "max_score": dim_data["max_score"]
+                }
+            
+            # Load policy areas
+            for point_id, point_data in rubric_data.get("thematic_points", {}).items():
+                self._policy_areas[point_id] = {
+                    "id": point_id,
+                    "title": point_data["title"],
+                    "keywords": point_data["keywords"],
+                    "applies_all_questions": point_data.get("applies_all_questions", True),
+                    "can_be_na": point_data.get("can_be_na", False),
+                    "na_condition": point_data.get("na_condition")
+                }
+            
+            logger.info(f"Loaded {len(self._scoring_modalities)} scoring modalities")
+            logger.info(f"Loaded {len(self._dimensions)} dimensions")
+            logger.info(f"Loaded {len(self._policy_areas)} policy areas")
+            
         except Exception as e:
-            execution_time = time.time() - start_time
+            logger.error(f"Failed to load rubric_scoring.json: {e}")
+            raise
 
-            # Classify failure severity
-            severity = self._classify_failure(e, execution_time)
-
-            # Record failure
-            failure_event = FailureEvent(
-                timestamp=start_time,
-                severity=severity,
-                error_type=type(e).__name__,
-                error_message=str(e),
-                execution_time=execution_time,
-                context=execution_context,
-                stack_trace=self._get_stack_trace()
-            )
-
-            self._record_failure(failure_event)
-
-            # Try fallback
-            if fallback:
-                self.logger.info(f"Executing fallback for {self.module_name} after failure")
-                try:
-                    fallback_result = fallback(*args, **kwargs)
-                    self.metrics.fallback_usage_count += 1
-                    return fallback_result
-                except Exception as fallback_error:
-                    self.logger.error(f"Fallback also failed for {self.module_name}: {fallback_error}")
-                    raise
-            else:
-                raise
-
-    def _execute_with_timeout(self, func: Callable, timeout: float, *args, **kwargs) -> Any:
-        """Execute function with timeout handling"""
-        if timeout <= 0:
-            return func(*args, **kwargs)
-
-        # Use asyncio for timeout if function is async
-        if asyncio.iscoroutinefunction(func):
-            try:
-                loop = asyncio.get_event_loop()
-            except RuntimeError:
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-
-            return loop.run_until_complete(
-                asyncio.wait_for(func(*args, **kwargs), timeout=timeout)
-            )
-
-        # For sync functions, use ThreadPoolExecutor
-        with ThreadPoolExecutor(max_workers=1) as executor:
-            future = executor.submit(func, *args, **kwargs)
-            try:
-                return future.result(timeout=timeout)
-            except TimeoutError:
-                future.cancel()
-                raise CircuitBreakerError(f"Timeout after {timeout}s for {self.module_name}")
-
-    def _record_success(self, execution_time: float, resource_usage: float,
-                        context: Dict[str, Any]):
-        """Record a successful execution"""
-        with self.state_lock:
-            self.metrics.successful_requests += 1
-            self.consecutive_failures = 0
-            self.metrics.last_success_time = time.time()
-
-            # Update performance metrics
-            self.metrics.performance_metrics.add_measurement(
-                execution_time, True, time.time(), resource_usage
-            )
-
-            # Handle HALF_OPEN state
-            if self.state == CircuitState.HALF_OPEN:
-                self.half_open_successes += 1
-                if self.half_open_successes >= self.thresholds.success_threshold:
-                    self._transition_to_closed("recovery_confirmed")
-
-            # Adapt thresholds if enabled
-            if self.enable_adaptation:
-                self.thresholds.adapt(self.metrics.performance_metrics)
-
-            # Notify observers
-            self._notify_observers("success", {
-                "execution_time": execution_time,
-                "resource_usage": resource_usage,
-                "context": context
-            })
-
-    def _record_failure(self, event: FailureEvent):
-        """Record a failure event"""
-        with self.state_lock:
-            self.metrics.failed_requests += 1
-            self.consecutive_failures += 1
-            self.metrics.last_failure_time = event.timestamp
-            self.metrics.add_failure_event(event)
-
-            # Update performance metrics
-            self.metrics.performance_metrics.add_measurement(
-                event.execution_time, False, event.timestamp
-            )
-
-            # Check if should open circuit
-            if self.consecutive_failures >= self.thresholds.failure_threshold:
-                if event.severity in [FailureSeverity.CRITICAL, FailureSeverity.CATASTROPHIC]:
-                    self._transition_to_isolated(f"critical_failure_{event.severity.value}")
-                else:
-                    self._transition_to_open("failure_threshold_exceeded")
-
-            # Notify observers
-            self._notify_observers("failure", {
-                "event": event,
-                "consecutive_failures": self.consecutive_failures
-            })
-
-    def _transition_to_open(self, reason: str):
-        """Transition circuit to OPEN state"""
-        old_state = self.state
-        self.state = CircuitState.OPEN
-
-        self.metrics.record_state_transition(
-            old_state, CircuitState.OPEN, reason, time.time()
-        )
-
-        self.logger.warning(
-            f"Circuit OPENED for {self.module_name} "
-            f"({self.consecutive_failures} consecutive failures) - {reason}"
-        )
-
-        # Start recovery timer
-        self._schedule_recovery_attempt()
-
-    def _transition_to_half_open(self, reason: str):
-        """Transition circuit to HALF_OPEN state"""
-        old_state = self.state
-        self.state = CircuitState.HALF_OPEN
-
-        # Reset half-open counters
-        self.half_open_calls = 0
-        self.half_open_successes = 0
-
-        self.metrics.record_state_transition(
-            old_state, CircuitState.HALF_OPEN, reason, time.time()
-        )
-
-        self.logger.info(f"Circuit HALF-OPEN for {self.module_name}, testing recovery - {reason}")
-
-    def _transition_to_closed(self, reason: str):
-        """Transition circuit to CLOSED state"""
-        old_state = self.state
-        self.state = CircuitState.CLOSED
-
-        self.metrics.record_state_transition(
-            old_state, CircuitState.CLOSED, reason, time.time()
-        )
-
-        self.logger.info(f"Circuit CLOSED for {self.module_name}, normal operation resumed - {reason}")
-
-        # Train predictor with new data
-        if self.enable_prediction and self.predictor:
-            self._train_predictor()
-
-    def _transition_to_isolated(self, reason: str):
-        """Transition circuit to ISOLATED state (critical failures)"""
-        old_state = self.state
-        self.state = CircuitState.ISOLATED
-
-        self.metrics.record_state_transition(
-            old_state, CircuitState.ISOLATED, reason, time.time()
-        )
-
-        self.logger.error(
-            f"Circuit ISOLATED for {self.module_name} due to critical failure - {reason}"
-        )
-
-        # Schedule manual intervention notification
-        self._notify_manual_intervention(reason)
-
-    def _should_attempt_reset(self) -> bool:
-        """Check if enough time has passed to attempt reset"""
-        if self.metrics.last_failure_time is None:
-            return True
-
-        time_since_failure = time.time() - self.metrics.last_failure_time
-        return time_since_failure >= self.thresholds.timeout_seconds
-
-    def _classify_failure(self, exception: Exception, execution_time: float) -> FailureSeverity:
-        """Classify the severity of a failure"""
-        if isinstance(exception, TimeoutError):
-            return FailureSeverity.TRANSIENT
-        elif isinstance(exception, ConnectionError):
-            return FailureSeverity.DEGRADED
-        elif execution_time > self.thresholds.timeout_seconds * 2:
-            return FailureSeverity.CRITICAL
-        elif "critical" in str(exception).lower() or "fatal" in str(exception).lower():
-            return FailureSeverity.CRITICAL
-        else:
-            return FailureSeverity.DEGRADED
-
-    def _get_resource_usage(self) -> float:
-        """Get current resource usage (CPU/Memory)"""
+    def _load_execution_mapping(self):
+        """Load execution chains from execution_mapping.yaml"""
         try:
-            import psutil
-            process = psutil.Process()
-            return process.cpu_percent() + process.memory_percent()
-        except ImportError:
-            return 0.0
+            with open(self.execution_mapping_path, 'r', encoding='utf-8') as f:
+                execution_data = yaml.safe_load(f)
+            
+            # Load execution chains for each dimension
+            for dimension_key in ["D1_INSUMOS", "D2_ACTIVIDADES", "D3_PRODUCTOS", 
+                                 "D4_RESULTADOS", "D5_IMPACTOS", "D6_CAUSALIDAD"]:
+                if dimension_key in execution_data:
+                    dim_data = execution_data[dimension_key]
+                    dimension = dimension_key.split("_")[0]  # Extract D1, D2, etc.
+                    
+                    # Load chains for each question (Q1-Q5)
+                    for q_num in range(1, 6):
+                        q_key = f"Q{q_num}_{self._get_question_key_suffix(dimension, q_num)}"
+                        
+                        if q_key in dim_data:
+                            chain_data = dim_data[q_key]
+                            chain_id = f"{dimension}-Q{q_num}"
+                            
+                            self._execution_chains[chain_id] = ExecutionChain(
+                                description=chain_data.get("description", ""),
+                                steps=chain_data.get("execution_chain", []),
+                                aggregation=chain_data.get("aggregation", {})
+                            )
+            
+            logger.info(f"Loaded {len(self._execution_chains)} execution chains")
+            
+        except Exception as e:
+            logger.warning(f"Failed to load execution_mapping.yaml: {e}")
+            # Continue without execution chains - will use fallback
 
-    def _get_stack_trace(self) -> Optional[str]:
-        """Get current stack trace"""
-        import traceback
-        return traceback.format_exc()
+    def _get_question_key_suffix(self, dimension: str, q_num: int) -> str:
+        """Get the question key suffix based on dimension and question number"""
+        # This maps to the YAML structure
+        suffixes = {
+            "D1": ["Baseline_Identification", "Gap_Analysis", "Budget_Allocation", 
+                   "Capacity_Assessment", "Restriction_Identification"],
+            "D2": ["Activity_Format", "Mechanism_Specification", "Causal_Links", 
+                   "Risk_Assessment", "Sequencing_Logic"],
+            "D3": ["DNP_Ficha_Completeness", "Indicator_Specification", "Budget_Alignment", 
+                   "Feasibility_Assessment", "Mechanism_Clarity"],
+            "D4": ["Measurability", "Causal_Chain_Completeness", "Timeframe_Specification", 
+                   "Monitoring_Mechanism", "Strategic_Alignment"],
+            "D5": ["Projection_Methodology", "Proxy_Indicators", "Validity_Assessment", 
+                   "Risk_Analysis", "Unwanted_Effects"],
+            "D6": ["Theory_of_Change", "Causal_Logic", "Inconsistency_Detection", 
+                   "Adaptive_Monitoring", "Differential_Approach"]
+        }
+        return suffixes.get(dimension, ["Unknown"] * 5)[q_num - 1]
 
-    def _schedule_recovery_attempt(self):
-        """Schedule an automatic recovery attempt"""
+    def _load_cuestionario(self):
+        """Load questions from cuestionario.json"""
+        try:
+            with open(self.cuestionario_path, 'r', encoding='utf-8') as f:
+                cuestionario_data = json.load(f)
+            
+            # Load base questions from rubric_scoring.json
+            questions_data = cuestionario_data.get("questions", [])
+            
+            # Generate all 300 questions (10 policy areas × 30 base questions)
+            for policy_id in range(1, 11):
+                policy_area = f"P{policy_id}"
+                
+                for question_data in questions_data:
+                    # Extract dimension and question number
+                    base_id = question_data["id"]  # e.g., "D1-Q1"
+                    dimension = question_data["dimension"]
+                    question_no = question_data["question_no"]
+                    
+                    # Create full question ID
+                    question_id = f"{policy_area}-{base_id}"
+                    
+                    # Interpolate question template with policy area
+                    template = question_data["template"]
+                    policy_name = self._policy_areas.get(policy_area, {}).get("title", policy_area)
+                    question_text = template.replace("{PUNTO_TEMATICO}", policy_name)
+                    
+                    # Get execution chain
+                    chain_id = f"{dimension}-Q{question_no}"
+                    execution_chain = self._execution_chains.get(chain_id)
+                    
+                    # Extract modules from execution chain
+                    required_modules = []
+                    if execution_chain:
+                        required_modules = list(set(
+                            step["module"] for step in execution_chain.steps
+                        ))
+                    
+                    # Fallback module mapping if no execution chain
+                    if not required_modules:
+                        required_modules = self._get_fallback_modules(dimension, question_no)
+                    
+                    primary_module = required_modules[0] if required_modules else "policy_processor"
+                    supporting_modules = required_modules[1:] if len(required_modules) > 1 else []
+                    
+                    # Create question spec
+                    question = QuestionSpec(
+                        question_id=base_id,
+                        dimension=dimension,
+                        question_no=question_no,
+                        policy_area=policy_area,
+                        template=template,
+                        text=question_text,
+                        scoring_modality=question_data.get("scoring_modality", "TYPE_A"),
+                        max_score=question_data.get("max_score", 3.0),
+                        expected_elements=question_data.get("expected_elements", []),
+                        search_patterns=question_data.get("search_patterns", {}),
+                        execution_chain=execution_chain,
+                        required_modules=required_modules,
+                        primary_module=primary_module,
+                        supporting_modules=supporting_modules,
+                        evidence_sources=question_data.get("evidence_sources", {}),
+                        verification_patterns=self._extract_verification_patterns(question_text),
+                        rubric_levels=self._rubric_mapping,
+                        weight=1.0,
+                        evidence_requirements={
+                            "min_evidence_count": 2,
+                            "required_evidence_types": ["quantitative", "qualitative"],
+                            "confidence_threshold": 0.6
+                        },
+                        metadata={
+                            "policy_area": policy_area,
+                            "policy_name": policy_name,
+                            "dimension_name": self._dimensions.get(dimension, {}).get("name", dimension),
+                            "can_be_na": self._policy_areas.get(policy_area, {}).get("can_be_na", False),
+                            "na_condition": self._policy_areas.get(policy_area, {}).get("na_condition")
+                        }
+                    )
+                    
+                    self._questions[question_id] = question
+            
+            logger.info(f"Generated {len(self._questions)} questions")
+            
+        except Exception as e:
+            logger.error(f"Failed to load cuestionario.json: {e}")
+            raise
 
-        def recovery_worker():
-            time.sleep(self.thresholds.timeout_seconds)
-            with self.state_lock:
-                if self.state == CircuitState.OPEN:
-                    self._transition_to_half_open("scheduled_recovery")
+    def _get_fallback_modules(self, dimension: str, question_num: int) -> List[str]:
+        """Fallback module mapping if execution chain not found"""
+        # This is the original module mapping from choreographer
+        module_mapping = {
+            "D1": {
+                1: ["semantic_processor", "embedding_policy", "analyzer_one", "policy_segmenter"],
+                2: ["bayesian_integrator", "semantic_processor", "municipal_analyzer", "embedding_analyzer"],
+                3: ["financial_analyzer", "dereck_beach", "pdet_analyzer", "causal_processor"],
+                4: ["analyzer_one", "municipal_analyzer", "causal_processor", "decologo_processor"],
+                5: ["contradiction_detector", "dereck_beach", "causal_validator", "policy_processor"]
+            },
+            "D2": {
+                1: ["policy_segmenter", "semantic_processor", "analyzer_one", "policy_processor"],
+                2: ["dereck_beach", "causal_processor", "pdet_analyzer", "causal_validator"],
+                3: ["causal_processor", "dereck_beach", "pdet_analyzer", "validation_framework"],
+                4: ["contradiction_detector", "analyzer_one", "municipal_analyzer", "causal_processor"],
+                5: ["contradiction_detector", "causal_processor", "causal_validator", "semantic_processor"]
+            },
+            "D3": {
+                1: ["dereck_beach", "policy_processor", "semantic_processor", "pdet_analyzer"],
+                2: ["embedding_policy", "semantic_processor", "bayesian_integrator", "embedding_analyzer"],
+                3: ["financial_analyzer", "dereck_beach", "causal_processor", "pdet_analyzer"],
+                4: ["analyzer_one", "municipal_analyzer", "pdet_analyzer", "causal_processor"],
+                5: ["dereck_beach", "semantic_processor", "causal_processor", "decologo_processor"]
+            },
+            "D4": {
+                1: ["embedding_policy", "semantic_processor", "bayesian_integrator", "embedding_analyzer"],
+                2: ["causal_processor", "dereck_beach", "pdet_analyzer", "validation_framework"],
+                3: ["contradiction_detector", "causal_processor", "semantic_processor", "causal_validator"],
+                4: ["dereck_beach", "analyzer_one", "municipal_analyzer", "policy_processor"],
+                5: ["semantic_processor", "policy_processor", "decologo_processor", "embedding_analyzer"]
+            },
+            "D5": {
+                1: ["embedding_policy", "pdet_analyzer", "bayesian_integrator", "embedding_analyzer"],
+                2: ["semantic_processor", "embedding_policy", "embedding_analyzer", "analyzer_one"],
+                3: ["dereck_beach", "causal_processor", "causal_validator", "validation_framework"],
+                4: ["contradiction_detector", "pdet_analyzer", "causal_processor", "municipal_analyzer"],
+                5: ["contradiction_detector", "pdet_analyzer", "causal_processor", "causal_validator"]
+            },
+            "D6": {
+                1: ["causal_processor", "dereck_beach", "validation_framework", "decologo_processor"],
+                2: ["dereck_beach", "causal_processor", "causal_validator", "bayesian_integrator"],
+                3: ["contradiction_detector", "causal_processor", "causal_validator", "validation_framework"],
+                4: ["dereck_beach", "analyzer_one", "municipal_analyzer", "policy_processor"],
+                5: ["embedding_policy", "semantic_processor", "analyzer_one", "embedding_analyzer"]
+            }
+        }
+        
+        return module_mapping.get(dimension, {}).get(question_num, ["policy_processor"])
 
-        Thread(target=recovery_worker, daemon=True).start()
+    def _extract_verification_patterns(self, question_text: str) -> List[str]:
+        """Extract verification patterns from question text"""
+        patterns = []
 
-    def _train_predictor(self):
-        """Train the failure prediction model"""
-        if not self.predictor or len(self.metrics.failure_events) < 50:
-            return
+        # Common patterns
+        if "línea base" in question_text or "baseline" in question_text:
+            patterns.append("baseline_present")
+        if "fuente" in question_text or "source" in question_text:
+            patterns.append("source_specified")
+        if "cifras" in question_text or "números" in question_text or "cuantif" in question_text:
+            patterns.append("quantitative_data")
+        if "meta" in question_text or "target" in question_text:
+            patterns.append("target_specified")
+        if "responsable" in question_text or "responsible" in question_text:
+            patterns.append("responsibility_assigned")
+        if "presupuesto" in question_text or "recursos" in question_text or "budget" in question_text:
+            patterns.append("budget_allocated")
+        if "cronograma" in question_text or "plazo" in question_text or "timeline" in question_text:
+            patterns.append("timeline_specified")
+        if "causal" in question_text or "mecanismo" in question_text:
+            patterns.append("causal_mechanism")
+        if "indicador" in question_text or "indicator" in question_text:
+            patterns.append("indicator_present")
 
-        # Extract features from historical data
-        feature_data = []
-        for event in self.metrics.failure_events[-500:]:  # Use last 500 events
-            # Extract features from the time window around the event
-            features = self.predictor.extract_features(self.metrics.performance_metrics)
-            if len(features) > 0:
-                feature_data.append(features)
-
-        if len(feature_data) >= 50:
-            self.predictor.train(feature_data)
-
-    def _notify_observers(self, event_type: str, data: Dict[str, Any]):
-        """Notify all registered observers"""
-        for observer in self.observers:
-            try:
-                observer(self.module_name, event_type, data)
-            except Exception as e:
-                self.logger.error(f"Observer notification failed: {e}")
-
-    def _notify_manual_intervention(self, reason: str):
-        """Notify about need for manual intervention"""
-        self.logger.critical(
-            f"MANUAL INTERVENTION REQUIRED for {self.module_name}: {reason}"
-        )
-        # In production, this would send alerts to monitoring systems
+        return patterns
 
     # Public API methods
 
-    def is_available(self) -> bool:
-        """Check if the circuit is available for calls"""
-        with self.state_lock:
-            return self.state in [CircuitState.CLOSED, CircuitState.HALF_OPEN]
+    def get_question(self, question_id: str) -> Optional[QuestionSpec]:
+        """Get a question by full ID (P#-D#-Q#)"""
+        return self._questions.get(question_id)
 
-    def force_open(self, reason: str = "manual"):
-        """Manually force the circuit open"""
-        with self.state_lock:
-            self._transition_to_open(reason)
+    def get_all_questions(self) -> Dict[str, QuestionSpec]:
+        """Get all 300 questions"""
+        return self._questions.copy()
 
-    def force_close(self, reason: str = "manual"):
-        """Manually force the circuit closed"""
-        with self.state_lock:
-            self._transition_to_closed(reason)
+    def get_questions_by_dimension(self, dimension: str) -> List[QuestionSpec]:
+        """Get all questions for a dimension across all policy areas"""
+        return [q for q in self._questions.values() if q.dimension == dimension]
 
-    def reset(self):
-        """Reset the circuit breaker to initial state"""
-        with self.state_lock:
-            self.state = CircuitState.CLOSED
-            self.consecutive_failures = 0
-            self.half_open_calls = 0
-            self.half_open_successes = 0
-            self.metrics = CircuitBreakerMetrics()
-            self.logger.info(f"Circuit breaker reset for {self.module_name}")
+    def get_questions_by_policy_area(self, policy_area: str) -> List[QuestionSpec]:
+        """Get all 30 questions for a policy area"""
+        return [q for q in self._questions.values() if q.policy_area == policy_area]
 
-    def add_observer(self, observer: Callable):
-        """Add an observer for circuit events"""
-        self.observers.append(observer)
-
-    def remove_observer(self, observer: Callable):
-        """Remove an observer"""
-        if observer in self.observers:
-            self.observers.remove(observer)
-
-    def get_health_status(self) -> Dict[str, Any]:
-        """Get comprehensive health status"""
-        with self.state_lock:
-            return {
-                "module": self.module_name,
-                "state": self.state.name,
-                "consecutive_failures": self.consecutive_failures,
-                "total_requests": self.metrics.total_requests,
-                "success_rate": self.metrics.success_rate,
-                "failure_rate": self.metrics.failure_rate,
-                "avg_response_time": self.metrics.avg_response_time,
-                "last_failure": self.metrics.last_failure_time,
-                "last_success": self.metrics.last_success_time,
-                "circuit_opens": self.metrics.circuit_open_count,
-                "circuit_closes": self.metrics.circuit_close_count,
-                "fallback_usage": self.metrics.fallback_usage_count,
-                "thresholds": {
-                    "failure_threshold": self.thresholds.failure_threshold,
-                    "timeout": self.thresholds.timeout_seconds,
-                    "half_open_max_calls": self.thresholds.half_open_max_calls
-                },
-                "predictive_enabled": self.enable_prediction,
-                "adaptive_enabled": self.enable_adaptation
-            }
-
-    def get_detailed_metrics(self) -> Dict[str, Any]:
-        """Get detailed metrics for analysis"""
-        with self.state_lock:
-            recent_failures = [
-                {
-                    "timestamp": f.timestamp,
-                    "severity": f.severity.value,
-                    "error_type": f.error_type,
-                    "execution_time": f.execution_time
-                }
-                for f in list(self.metrics.failure_events)[-10:]
-            ]
-
-            return {
-                "health": self.get_health_status(),
-                "recent_failures": recent_failures,
-                "state_transitions": self.metrics.state_transitions[-20:],
-                "performance": {
-                    "response_times": list(self.metrics.performance_metrics.response_times)[-100:],
-                    "error_rates": list(self.metrics.performance_metrics.error_rates)[-100:],
-                    "throughput": list(self.metrics.performance_metrics.throughput)[-100:]
-                },
-                "prediction": {
-                    "enabled": self.enable_prediction,
-                    "trained": self.predictor.is_trained if self.predictor else False
-                }
-            }
-
-
-class CircuitBreaker:
-    """
-    Simplified Circuit Breaker interface for backward compatibility.
-    Wraps AdvancedCircuitBreaker with a simpler API.
-    """
-
-    def __init__(self):
-        self.circuit_breakers: Dict[str, AdvancedCircuitBreaker] = {}
-        self.global_observers = []
-        self.metrics_aggregator = CircuitBreakerMetricsAggregator()
-        self.logger = logging.getLogger(__name__)
-
-    def call(
-            self,
-            module_name: str,
-            func: Callable,
-            fallback: Optional[Callable] = None,
-            *args,
-            **kwargs
-    ) -> Any:
-        """
-        Execute a function with circuit breaker protection.
-
-        Args:
-            module_name: Name of the module
-            func: Function to execute
-            fallback: Optional fallback function
-            *args, **kwargs: Arguments to pass to func
-
-        Returns:
-            Result from func or fallback
-        """
-        circuit_breaker = self._get_or_create_circuit_breaker(module_name)
-        return circuit_breaker.call(func, *args, fallback=fallback, **kwargs)
-
-    def is_available(self, module_name: str) -> bool:
-        """Check if a module is available (circuit not open)"""
-        if module_name not in self.circuit_breakers:
-            return True
-        return self.circuit_breakers[module_name].is_available()
-
-    def _get_or_create_circuit_breaker(self, module_name: str) -> AdvancedCircuitBreaker:
-        """Get or create a circuit breaker for a module"""
-        if module_name not in self.circuit_breakers:
-            self.circuit_breakers[module_name] = AdvancedCircuitBreaker(
-                module_name,
-                enable_prediction=True,
-                enable_adaptation=True
-            )
-            # Add global observer
-            self.circuit_breakers[module_name].add_observer(
-                self._global_observer
-            )
-            self.logger.info(f"Created circuit breaker for module: {module_name}")
-        return self.circuit_breakers[module_name]
-
-    def _global_observer(self, module_name: str, event_type: str, data: Dict[str, Any]):
-        """Global observer for all circuit events"""
-        self.metrics_aggregator.record_event(module_name, event_type, data)
-
-    def get_health_summary(self) -> Dict[str, Any]:
-        """Get health summary for all circuit breakers"""
-        statuses = {}
-        for module_name, cb in self.circuit_breakers.items():
-            statuses[module_name] = cb.get_health_status()
-
-        total_modules = len(statuses)
-        if total_modules == 0:
-            return {
-                "total_modules": 0,
-                "healthy_modules": 0,
-                "degraded_modules": 0,
-                "unhealthy_modules": 0,
-                "health_percentage": 100.0,
-                "avg_success_rate": 1.0,
-                "timestamp": datetime.now().isoformat()
-            }
-
-        healthy = sum(1 for s in statuses.values() if s["state"] == "CLOSED")
-        degraded = sum(1 for s in statuses.values() if s["state"] == "HALF_OPEN")
-        unhealthy = sum(1 for s in statuses.values() if s["state"] in ["OPEN", "ISOLATED"])
-
-        success_rates = [s["success_rate"] for s in statuses.values() if s["total_requests"] > 0]
-        avg_success_rate = np.mean(success_rates) if success_rates else 1.0
-
-        return {
-            "total_modules": total_modules,
-            "healthy_modules": healthy,
-            "degraded_modules": degraded,
-            "unhealthy_modules": unhealthy,
-            "health_percentage": (healthy / total_modules * 100) if total_modules > 0 else 100,
-            "avg_success_rate": avg_success_rate,
-            "timestamp": datetime.now().isoformat(),
-            "module_statuses": statuses
-        }
-
-    def get_all_metrics(self) -> Dict[str, Dict[str, Any]]:
-        """Get detailed metrics for all circuit breakers"""
-        return {
-            module_name: cb.get_detailed_metrics()
-            for module_name, cb in self.circuit_breakers.items()
-        }
-
-    def reset_all(self):
-        """Reset all circuit breakers"""
-        for cb in self.circuit_breakers.values():
-            cb.reset()
-        self.logger.info("All circuit breakers reset")
-
-    def force_open(self, module_name: str, reason: str = "manual"):
-        """Force open a specific circuit breaker"""
-        if module_name in self.circuit_breakers:
-            self.circuit_breakers[module_name].force_open(reason)
-
-    def force_close(self, module_name: str, reason: str = "manual"):
-        """Force close a specific circuit breaker"""
-        if module_name in self.circuit_breakers:
-            self.circuit_breakers[module_name].force_close(reason)
-
-
-class CircuitBreakerMetricsAggregator:
-    """Aggregates metrics from all circuit breakers"""
-
-    def __init__(self):
-        self.events = deque(maxlen=10000)
-        self.module_metrics = defaultdict(lambda: defaultdict(list))
-
-    def record_event(self, module_name: str, event_type: str, data: Dict[str, Any]):
-        """Record an event from a circuit breaker"""
-        event = {
-            "module": module_name,
-            "event_type": event_type,
-            "timestamp": time.time(),
-            "data": data
-        }
-        self.events.append(event)
-        self.module_metrics[module_name][event_type].append(event)
-
-    def get_failure_patterns(self) -> Dict[str, Any]:
-        """Analyze failure patterns across modules"""
-        failure_events = [
-            e for e in self.events
-            if e["event_type"] == "failure"
+    def get_questions_by_policy_and_dimension(self, policy_area: str, dimension: str) -> List[QuestionSpec]:
+        """Get questions for a specific policy area and dimension (5 questions)"""
+        return [
+            q for q in self._questions.values()
+            if q.policy_area == policy_area and q.dimension == dimension
         ]
 
-        if not failure_events:
-            return {
-                "hourly_pattern": {},
-                "error_types": {},
-                "total_failures": 0
-            }
+    def get_policy_areas(self) -> Dict[str, Dict[str, Any]]:
+        """Get all policy areas"""
+        return self._policy_areas.copy()
 
-        # Group by hour
-        hourly_failures = defaultdict(int)
-        for event in failure_events:
-            hour = datetime.fromtimestamp(event["timestamp"]).hour
-            hourly_failures[hour] += 1
+    def get_dimensions(self) -> Dict[str, Dict[str, str]]:
+        """Get all dimensions"""
+        return self._dimensions.copy()
 
-        # Group by error type
-        error_types = defaultdict(int)
-        for event in failure_events:
-            if "event" in event["data"]:
-                error_type = event["data"]["event"].error_type
-                error_types[error_type] += 1
-
+    def get_dimension_descriptions(self) -> Dict[str, str]:
+        """Get dimension descriptions for report assembly"""
         return {
-            "hourly_pattern": dict(hourly_failures),
-            "error_types": dict(error_types),
-            "total_failures": len(failure_events)
+            dim_id: dim_data["description"]
+            for dim_id, dim_data in self._dimensions.items()
         }
 
-    def get_module_statistics(self, module_name: str) -> Dict[str, Any]:
-        """Get statistics for a specific module"""
-        if module_name not in self.module_metrics:
-            return {}
+    def get_rubric_mapping(self) -> Dict[str, float]:
+        """Get the rubric mapping"""
+        return self._rubric_mapping.copy()
 
-        metrics = self.module_metrics[module_name]
-        total_events = sum(len(events) for events in metrics.values())
+    def get_scoring_modality(self, modality_id: str) -> Optional[ScoringModality]:
+        """Get a scoring modality by ID"""
+        return self._scoring_modalities.get(modality_id)
 
-        return {
-            "total_events": total_events,
-            "success_count": len(metrics.get("success", [])),
-            "failure_count": len(metrics.get("failure", [])),
-            "event_types": {
-                event_type: len(events)
-                for event_type, events in metrics.items()
-            }
+    def get_execution_chain(self, dimension: str, question_no: int) -> Optional[ExecutionChain]:
+        """Get execution chain for a dimension and question"""
+        chain_id = f"{dimension}-Q{question_no}"
+        return self._execution_chains.get(chain_id)
+
+    def validate_questionnaire(self) -> Dict[str, Any]:
+        """Validate the loaded questionnaire"""
+        validation_result = {
+            "valid": True,
+            "total_questions": len(self._questions),
+            "expected_questions": 300,
+            "dimensions": len(self._dimensions),
+            "policy_areas": len(self._policy_areas),
+            "scoring_modalities": len(self._scoring_modalities),
+            "execution_chains": len(self._execution_chains),
+            "issues": []
         }
 
+        # Check question count
+        if len(self._questions) != 300:
+            validation_result["valid"] = False
+            validation_result["issues"].append(
+                f"Expected 300 questions, found {len(self._questions)}"
+            )
 
-class CircuitBreakerError(Exception):
-    """Raised when circuit breaker blocks execution"""
-    pass
+        # Check dimension coverage
+        for dim in ["D1", "D2", "D3", "D4", "D5", "D6"]:
+            dim_questions = self.get_questions_by_dimension(dim)
+            expected = 50  # 10 policy areas × 5 questions
+            if len(dim_questions) != expected:
+                validation_result["valid"] = False
+                validation_result["issues"].append(
+                    f"Dimension {dim}: expected {expected} questions, found {len(dim_questions)}"
+                )
 
+        # Check policy area coverage
+        for policy in [f"P{i}" for i in range(1, 11)]:
+            policy_questions = self.get_questions_by_policy_area(policy)
+            expected = 30  # 6 dimensions × 5 questions
+            if len(policy_questions) != expected:
+                validation_result["valid"] = False
+                validation_result["issues"].append(
+                    f"Policy area {policy}: expected {expected} questions, found {len(policy_questions)}"
+                )
 
-# Convenience function for creating module-specific fallbacks
-def create_module_specific_fallback(module_name: str) -> Callable:
-    """
-    Create a module-specific fallback function that returns degraded responses
-    compatible with ModuleResult format from module_adapters.py
-    """
+        # Check module mappings
+        questions_without_modules = [
+            q.canonical_id for q in self._questions.values()
+            if not q.required_modules
+        ]
+        if questions_without_modules:
+            validation_result["issues"].append(
+                f"{len(questions_without_modules)} questions without module mappings"
+            )
 
-    def fallback(*args, **kwargs) -> Dict[str, Any]:
-        logger.warning(f"Using fallback for {module_name}")
-
-        # Return module-specific degraded response compatible with ModuleResult
-        fallback_responses = {
-            "contradiction_detector": {
-                "contradictions": [],
-                "coherence_metrics": {"coherence_score": 0.5},
-                "status": "degraded",
-                "message": "Contradiction detection unavailable, using fallback"
-            },
-            "causal_processor": {
-                "causal_dag": None,
-                "causal_dimensions": {},
-                "information_gain": 0.0,
-                "status": "degraded",
-                "message": "Causal processing unavailable, using fallback"
-            },
-            "dereck_beach": {
-                "causal_hierarchy": None,
-                "mechanism_parts": [],
-                "mechanism_inferences": [],
-                "bayesian_confidence_report": {"mean_confidence": 0.5},
-                "rigor_status": 0.0,
-                "status": "degraded",
-                "message": "Derek Beach analysis unavailable, using fallback"
-            },
-            "policy_processor": {
-                "dimensions": {},
-                "overall_score": 0.5,
-                "status": "degraded",
-                "message": "Policy processing unavailable, using fallback"
-            },
-            "analyzer_one": {
-                "semantic_analysis": {},
-                "value_chain": {},
-                "critical_links": [],
-                "analysis_results": {},
-                "quality_score": 0.5,
-                "status": "degraded",
-                "message": "Municipal analysis unavailable, using fallback"
-            },
-            "embedding_policy": {
-                "chunks": [],
-                "chunks_processed": 0,
-                "embeddings_generated": False,
-                "status": "degraded",
-                "message": "Embedding analysis unavailable, using fallback"
-            },
-            "policy_segmenter": {
-                "segments": [],
-                "num_segments": 0,
-                "status": "degraded",
-                "message": "Segmentation unavailable, using fallback"
-            },
-            "semantic_processor": {
-                "semantic_analysis": {},
-                "chunks": [],
-                "status": "degraded",
-                "message": "Semantic processing unavailable, using fallback"
-            },
-            "financial_analyzer": {
-                "budget_analysis": {},
-                "viability_score": 0.5,
-                "financial_indicators": [],
-                "status": "degraded",
-                "message": "Financial analysis unavailable, using fallback"
-            },
-            "bayesian_integrator": {
-                "integrated_evidence": {},
-                "posterior_probability": 0.5,
-                "status": "degraded",
-                "message": "Bayesian integration unavailable, using fallback"
-            },
-            "validation_framework": {
-                "validation_results": {},
-                "is_valid": False,
-                "completeness_score": 0.5,
-                "status": "degraded",
-                "message": "Validation unavailable, using fallback"
-            },
-            "municipal_analyzer": {
-                "municipal_context": {},
-                "institutional_capacity": 0.5,
-                "status": "degraded",
-                "message": "Municipal analysis unavailable, using fallback"
-            },
-            "pdet_analyzer": {
-                "pdet_analysis": {},
-                "financial_feasibility": 0.5,
-                "status": "degraded",
-                "message": "PDET analysis unavailable, using fallback"
-            },
-            "decologo_processor": {
-                "decologo_analysis": {},
-                "alignment_score": 0.5,
-                "status": "degraded",
-                "message": "Decologo processing unavailable, using fallback"
-            },
-            "embedding_analyzer": {
-                "embedding_analysis": {},
-                "semantic_similarity": 0.5,
-                "status": "degraded",
-                "message": "Embedding analysis unavailable, using fallback"
-            },
-            "causal_validator": {
-                "validation_results": {},
-                "is_valid": False,
-                "structural_violations": [],
-                "status": "degraded",
-                "message": "Causal validation unavailable, using fallback"
-            },
-            "modulos_teoria_cambio": {
-                "grafo": None,
-                "validacion": None,
-                "es_valida": False,
-                "monte_carlo_result": None,
-                "p_value": 0.5,
-                "bayesian_posterior": 0.5,
-                "status": "degraded",
-                "message": "Theory of Change validation unavailable, using fallback"
-            }
-        }
-
-        return fallback_responses.get(
-            module_name,
-            {
-                "status": "degraded",
-                "message": f"Module {module_name} unavailable, using fallback",
-                "data": {},
-                "confidence": 0.5
-            }
-        )
-
-    return fallback
-
-
-# Global registry instance for backward compatibility
-circuit_breaker_registry = None
-
-
-def get_circuit_breaker_registry():
-    """Get or create the global circuit breaker registry"""
-    global circuit_breaker_registry
-    if circuit_breaker_registry is None:
-        circuit_breaker_registry = CircuitBreaker()
-    return circuit_breaker_registry
-
-
-# Convenience functions for common operations
-def call_with_circuit_breaker(
-        module_name: str,
-        func: Callable,
-        *args,
-        fallback: Optional[Callable] = None,
-        **kwargs
-) -> Any:
-    """
-    Execute a function with circuit breaker protection.
-    
-    Args:
-        module_name: Name of the module
-        func: Function to execute
-        *args, **kwargs: Arguments to pass to func
-        fallback: Optional fallback function
-        
-    Returns:
-        Result from func or fallback
-    """
-    registry = get_circuit_breaker_registry()
-    return registry.call(module_name, func, fallback, *args, **kwargs)
-
-
-def is_module_available(module_name: str) -> bool:
-    """Check if a module is available (circuit not open)"""
-    registry = get_circuit_breaker_registry()
-    return registry.is_available(module_name)
-
-
-def get_all_circuit_health() -> Dict[str, Any]:
-    """Get health status for all circuit breakers"""
-    registry = get_circuit_breaker_registry()
-    return registry.get_health_summary()
-
-
-def reset_circuit_breaker(module_name: str):
-    """Reset a specific circuit breaker"""
-    registry = get_circuit_breaker_registry()
-    if module_name in registry.circuit_breakers:
-        registry.circuit_breakers[module_name].reset()
-
-
-def reset_all_circuit_breakers():
-    """Reset all circuit breakers"""
-    registry = get_circuit_breaker_registry()
-    registry.reset_all()
-
-
-# Export main classes and functions
-__all__ = [
-    'CircuitBreaker',
-    'AdvancedCircuitBreaker',
-    'CircuitBreakerError',
-    'CircuitState',
-    'FailureSeverity',
-    'create_module_specific_fallback',
-    'call_with_circuit_breaker',
-    'is_module_available',
-    'get_all_circuit_health',
-    'reset_circuit_breaker',
-    'reset_all_circuit_breakers',
-    'get_circuit_breaker_registry'
-]
+        return validation_result
