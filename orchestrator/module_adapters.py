@@ -99,9 +99,42 @@ class PolicyProcessorAdapter(BaseAdapter):
     """
     Complete adapter for policy_processor.py - Industrial Policy Processing System.
     
-    This adapter provides access to ALL classes and methods from the policy
-    processing framework including configuration, Bayesian evidence scoring,
-    text processing, pattern matching, and analysis pipeline.
+    Provides unified access to industrial-grade policy processing with Bayesian evidence 
+    scoring, pattern matching, and semantic text analysis. Handles pattern-based extraction 
+    of policy indicators from territorial development plans.
+    
+    Supported Cuestionario Question IDs:
+        P1-D1-Q1, P2-D1-Q1, P3-D1-Q2, P4-D1-Q1, P5-D2-Q1, P6-D3-Q1, P7-D1-Q3, 
+        P8-D2-Q2, P9-D3-Q2, P10-D1-Q2
+    
+    Classes Exposed:
+        - ProcessorConfig: Configuration management (2 methods)
+        - BayesianEvidenceScorer: Probabilistic confidence scoring (3 methods)
+        - PolicyTextProcessor: Text normalization and segmentation (5 methods)
+        - IndustrialPolicyProcessor: Main processing pipeline (14 methods)
+        - AdvancedTextSanitizer: Text cleaning (4 methods)
+        - ResilientFileHandler: File I/O with error recovery (2 methods)
+        - PolicyAnalysisPipeline: End-to-end orchestration (3 methods)
+    
+    Args:
+        None
+    
+    Attributes:
+        available (bool): True if module loaded successfully
+        module_name (str): Identifier "policy_processor"
+        ProcessorConfig: Configuration class reference
+        BayesianEvidenceScorer: Evidence scorer class reference
+        PolicyTextProcessor: Text processor class reference
+        IndustrialPolicyProcessor: Main processor class reference
+    
+    Raises:
+        ImportError: If policy_processor module unavailable (caught and logged)
+    
+    Examples:
+        >>> adapter = PolicyProcessorAdapter()
+        >>> result = adapter.execute("process", ["policy text"], {"questionnaire_path": "cuestionario.json"})
+        >>> print(result.confidence)  # 0.85
+        >>> print(result.data["points_found"])  # 12
     """
 
     def __init__(self):
@@ -109,7 +142,15 @@ class PolicyProcessorAdapter(BaseAdapter):
         self._load_module()
 
     def _load_module(self):
-        """Load all components from policy_processor module"""
+        """
+        Load all components from policy_processor module.
+        
+        Attempts to import all required classes from policy_processor.py and marks
+        adapter as available if successful. Logs warning if import fails.
+        
+        Raises:
+            ImportError: Caught internally, sets self.available=False
+        """
         try:
             from policy_processor import (
                 ProcessorConfig,
@@ -140,7 +181,35 @@ class PolicyProcessorAdapter(BaseAdapter):
 
     def execute(self, method_name: str, args: List[Any], kwargs: Dict[str, Any]) -> ModuleResult:
         """
-        Execute a method from policy_processor module.
+        Execute a method from policy_processor module with standardized error handling.
+        
+        Routes method calls to appropriate internal handlers, measures execution time,
+        and returns standardized ModuleResult with confidence scores and evidence.
+        
+        Supported Cuestionario Question IDs: P1-D1-Q1, P2-D1-Q1, P3-D1-Q2, P4-D1-Q1, 
+            P5-D2-Q1, P6-D3-Q1, P7-D1-Q3, P8-D2-Q2, P9-D3-Q2, P10-D1-Q2
+        
+        Args:
+            method_name (str): Name of method to execute (e.g., "process", "normalize_unicode")
+            args (List[Any]): Positional arguments for method
+            kwargs (Dict[str, Any]): Keyword arguments for method
+        
+        Returns:
+            ModuleResult: Standardized result with fields:
+                - module_name (str): "policy_processor"
+                - class_name (str): Source class name
+                - method_name (str): Executed method name
+                - status (str): "success" | "failed" | "degraded"
+                - data (Dict): Method-specific output data
+                - evidence (List[Dict]): Supporting evidence with provenance
+                - confidence (float): Confidence score 0.0-1.0
+                - execution_time (float): Duration in seconds
+                - errors (List[str]): Error messages if any
+                - warnings (List[str]): Non-fatal warnings
+        
+        Raises:
+            ValueError: If method_name not recognized
+            Exception: Caught and returned as ModuleResult with status="failed"
         
         COMPLETE METHOD LIST (34 methods):
         
@@ -807,12 +876,43 @@ if __name__ == "__main__":
 
 class PolicySegmenterAdapter(BaseAdapter):
     """
-    Complete adapter for policy_segmenter.py - Document Segmentation System.
+    Complete adapter for policy_segmenter.py - Semantic Document Segmentation System.
     
-    This adapter provides access to ALL classes and methods from the policy
-    segmentation framework including Spanish sentence segmentation, Bayesian
-    boundary scoring, structure detection, dynamic programming optimization,
-    and comprehensive document segmentation.
+    Provides access to C3 algorithm-based semantic segmentation for territorial 
+    development plans. Handles Spanish sentence segmentation, Bayesian boundary 
+    scoring, structure detection, and dynamic programming optimization for coherent 
+    document chunking.
+    
+    Supported Cuestionario Question IDs:
+        P1-D1-Q1, P2-D1-Q1, P3-D1-Q1, P4-D1-Q2, P5-D3-Q1, P6-D3-Q2, P7-D1-Q3
+    
+    Classes Exposed:
+        - SpanishSentenceSegmenter: Spanish-specific sentence tokenization (5 methods)
+        - BayesianBoundaryScorer: Probabilistic boundary detection (4 methods)
+        - StructureDetector: Document structure inference (6 methods)
+        - DPSegmentOptimizer: Dynamic programming for optimal cuts (4 methods)
+        - DocumentSegmenter: End-to-end segmentation orchestrator (18 methods)
+    
+    Args:
+        None
+    
+    Attributes:
+        available (bool): True if module loaded successfully
+        module_name (str): Identifier "policy_segmenter"
+        SpanishSentenceSegmenter: Sentence segmenter class reference
+        BayesianBoundaryScorer: Boundary scorer class reference
+        StructureDetector: Structure detector class reference
+        DPSegmentOptimizer: DP optimizer class reference
+        DocumentSegmenter: Main segmenter class reference
+    
+    Raises:
+        ImportError: If policy_segmenter module unavailable (caught and logged)
+    
+    Examples:
+        >>> adapter = PolicySegmenterAdapter()
+        >>> result = adapter.execute("segment", ["Long policy document text..."], {"target_size": 512})
+        >>> print(len(result.data["segments"]))  # 15
+        >>> print(result.confidence)  # 0.85
     """
 
     def __init__(self):
@@ -820,7 +920,15 @@ class PolicySegmenterAdapter(BaseAdapter):
         self._load_module()
 
     def _load_module(self):
-        """Load all components from policy_segmenter module"""
+        """
+        Load all components from policy_segmenter module.
+        
+        Attempts to import all required classes and marks adapter as available
+        if successful. Logs warning if import fails.
+        
+        Raises:
+            ImportError: Caught internally, sets self.available=False
+        """
         try:
             from policy_segmenter import (
                 SpanishSentenceSegmenter,
