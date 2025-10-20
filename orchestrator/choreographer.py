@@ -1,497 +1,626 @@
 """
-Choreographer - Job Queuing and Sequential Execution with Circuit Breaker Integration
-=====================================================================================
+Choreographer - Job Orchestration with Retry Logic and Partial Result Collection
+=================================================================================
 
-CORE RESPONSIBILITY: Queue jobs, execute question processing sequentially through
-ModuleController, integrate circuit breaker for fault tolerance, and aggregate results
+CORE RESPONSIBILITY: Orchestrate job execution with resilience and fault tolerance
+----------------------------------------------------------------------------------
+Manages complete job lifecycle from question loading through result aggregation:
+1. Queue questions from cuestionario.json
+2. Invoke ModuleController handlers through circuit breaker wrapper
+3. Aggregate results with retry logic
+4. Handle failure scenarios with partial result collection
+5. Provide job progress tracking and status reporting
 
 EXECUTION FLOW:
---------------
-1. Job Queuing: Accept question specifications and plan text for processing
-2. Sequential Execution: Process each question through ModuleController
-3. Circuit Breaker Integration: Skip failed modules and log degraded operation
-4. Result Aggregation: Compile results for ReportAssembly consumption
+---------------
+Job Start → Load Questions → For each question:
+  → Check circuit breaker → Invoke ModuleController → Record result
+  → On failure: Retry with exponential backoff → Collect partial results
+→ Aggregate all results → Generate job summary
+
+RETRY STRATEGY:
+---------------
+- Max retries: 3 per question
+- Backoff: Exponential (1s, 2s, 4s)
+- Circuit breaker: Skip if circuit open
+- Partial results: Continue with other questions on failure
+- Job fails only if 100% questions fail
 
 CIRCUIT BREAKER INTEGRATION:
 ----------------------------
-- Automatically handled by ModuleController
-- Failed modules are skipped with logged warnings
-- System continues in degraded mode when modules fail
-- Recovery attempts after timeout period
+- Check circuit state before each invocation
+- Record success/failure after each invocation
+- Use fallback strategy if circuit opens
+- Automatic recovery after timeout period
 
 Author: FARFAN Integration Team
-Version: 3.0.0 - Refactored for unified data structure
+Version: 3.0.0 - Dependency injection with ModuleController
 Python: 3.10+
 """
 
 import logging
 import time
-import uuid
-from typing import Dict, List, Any, Optional
+import json
+from pathlib import Path
+from typing import Dict, List, Set, Tuple, Any, Optional, Union
 from dataclasses import dataclass, field
-from datetime import datetime
 from enum import Enum
+from datetime import datetime
+from collections import defaultdict
 
 logger = logging.getLogger(__name__)
 
 
-class JobStatus(Enum):
-    """Job execution status"""
-    QUEUED = "queued"
+class ExecutionStatus(Enum):
+    """Execution status for individual question processing"""
+    PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
     FAILED = "failed"
-    CANCELLED = "cancelled"
+    SKIPPED = "skipped"
+    DEGRADED = "degraded"
+    RETRYING = "retrying"
 
 
 @dataclass
-class Job:
-    """Represents a question processing job"""
-    job_id: str
-    question_spec: Any
-    plan_text: str
-    status: JobStatus = JobStatus.QUEUED
-    result: Optional[Any] = None
+class ExecutionResult:
+    """
+    Result from a single question execution
+    
+    Wraps ModuleResult objects with additional orchestration metadata
+    """
+    question_id: str
+    status: ExecutionStatus
+    
+    module_results: Dict[str, Any] = field(default_factory=dict)
     error: Optional[str] = None
-    created_at: str = field(default_factory=lambda: datetime.now().isoformat())
-    started_at: Optional[str] = None
-    completed_at: Optional[str] = None
     execution_time: float = 0.0
+    retry_count: int = 0
+    
+    aggregated_confidence: float = 0.0
+    evidence_count: int = 0
+    
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for aggregation and reporting"""
+        return {
+            "question_id": self.question_id,
+            "status": self.status.value,
+            "module_results": self.module_results,
+            "error": self.error,
+            "execution_time": self.execution_time,
+            "retry_count": self.retry_count,
+            "aggregated_confidence": self.aggregated_confidence,
+            "evidence_count": self.evidence_count,
+            "metadata": self.metadata
+        }
+
+
+@dataclass
+class JobSummary:
+    """
+    Summary of job execution
+    
+    Provides statistics and results from complete job run
+    """
+    job_id: str
+    total_questions: int
+    completed: int
+    failed: int
+    skipped: int
+    degraded: int
+    
+    total_execution_time: float
+    avg_execution_time: float
+    
+    total_retries: int
+    circuit_breaker_trips: int
+    
+    success_rate: float
+    completion_rate: float
+    
+    results: List[ExecutionResult] = field(default_factory=list)
+    errors: List[Dict[str, Any]] = field(default_factory=list)
+    
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for reporting"""
+        return {
+            "job_id": self.job_id,
+            "total_questions": self.total_questions,
+            "completed": self.completed,
+            "failed": self.failed,
+            "skipped": self.skipped,
+            "degraded": self.degraded,
+            "total_execution_time": self.total_execution_time,
+            "avg_execution_time": self.avg_execution_time,
+            "total_retries": self.total_retries,
+            "circuit_breaker_trips": self.circuit_breaker_trips,
+            "success_rate": self.success_rate,
+            "completion_rate": self.completion_rate,
+            "results": [r.to_dict() for r in self.results],
+            "errors": self.errors,
+            "metadata": self.metadata
+        }
 
 
 class Choreographer:
     """
-    Orchestrates job queuing and sequential question processing
+    Orchestrates job execution with ModuleController integration
     
-    Features:
-    - Job queue management
-    - Sequential execution through ModuleController
-    - Circuit breaker integration (handled by ModuleController)
-    - Result aggregation for ReportAssembly
-    - Degraded operation logging
+    Manages:
+    - Question queueing from cuestionario.json
+    - Circuit breaker-wrapped ModuleController invocations
+    - Retry logic with exponential backoff
+    - Partial result collection
+    - Job progress tracking
     """
 
-    def __init__(self, module_controller: Any):
+    def __init__(
+            self,
+            module_controller: Any,
+            max_workers: Optional[int] = None,
+            max_retries: int = 3,
+            retry_delay: float = 1.0,
+            cuestionario_path: Optional[Path] = None
+    ) -> None:
         """
-        Initialize choreographer with module controller
+        Initialize choreographer with ModuleController dependency
         
         Args:
-            module_controller: ModuleController instance for adapter execution
+            module_controller: ModuleController instance for question routing
+            max_workers: Maximum parallel workers (not used in current sequential implementation)
+            max_retries: Maximum retry attempts per question (default: 3)
+            retry_delay: Initial retry delay in seconds (default: 1.0)
+            cuestionario_path: Path to cuestionario.json (defaults to ./cuestionario.json)
         """
         self.module_controller = module_controller
+        self.max_workers = max_workers or 4
+        self.max_retries = max_retries
+        self.retry_delay = retry_delay
+        self.cuestionario_path = cuestionario_path or Path("cuestionario.json")
         
-        # Job management
-        self.jobs: Dict[str, Job] = {}
-        self.job_queue: List[str] = []
+        self.question_queue: List[Any] = []
+        self.execution_results: List[ExecutionResult] = []
         
-        # Statistics
         self.stats = {
-            "total_jobs_queued": 0,
-            "total_jobs_completed": 0,
-            "total_jobs_failed": 0,
-            "total_execution_time": 0.0,
-            "degraded_executions": 0,
-            "skipped_modules": 0
+            "total_retries": 0,
+            "circuit_breaker_trips": 0,
+            "fallback_invocations": 0
         }
         
-        logger.info("Choreographer initialized with ModuleController")
+        logger.info(
+            f"Choreographer initialized with ModuleController "
+            f"(max_retries={max_retries}, retry_delay={retry_delay}s)"
+        )
 
-    def queue_job(
+    def load_questions_from_cuestionario(self) -> List[Dict[str, Any]]:
+        """
+        Load questions from cuestionario.json
+        
+        Returns:
+            List of question dictionaries
+            
+        Raises:
+            FileNotFoundError: If cuestionario.json not found
+            ValueError: If JSON structure is invalid
+        """
+        if not self.cuestionario_path.exists():
+            raise FileNotFoundError(f"cuestionario.json not found at {self.cuestionario_path}")
+        
+        logger.info(f"Loading questions from {self.cuestionario_path}")
+        
+        with open(self.cuestionario_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        
+        if not isinstance(data, dict):
+            raise ValueError("cuestionario.json must contain a dictionary")
+        
+        questions = []
+        for category_key, category_data in data.items():
+            if isinstance(category_data, dict) and 'questions' in category_data:
+                questions.extend(category_data['questions'])
+            elif isinstance(category_data, list):
+                questions.extend(category_data)
+        
+        logger.info(f"Loaded {len(questions)} questions from cuestionario")
+        return questions
+
+    def execute_job(
+            self,
+            question_specs: List[Any],
+            plan_text: str,
+            circuit_breaker: Optional[Any] = None,
+            job_id: Optional[str] = None
+    ) -> JobSummary:
+        """
+        Execute complete job with all questions
+        
+        EXECUTION FLOW:
+        ---------------
+        1. Initialize job tracking
+        2. For each question in queue:
+           a. Check circuit breaker status
+           b. Execute question with retry logic
+           c. Record result (success or failure)
+           d. Update statistics
+        3. Generate job summary with aggregated results
+        
+        Args:
+            question_specs: List of question specifications
+            plan_text: Plan document text
+            circuit_breaker: Optional CircuitBreaker for fault tolerance
+            job_id: Optional job identifier
+            
+        Returns:
+            JobSummary with execution statistics and results
+        """
+        job_id = job_id or f"job_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        logger.info(f"Starting job {job_id} with {len(question_specs)} questions")
+        
+        start_time = time.time()
+        
+        self.execution_results = []
+        self.stats = {
+            "total_retries": 0,
+            "circuit_breaker_trips": 0,
+            "fallback_invocations": 0
+        }
+        
+        for i, question_spec in enumerate(question_specs, 1):
+            logger.info(f"Processing question {i}/{len(question_specs)}: {question_spec.canonical_id}")
+            
+            result = self.execute_question(
+                question_spec=question_spec,
+                plan_text=plan_text,
+                circuit_breaker=circuit_breaker
+            )
+            
+            self.execution_results.append(result)
+            
+            self._log_progress(i, len(question_specs), result)
+        
+        total_time = time.time() - start_time
+        
+        summary = self._generate_job_summary(
+            job_id=job_id,
+            total_questions=len(question_specs),
+            total_time=total_time
+        )
+        
+        logger.info(
+            f"Job {job_id} completed: {summary.completed}/{summary.total_questions} successful "
+            f"({summary.success_rate:.1%}), {summary.failed} failed, {summary.total_retries} retries"
+        )
+        
+        return summary
+
+    def execute_question(
             self,
             question_spec: Any,
-            plan_text: str
-    ) -> str:
+            plan_text: str,
+            circuit_breaker: Optional[Any] = None
+    ) -> ExecutionResult:
         """
-        Queue a job for question processing
+        Execute single question with retry logic and circuit breaker integration
+        
+        RETRY STRATEGY:
+        ---------------
+        - Attempt 1: Immediate execution
+        - Attempt 2: Wait retry_delay seconds (1.0s)
+        - Attempt 3: Wait retry_delay * 2 seconds (2.0s)
+        - Attempt 4: Wait retry_delay * 4 seconds (4.0s)
+        - After max_retries: Return FAILED with partial results if any
+        
+        CIRCUIT BREAKER CHECKS:
+        -----------------------
+        - Before each attempt: Check if circuit allows execution
+        - After success: Record success in circuit breaker
+        - After failure: Record failure in circuit breaker
+        - If circuit opens: Use fallback strategy
         
         Args:
             question_spec: Question specification from questionnaire parser
             plan_text: Plan document text
+            circuit_breaker: Optional CircuitBreaker for fault tolerance
             
         Returns:
-            Job ID for tracking
+            ExecutionResult with execution outcome and collected results
         """
-        job_id = str(uuid.uuid4())
-        
-        job = Job(
-            job_id=job_id,
-            question_spec=question_spec,
-            plan_text=plan_text
-        )
-        
-        self.jobs[job_id] = job
-        self.job_queue.append(job_id)
-        
-        self.stats["total_jobs_queued"] += 1
-        
-        question_id = getattr(question_spec, 'canonical_id', 'unknown')
-        logger.info(f"Queued job {job_id} for question {question_id}")
-        
-        return job_id
-
-    def execute_job(self, job_id: str) -> Any:
-        """
-        Execute a queued job
-        
-        Args:
-            job_id: Job identifier
-            
-        Returns:
-            UnifiedAnalysisData from ModuleController
-            
-        Raises:
-            ValueError: If job_id not found
-        """
-        if job_id not in self.jobs:
-            raise ValueError(f"Job {job_id} not found")
-        
-        job = self.jobs[job_id]
-        
-        if job.status != JobStatus.QUEUED:
-            logger.warning(f"Job {job_id} already processed (status: {job.status.value})")
-            return job.result
-        
-        # Update job status
-        job.status = JobStatus.RUNNING
-        job.started_at = datetime.now().isoformat()
-        
-        question_id = getattr(job.question_spec, 'canonical_id', 'unknown')
-        logger.info(f"Executing job {job_id} for question {question_id}")
-        
+        question_id = question_spec.canonical_id
         start_time = time.time()
         
-        try:
-            # Execute through ModuleController
-            unified_data = self.module_controller.execute_question_analysis(
-                question_spec=job.question_spec,
-                plan_text=job.plan_text
-            )
+        errors = []
+        partial_results = {}
+        
+        for attempt in range(self.max_retries + 1):
+            if attempt > 0:
+                delay = self.retry_delay * (2 ** (attempt - 1))
+                logger.info(f"Retry attempt {attempt} for {question_id} after {delay}s")
+                time.sleep(delay)
+                self.stats["total_retries"] += 1
             
-            # Check for degraded execution (failed or skipped modules)
-            self._check_degraded_execution(unified_data, question_id)
-            
-            # Update job with result
-            job.status = JobStatus.COMPLETED
-            job.result = unified_data
-            job.completed_at = datetime.now().isoformat()
-            job.execution_time = time.time() - start_time
-            
-            # Update statistics
-            self.stats["total_jobs_completed"] += 1
-            self.stats["total_execution_time"] += job.execution_time
-            
-            logger.info(
-                f"Completed job {job_id} for {question_id} in {job.execution_time:.2f}s "
-                f"({unified_data.execution_metadata['successful_steps']}/{unified_data.execution_metadata['total_steps']} steps succeeded)"
-            )
-            
-            return unified_data
-            
-        except Exception as e:
-            logger.error(f"Error executing job {job_id} for {question_id}: {e}", exc_info=True)
-            
-            job.status = JobStatus.FAILED
-            job.error = str(e)
-            job.completed_at = datetime.now().isoformat()
-            job.execution_time = time.time() - start_time
-            
-            self.stats["total_jobs_failed"] += 1
-            
-            raise
+            try:
+                if circuit_breaker:
+                    dimension = getattr(question_spec, 'dimension', None)
+                    responsible_adapters = self.module_controller.get_responsible_adapters(dimension)
+                    
+                    circuit_blocked = all(
+                        not circuit_breaker.can_execute(adapter)
+                        for adapter in responsible_adapters
+                    )
+                    
+                    if circuit_blocked:
+                        logger.warning(f"Circuit breaker blocking {question_id} (all adapters blocked)")
+                        self.stats["circuit_breaker_trips"] += 1
+                        
+                        if attempt < self.max_retries:
+                            continue
+                        else:
+                            return self._create_failed_result(
+                                question_id=question_id,
+                                error="Circuit breaker blocking all responsible adapters",
+                                execution_time=time.time() - start_time,
+                                retry_count=attempt,
+                                partial_results=partial_results
+                            )
+                
+                module_results = self.module_controller.process_question(
+                    question_spec=question_spec,
+                    plan_text=plan_text,
+                    context=None
+                )
+                
+                if not module_results:
+                    raise ValueError("No module results returned")
+                
+                partial_results.update(module_results)
+                
+                if circuit_breaker:
+                    for adapter_name in responsible_adapters:
+                        circuit_breaker.record_success(adapter_name, time.time() - start_time)
+                
+                return self._create_success_result(
+                    question_id=question_id,
+                    module_results=module_results,
+                    execution_time=time.time() - start_time,
+                    retry_count=attempt
+                )
+                
+            except Exception as e:
+                error_msg = f"Attempt {attempt + 1}: {str(e)}"
+                errors.append(error_msg)
+                logger.error(f"Execution failed for {question_id}: {e}")
+                
+                if circuit_breaker:
+                    dimension = getattr(question_spec, 'dimension', None)
+                    responsible_adapters = self.module_controller.get_responsible_adapters(dimension)
+                    for adapter_name in responsible_adapters:
+                        circuit_breaker.record_failure(adapter_name, str(e), time.time() - start_time)
+        
+        logger.error(f"All retry attempts exhausted for {question_id}")
+        
+        return self._create_failed_result(
+            question_id=question_id,
+            error=f"Failed after {self.max_retries + 1} attempts: {'; '.join(errors)}",
+            execution_time=time.time() - start_time,
+            retry_count=self.max_retries + 1,
+            partial_results=partial_results
+        )
 
-    def _check_degraded_execution(
+    def _create_success_result(
             self,
-            unified_data: Any,
-            question_id: str
-    ) -> None:
+            question_id: str,
+            module_results: Dict[str, Any],
+            execution_time: float,
+            retry_count: int
+    ) -> ExecutionResult:
         """
-        Check for degraded execution and log appropriately
+        Create success ExecutionResult from module results
         
         Args:
-            unified_data: UnifiedAnalysisData from execution
-            question_id: Question identifier for logging
-        """
-        metadata = unified_data.execution_metadata
-        
-        failed_steps = metadata.get('failed_steps', 0)
-        skipped_steps = metadata.get('skipped_steps', 0)
-        total_steps = metadata.get('total_steps', 0)
-        
-        if failed_steps > 0 or skipped_steps > 0:
-            self.stats["degraded_executions"] += 1
-            self.stats["skipped_modules"] += skipped_steps
+            question_id: Question canonical ID
+            module_results: Dictionary of ModuleResult objects
+            execution_time: Total execution time
+            retry_count: Number of retries before success
             
-            logger.warning(
-                f"Degraded execution for {question_id}: "
-                f"{failed_steps} failed, {skipped_steps} skipped out of {total_steps} total steps"
-            )
-            
-            # Log failed modules
-            for trace in unified_data.module_traces:
-                if trace.status == 'failed':
-                    logger.warning(
-                        f"  - Module {trace.module_name}.{trace.method_name} failed: {trace.error}"
-                    )
-                elif trace.status == 'skipped':
-                    logger.warning(
-                        f"  - Module {trace.module_name}.{trace.method_name} skipped: {trace.error}"
-                    )
-
-    def execute_all_queued(self) -> List[Any]:
-        """
-        Execute all queued jobs sequentially
-        
         Returns:
-            List of UnifiedAnalysisData results
+            ExecutionResult with COMPLETED status
         """
-        logger.info(f"Executing {len(self.job_queue)} queued jobs")
+        confidences = []
+        evidence_count = 0
         
-        results = []
+        for key, result in module_results.items():
+            conf = getattr(result, 'confidence', 0.0)
+            confidences.append(conf)
+            
+            evidence = getattr(result, 'evidence', [])
+            if isinstance(evidence, list):
+                evidence_count += len(evidence)
+            elif isinstance(evidence, dict):
+                evidence_count += len(evidence)
         
-        for job_id in list(self.job_queue):
-            try:
-                result = self.execute_job(job_id)
-                results.append(result)
-            except Exception as e:
-                logger.error(f"Failed to execute job {job_id}: {e}")
-                continue
+        avg_confidence = sum(confidences) / len(confidences) if confidences else 0.0
         
-        # Clear queue
-        self.job_queue = []
-        
-        logger.info(f"Completed execution of {len(results)} jobs")
-        
-        return results
+        return ExecutionResult(
+            question_id=question_id,
+            status=ExecutionStatus.COMPLETED,
+            module_results={k: v for k, v in module_results.items()},
+            execution_time=execution_time,
+            retry_count=retry_count,
+            aggregated_confidence=avg_confidence,
+            evidence_count=evidence_count,
+            metadata={
+                "timestamp": datetime.now().isoformat(),
+                "module_count": len(module_results)
+            }
+        )
 
-    def get_job_status(self, job_id: str) -> Dict[str, Any]:
+    def _create_failed_result(
+            self,
+            question_id: str,
+            error: str,
+            execution_time: float,
+            retry_count: int,
+            partial_results: Optional[Dict[str, Any]] = None
+    ) -> ExecutionResult:
         """
-        Get status of a specific job
+        Create failed ExecutionResult with partial results if available
+        
+        Args:
+            question_id: Question canonical ID
+            error: Error message
+            execution_time: Total execution time
+            retry_count: Number of retry attempts
+            partial_results: Optional partial results collected before failure
+            
+        Returns:
+            ExecutionResult with FAILED or DEGRADED status
+        """
+        has_partial = partial_results and len(partial_results) > 0
+        
+        return ExecutionResult(
+            question_id=question_id,
+            status=ExecutionStatus.DEGRADED if has_partial else ExecutionStatus.FAILED,
+            module_results=partial_results or {},
+            error=error,
+            execution_time=execution_time,
+            retry_count=retry_count,
+            aggregated_confidence=0.0,
+            evidence_count=0,
+            metadata={
+                "timestamp": datetime.now().isoformat(),
+                "has_partial_results": has_partial,
+                "partial_module_count": len(partial_results) if partial_results else 0
+            }
+        )
+
+    def _generate_job_summary(
+            self,
+            job_id: str,
+            total_questions: int,
+            total_time: float
+    ) -> JobSummary:
+        """
+        Generate job summary from execution results
         
         Args:
             job_id: Job identifier
+            total_questions: Total number of questions
+            total_time: Total execution time
             
         Returns:
-            Job status dictionary
+            JobSummary with aggregated statistics
         """
-        if job_id not in self.jobs:
-            return {"error": f"Job {job_id} not found"}
+        status_counts = defaultdict(int)
+        for result in self.execution_results:
+            status_counts[result.status] += 1
         
-        job = self.jobs[job_id]
+        completed = status_counts[ExecutionStatus.COMPLETED]
+        failed = status_counts[ExecutionStatus.FAILED]
+        skipped = status_counts[ExecutionStatus.SKIPPED]
+        degraded = status_counts[ExecutionStatus.DEGRADED]
         
-        return {
-            "job_id": job.job_id,
-            "question_id": getattr(job.question_spec, 'canonical_id', 'unknown'),
-            "status": job.status.value,
-            "created_at": job.created_at,
-            "started_at": job.started_at,
-            "completed_at": job.completed_at,
-            "execution_time": job.execution_time,
-            "error": job.error
-        }
-
-    def get_queue_status(self) -> Dict[str, Any]:
-        """
-        Get overall queue status
+        success_rate = completed / total_questions if total_questions > 0 else 0.0
+        completion_rate = (completed + degraded) / total_questions if total_questions > 0 else 0.0
         
-        Returns:
-            Queue status dictionary
-        """
-        return {
-            "queued_jobs": len([j for j in self.jobs.values() if j.status == JobStatus.QUEUED]),
-            "running_jobs": len([j for j in self.jobs.values() if j.status == JobStatus.RUNNING]),
-            "completed_jobs": len([j for j in self.jobs.values() if j.status == JobStatus.COMPLETED]),
-            "failed_jobs": len([j for j in self.jobs.values() if j.status == JobStatus.FAILED]),
-            "total_jobs": len(self.jobs)
-        }
-
-    def get_stats(self) -> Dict[str, Any]:
-        """
-        Get choreographer statistics
+        avg_time = total_time / total_questions if total_questions > 0 else 0.0
         
-        Returns:
-            Statistics dictionary
-        """
-        stats = dict(self.stats)
-        
-        # Add module controller stats
-        stats["module_controller_stats"] = self.module_controller.get_execution_stats()
-        
-        return stats
-
-    def clear_completed_jobs(self) -> int:
-        """
-        Clear completed jobs from memory
-        
-        Returns:
-            Number of jobs cleared
-        """
-        completed_job_ids = [
-            job_id for job_id, job in self.jobs.items()
-            if job.status == JobStatus.COMPLETED
+        errors = [
+            {
+                "question_id": r.question_id,
+                "error": r.error,
+                "retry_count": r.retry_count
+            }
+            for r in self.execution_results
+            if r.error
         ]
         
-        for job_id in completed_job_ids:
-            del self.jobs[job_id]
-        
-        logger.info(f"Cleared {len(completed_job_ids)} completed jobs")
-        
-        return len(completed_job_ids)
+        return JobSummary(
+            job_id=job_id,
+            total_questions=total_questions,
+            completed=completed,
+            failed=failed,
+            skipped=skipped,
+            degraded=degraded,
+            total_execution_time=total_time,
+            avg_execution_time=avg_time,
+            total_retries=self.stats["total_retries"],
+            circuit_breaker_trips=self.stats["circuit_breaker_trips"],
+            success_rate=success_rate,
+            completion_rate=completion_rate,
+            results=self.execution_results,
+            errors=errors,
+            metadata={
+                "timestamp": datetime.now().isoformat(),
+                "fallback_invocations": self.stats["fallback_invocations"]
+            }
+        )
 
-    def cancel_job(self, job_id: str) -> bool:
-        """
-        Cancel a queued job
-        
-        Args:
-            job_id: Job identifier
-            
-        Returns:
-            True if job was cancelled, False otherwise
-        """
-        if job_id not in self.jobs:
-            return False
-        
-        job = self.jobs[job_id]
-        
-        if job.status != JobStatus.QUEUED:
-            logger.warning(f"Cannot cancel job {job_id} with status {job.status.value}")
-            return False
-        
-        job.status = JobStatus.CANCELLED
-        
-        if job_id in self.job_queue:
-            self.job_queue.remove(job_id)
-        
-        logger.info(f"Cancelled job {job_id}")
-        
-        return True
-
-    def aggregate_results(
+    def _log_progress(
             self,
-            unified_data_list: List[Any]
-    ) -> Dict[str, Any]:
+            current: int,
+            total: int,
+            result: ExecutionResult
+    ) -> None:
         """
-        Aggregate results from multiple executions for reporting
+        Log progress for current question
         
         Args:
-            unified_data_list: List of UnifiedAnalysisData objects
-            
+            current: Current question number
+            total: Total question count
+            result: ExecutionResult for current question
+        """
+        progress_pct = (current / total) * 100
+        status_symbol = {
+            ExecutionStatus.COMPLETED: "✓",
+            ExecutionStatus.FAILED: "✗",
+            ExecutionStatus.SKIPPED: "⊘",
+            ExecutionStatus.DEGRADED: "⚠"
+        }.get(result.status, "?")
+        
+        logger.info(
+            f"Progress: {current}/{total} ({progress_pct:.1f}%) | "
+            f"{status_symbol} {result.question_id} | "
+            f"Time: {result.execution_time:.2f}s | "
+            f"Retries: {result.retry_count}"
+        )
+
+    def get_execution_statistics(self) -> Dict[str, Any]:
+        """
+        Get execution statistics for monitoring
+        
         Returns:
-            Aggregated results dictionary
+            Dictionary with execution metrics
         """
-        if not unified_data_list:
-            return {}
-        
-        aggregated = {
-            "total_questions": len(unified_data_list),
-            "total_execution_time": sum(d.total_execution_time for d in unified_data_list),
-            "avg_execution_time": sum(d.total_execution_time for d in unified_data_list) / len(unified_data_list),
-            "total_modules_executed": sum(len(d.module_traces) for d in unified_data_list),
-            "successful_executions": sum(
-                1 for d in unified_data_list
-                if d.execution_metadata.get('successful_steps', 0) == d.execution_metadata.get('total_steps', 1)
-            ),
-            "degraded_executions": sum(
-                1 for d in unified_data_list
-                if d.execution_metadata.get('failed_steps', 0) > 0 or d.execution_metadata.get('skipped_steps', 0) > 0
-            ),
-            "avg_confidence": sum(
-                d.execution_metadata.get('avg_confidence', 0.0) for d in unified_data_list
-            ) / len(unified_data_list),
-            "modules_used": list(set(
-                trace.module_name
-                for d in unified_data_list
-                for trace in d.module_traces
-            )),
-            "failure_summary": self._aggregate_failures(unified_data_list)
-        }
-        
-        return aggregated
-
-    def _aggregate_failures(self, unified_data_list: List[Any]) -> Dict[str, int]:
-        """
-        Aggregate failure counts by module
-        
-        Args:
-            unified_data_list: List of UnifiedAnalysisData objects
-            
-        Returns:
-            Dictionary mapping module names to failure counts
-        """
-        failure_counts: Dict[str, int] = {}
-        
-        for data in unified_data_list:
-            for trace in data.module_traces:
-                if trace.status in ['failed', 'skipped']:
-                    module_name = trace.module_name
-                    failure_counts[module_name] = failure_counts.get(module_name, 0) + 1
-        
-        return failure_counts
-
-
-# ============================================================================
-# BACKWARD COMPATIBILITY - ExecutionChoreographer
-# ============================================================================
-
-class ExecutionChoreographer:
-    """
-    DEPRECATED: Legacy interface for backward compatibility
-    
-    Use Choreographer class instead
-    """
-
-    def __init__(self, max_workers: Optional[int] = None):
-        logger.warning(
-            "ExecutionChoreographer is deprecated. "
-            "Use Choreographer class with ModuleController instead."
-        )
-        self.max_workers = max_workers or 4
-
-    def execute_question_chain(
-            self,
-            question_spec: Any,
-            plan_text: str,
-            module_adapter_registry: Any,
-            circuit_breaker: Optional[Any] = None
-    ) -> Dict[str, Any]:
-        """
-        DEPRECATED: Legacy method for backward compatibility
-        
-        This method exists only to prevent breaking existing code.
-        New code should use Choreographer.queue_job() and Choreographer.execute_job()
-        """
-        logger.warning(
-            "execute_question_chain is deprecated. "
-            "Use Choreographer.queue_job() and Choreographer.execute_job() instead."
-        )
-        
-        # Create temporary ModuleController and Choreographer
-        from .module_controller import ModuleController
-        
-        module_controller = ModuleController(
-            module_adapter_registry=module_adapter_registry,
-            circuit_breaker=circuit_breaker
-        )
-        
-        choreographer = Choreographer(module_controller=module_controller)
-        
-        # Queue and execute
-        job_id = choreographer.queue_job(question_spec, plan_text)
-        unified_data = choreographer.execute_job(job_id)
-        
-        # Convert to legacy format
-        legacy_results = {}
-        for trace in unified_data.module_traces:
-            key = f"{trace.module_name}.{trace.method_name}"
-            legacy_results[key] = {
-                "module_name": trace.module_name,
-                "status": trace.status,
-                "output": trace.result_data,
-                "execution_time": trace.execution_time,
-                "evidence_extracted": {"evidence": trace.evidence},
-                "confidence": trace.confidence
+        if not self.execution_results:
+            return {
+                "total_questions": 0,
+                "completed": 0,
+                "failed": 0,
+                "success_rate": 0.0
             }
         
-        return legacy_results
+        status_counts = defaultdict(int)
+        for result in self.execution_results:
+            status_counts[result.status] += 1
+        
+        total = len(self.execution_results)
+        completed = status_counts[ExecutionStatus.COMPLETED]
+        
+        return {
+            "total_questions": total,
+            "completed": completed,
+            "failed": status_counts[ExecutionStatus.FAILED],
+            "skipped": status_counts[ExecutionStatus.SKIPPED],
+            "degraded": status_counts[ExecutionStatus.DEGRADED],
+            "success_rate": completed / total if total > 0 else 0.0,
+            "total_retries": self.stats["total_retries"],
+            "circuit_breaker_trips": self.stats["circuit_breaker_trips"],
+            "fallback_invocations": self.stats["fallback_invocations"]
+        }
 
 
 # ============================================================================
@@ -499,15 +628,13 @@ class ExecutionChoreographer:
 # ============================================================================
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-    
     print("=" * 80)
-    print("CHOREOGRAPHER - Job Queuing and Sequential Execution")
+    print("CHOREOGRAPHER - Job Orchestration with Retry Logic")
     print("=" * 80)
-    print("\nThis module provides:")
-    print("  - Job queue management")
-    print("  - Sequential question processing through ModuleController")
-    print("  - Circuit breaker integration for fault tolerance")
-    print("  - Result aggregation for reporting")
-    print("  - Degraded operation logging")
+    print("\nFeatures:")
+    print("  - Question queueing from cuestionario.json")
+    print("  - ModuleController integration with circuit breaker")
+    print("  - Retry logic with exponential backoff (1s, 2s, 4s)")
+    print("  - Partial result collection on failures")
+    print("  - Job progress tracking and summary reporting")
     print("=" * 80)

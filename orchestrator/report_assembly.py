@@ -290,7 +290,7 @@ class ReportAssembler:
     def generate_micro_answer(
             self,
             question_spec,  # QuestionSpec from questionnaire_parser
-            execution_results: Dict[str, Any],  # Results from ExecutionChoreographer
+            execution_results: Dict[str, Any],  # Results from ExecutionChoreographer (ExecutionResult or ModuleResult format)
             plan_text: str
     ) -> MicroLevelAnswer:
         """
@@ -298,6 +298,11 @@ class ReportAssembler:
         
         DEPRECATED: Use generate_micro_answer_from_unified instead
         This method is kept for backward compatibility
+        
+        Accepts execution results in either format:
+        - ExecutionResult objects from choreographer (with .output, .confidence, .status attributes)
+        - ModuleResult objects from module_controller (with .data, .confidence, .status attributes)
+        - Dictionary format (backward compatibility)
         
         Args:
             question_spec: Question specification with scoring modality
@@ -311,50 +316,46 @@ class ReportAssembler:
 
         start_time = datetime.now()
 
-        # Step 1: Apply scoring modality to calculate score
+        normalized_results = self._normalize_execution_results(execution_results)
+
         score, elements_found, pattern_matches = self._apply_scoring_modality(
             question_spec,
-            execution_results,
+            normalized_results,
             plan_text
         )
 
-        # Step 2: Map quantitative score to qualitative level
         qualitative = self._score_to_qualitative_question(score)
 
-        # Step 3: Extract evidence excerpts from plan
         evidence_excerpts = self._extract_evidence_excerpts(
             question_spec,
-            execution_results,
+            normalized_results,
             elements_found,
             plan_text
         )
 
-        # Step 4: Calculate overall confidence
         confidence = self._calculate_confidence(
-            execution_results,
+            normalized_results,
             elements_found,
             pattern_matches
         )
 
-        # Step 5: Generate doctoral-level explanation
         explanation = self._generate_explanation(
             question_spec,
             score,
             qualitative,
             elements_found,
-            execution_results,
+            normalized_results,
             evidence_excerpts
         )
 
-        # Step 6: Collect module execution details
-        modules_executed = list(execution_results.keys())
+        modules_executed = list(normalized_results.keys())
         module_results = {
             module: {
                 "status": result.get("status", "unknown"),
                 "confidence": result.get("confidence", 0.0),
                 "data_summary": self._summarize_module_data(result)
             }
-            for module, result in execution_results.items()
+            for module, result in normalized_results.items()
         }
 
         execution_time = (datetime.now() - start_time).total_seconds()
@@ -379,6 +380,73 @@ class ReportAssembler:
                 "question_number": question_spec.question_number
             }
         )
+
+    def _normalize_execution_results(
+            self,
+            execution_results: Dict[str, Any]
+    ) -> Dict[str, Dict[str, Any]]:
+        """
+        Normalize execution results to standardized format
+        
+        Handles multiple input formats:
+        - ExecutionResult objects (from choreographer with .output, .confidence, .status)
+        - ModuleResult objects (from module_controller with .data, .confidence, .status)
+        - Dictionary format (backward compatibility)
+        
+        Args:
+            execution_results: Dict of execution results in any supported format
+            
+        Returns:
+            Dict with normalized format: {"status", "data", "confidence", "evidence"}
+        """
+        normalized = {}
+        
+        for key, result in execution_results.items():
+            if hasattr(result, 'to_dict'):
+                result_dict = result.to_dict()
+                normalized[key] = {
+                    "status": result_dict.get("status", "unknown"),
+                    "data": result_dict.get("output") or result_dict.get("data", {}),
+                    "confidence": result_dict.get("confidence", 0.0),
+                    "evidence": result_dict.get("evidence") or result_dict.get("evidence_extracted", {})
+                }
+            elif hasattr(result, 'output'):
+                status_val = getattr(result, 'status', 'unknown')
+                if hasattr(status_val, 'value'):
+                    status_val = status_val.value
+                normalized[key] = {
+                    "status": status_val,
+                    "data": getattr(result, 'output', {}),
+                    "confidence": getattr(result, 'confidence', 0.0),
+                    "evidence": getattr(result, 'evidence_extracted', {})
+                }
+            elif hasattr(result, 'data'):
+                status_val = getattr(result, 'status', 'unknown')
+                if hasattr(status_val, 'value'):
+                    status_val = status_val.value
+                normalized[key] = {
+                    "status": status_val,
+                    "data": getattr(result, 'data', {}),
+                    "confidence": getattr(result, 'confidence', 0.0),
+                    "evidence": getattr(result, 'evidence', [])
+                }
+            elif isinstance(result, dict):
+                normalized[key] = {
+                    "status": result.get("status", "unknown"),
+                    "data": result.get("data") or result.get("output", {}),
+                    "confidence": result.get("confidence", 0.0),
+                    "evidence": result.get("evidence") or result.get("evidence_extracted", {})
+                }
+            else:
+                logger.warning(f"Unknown result format for {key}: {type(result)}")
+                normalized[key] = {
+                    "status": "unknown",
+                    "data": {},
+                    "confidence": 0.0,
+                    "evidence": {}
+                }
+        
+        return normalized
 
     def _apply_scoring_modality(
             self,

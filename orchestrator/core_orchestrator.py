@@ -68,7 +68,7 @@ class FARFANOrchestrator:
         Initialize FARFAN Orchestrator with required components
         
         Args:
-            module_controller: ModuleController instance for unified adapter execution
+            module_controller: ModuleController instance for question routing and adapter invocation
             questionnaire_parser: QuestionnaireParser with 300 question definitions
             config: Optional configuration dictionary
         """
@@ -79,9 +79,14 @@ class FARFANOrchestrator:
         self.config = config or {}
         
         from .choreographer import Choreographer
+        from .circuit_breaker import CircuitBreaker
         from .report_assembly import ReportAssembler
         
-        self.choreographer = Choreographer(module_controller=module_controller)
+        self.choreographer = Choreographer(
+            module_controller=self.module_controller,
+            max_workers=self.config.get('max_workers', 4)
+        )
+        self.circuit_breaker = CircuitBreaker()
         self.report_assembler = ReportAssembler()
 
         self.execution_stats: Dict[str, Any] = {
@@ -97,9 +102,10 @@ class FARFANOrchestrator:
             })
         }
 
+        available_adapters = len(self.module_controller.module_registry.adapters)
         logger.info(
             f"FARFAN Orchestrator initialized: "
-            f"{len(self.module_controller.get_available_modules())} adapters, "
+            f"{available_adapters} adapters, "
             f"300 questions ready"
         )
 
@@ -172,25 +178,21 @@ class FARFANOrchestrator:
                 logger.info(f"Processing question {i}/{len(questions)}: {question.canonical_id}")
                 
                 try:
-                    # Queue job in choreographer
-                    job_id = self.choreographer.queue_job(
+                    execution_results = self.choreographer.execute_question(
                         question_spec=question,
-                        plan_text=plan_text
+                        plan_text=plan_text,
+                        circuit_breaker=self.circuit_breaker
                     )
                     
-                    # Execute job and get unified analysis data
-                    unified_data = self.choreographer.execute_job(job_id)
-                    
-                    # Generate micro answer from unified data structure
-                    micro_answer = self.report_assembler.generate_micro_answer_from_unified(
-                        unified_data=unified_data,
+                    micro_answer = self.report_assembler.generate_micro_answer(
                         question_spec=question,
+                        execution_results=execution_results,
                         plan_text=plan_text
                     )
                     
                     micro_answers.append(micro_answer)
                     
-                    self._update_execution_stats_from_unified(unified_data)
+                    self._update_execution_stats(execution_results)
                     
                 except Exception as e:
                     logger.error(f"Error processing question {question.canonical_id}: {e}", exc_info=True)
@@ -311,31 +313,7 @@ class FARFANOrchestrator:
         else:
             raise ValueError(f"Unsupported file format: {suffix}")
 
-    def _update_execution_stats_from_unified(
-            self,
-            unified_data: Any
-    ) -> None:
-        """
-        Update execution statistics from unified analysis data
-        
-        Args:
-            unified_data: UnifiedAnalysisData from ModuleController
-        """
-        for trace in unified_data.module_traces:
-            adapter_name = trace.module_name
-            success = trace.status == 'success'
-            exec_time = trace.execution_time
-            
-            stats = self.execution_stats["adapter_performance"][adapter_name]
-            stats["calls"] += 1
-            if success:
-                stats["successes"] += 1
-            else:
-                stats["failures"] += 1
-            
-            prev_avg = stats["avg_time"]
-            calls = stats["calls"]
-            stats["avg_time"] = (prev_avg * (calls - 1) + exec_time) / calls
+
 
     def _generate_meso_clusters(
             self,
@@ -380,7 +358,30 @@ class FARFANOrchestrator:
         
         return clusters
 
-
+    def _update_execution_stats(self, execution_results: Dict[str, Any]) -> None:
+        """
+        Update internal execution statistics for monitoring
+        
+        Tracks per-adapter performance metrics including success rate and average execution time
+        
+        Args:
+            execution_results: Dictionary of ExecutionResult objects
+        """
+        for key, result in execution_results.items():
+            adapter_name = getattr(result, 'module_name', 'unknown')
+            success = getattr(result, 'status', None) == 'COMPLETED'
+            exec_time = getattr(result, 'execution_time', 0.0)
+            
+            stats = self.execution_stats["adapter_performance"][adapter_name]
+            stats["calls"] += 1
+            if success:
+                stats["successes"] += 1
+            else:
+                stats["failures"] += 1
+            
+            prev_avg = stats["avg_time"]
+            calls = stats["calls"]
+            stats["avg_time"] = (prev_avg * (calls - 1) + exec_time) / calls
 
     def _generate_execution_summary(
             self,
@@ -412,7 +413,7 @@ class FARFANOrchestrator:
             "overall_score": macro_convergence.overall_score,
             "plan_classification": macro_convergence.plan_classification,
             "adapter_stats": dict(self.execution_stats["adapter_performance"]),
-            "choreographer_stats": self.choreographer.get_stats(),
+            "circuit_breaker_status": self.circuit_breaker.get_all_status(),
             "score_distribution": {
                 level: sum(1 for a in micro_answers if a.qualitative_note == level)
                 for level in ["EXCELENTE", "BUENO", "ACEPTABLE", "INSUFICIENTE"]
@@ -430,10 +431,9 @@ class FARFANOrchestrator:
             Dictionary with adapter availability, circuit breaker status, and execution statistics
         """
         return {
-            "adapters_available": self.module_controller.get_available_modules(),
-            "total_adapters": len(self.module_controller.get_available_modules()),
-            "module_controller_stats": self.module_controller.get_execution_stats(),
-            "choreographer_stats": self.choreographer.get_stats(),
+            "adapters_available": self.module_controller.module_registry.get_available_modules(),
+            "total_adapters": len(self.module_controller.module_registry.adapters),
+            "circuit_breaker_status": self.circuit_breaker.get_all_status(),
             "execution_stats": dict(self.execution_stats),
             "questions_available": 300
         }

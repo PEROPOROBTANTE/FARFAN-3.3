@@ -28,6 +28,9 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from orchestrator import FARFANOrchestrator
 from orchestrator.config import CONFIG
+from orchestrator.module_adapters import ModuleAdapterRegistry, ModuleController
+from orchestrator.questionnaire_parser import QuestionnaireParser
+from orchestrator.question_router import QuestionRouter
 
 # Setup logging
 logging.basicConfig(
@@ -119,7 +122,16 @@ Examples:
     logger.info("World's First Causal Mechanism Analysis System")
     logger.info("="*80)
 
-    orchestrator = FARFANOrchestrator()
+    logger.info("Initializing components...")
+    module_registry = ModuleAdapterRegistry()
+    question_router = QuestionRouter()
+    module_controller = ModuleController(module_registry, question_router)
+    questionnaire_parser = QuestionnaireParser()
+    
+    orchestrator = FARFANOrchestrator(
+        module_controller=module_controller,
+        questionnaire_parser=questionnaire_parser
+    )
 
     # Health check mode
     if args.health:
