@@ -5455,6 +5455,8 @@ class ContradictionDetectionAdapter(BaseAdapter):
             evidence=[{"type": "temporal_classification", "type": temporal_type}],
             confidence=0.85,
             execution_time=0.0
+        )
+
     def _execute_detect(self, document: str, metadata: dict = None, **kwargs) -> ModuleResult:
         """Execute PolicyContradictionDetector.detect()"""
         model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
@@ -5684,21 +5686,21 @@ class ContradictionDetectionAdapter(BaseAdapter):
         stats = detector._get_graph_statistics()
 
 
-        # ============================================================================
-        # ADAPTER 9: ModulosAdapter (51 methods - Theory of Change)
-        # ============================================================================
+    # ============================================================================
+    # ADAPTER 9: ModulosAdapter (51 methods - Theory of Change)
+    # ============================================================================
 
-        class ModulosAdapter(BaseAdapter):
-        """
-        Comprehensive adapter for teoria_cambio.py - Framework Unificado para la
-        Validación Causal de Políticas Públicas.
-    
-        This adapter provides access to all classes and functions from the theory
-        of change validation framework including:
-        - TeoriaCambio: Axiomatic change theory engine
-        - AdvancedDAGValidator: Stochastic validation with Monte Carlo
-        - IndustrialGradeValidator: Industrial certification orchestrator
-        - Helper functions and utilities
+class ModulosAdapter(BaseAdapter):
+    """
+    Comprehensive adapter for teoria_cambio.py - Framework Unificado para la
+    Validación Causal de Políticas Públicas.
+
+    This adapter provides access to all classes and functions from the theory
+    of change validation framework including:
+    - TeoriaCambio: Axiomatic change theory engine
+    - AdvancedDAGValidator: Stochastic validation with Monte Carlo
+    - IndustrialGradeValidator: Industrial certification orchestrator
+    - Helper functions and utilities
         """
 
     def __init__(self):
