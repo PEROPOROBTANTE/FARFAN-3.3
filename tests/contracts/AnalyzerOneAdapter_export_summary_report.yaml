@@ -1,0 +1,28 @@
+adapter: AnalyzerOneAdapter
+method: export_summary_report
+input_schema:
+  type: object
+  properties:
+    results:
+      type: object
+    output_path:
+      type: string
+  required:
+  - results
+  - output_path
+output_schema:
+  type: object
+deterministic: false
+rng_seed_param: null
+canonical_canary:
+  results: {}
+  output_path: test_input
+sample_hash: a406ca974c3a0e8d688a8927c4a4b63822baa73051db1703250775621b71a891
+allowed_side_effects:
+- file_write
+max_latency_ms: 5000
+retry_policy:
+  max_retries: 3
+  backoff_multiplier: 1.5
+  initial_delay_ms: 100
+  max_delay_ms: 5000

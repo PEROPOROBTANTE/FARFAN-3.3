@@ -1,0 +1,27 @@
+adapter: ContradictionDetectionAdapter
+method: calculate_similarity
+input_schema:
+  type: object
+  properties:
+    emb1:
+      type: string
+    emb2:
+      type: string
+  required:
+  - emb1
+  - emb2
+output_schema:
+  type: number
+deterministic: true
+rng_seed_param: null
+canonical_canary:
+  emb1: test_input
+  emb2: test_input
+sample_hash: a406ca974c3a0e8d688a8927c4a4b63822baa73051db1703250775621b71a891
+allowed_side_effects: []
+max_latency_ms: 5000
+retry_policy:
+  max_retries: 0
+  backoff_multiplier: 1.5
+  initial_delay_ms: 100
+  max_delay_ms: 5000

@@ -1,0 +1,27 @@
+adapter: ModulosAdapter
+method: perform_sensitivity_analysis
+input_schema:
+  type: object
+  properties:
+    plan_name:
+      type: string
+    iterations:
+      type: array
+  required:
+  - plan_name
+  - iterations
+output_schema:
+  type: object
+deterministic: false
+rng_seed_param: null
+canonical_canary:
+  plan_name: test_input
+  iterations: []
+sample_hash: a406ca974c3a0e8d688a8927c4a4b63822baa73051db1703250775621b71a891
+allowed_side_effects: []
+max_latency_ms: 5000
+retry_policy:
+  max_retries: 3
+  backoff_multiplier: 1.5
+  initial_delay_ms: 100
+  max_delay_ms: 5000

@@ -1,0 +1,27 @@
+adapter: DerekBeachAdapter
+method: extract_observations
+input_schema:
+  type: object
+  properties:
+    link:
+      type: string
+    activities:
+      type: array
+  required:
+  - link
+  - activities
+output_schema:
+  type: array
+deterministic: false
+rng_seed_param: null
+canonical_canary:
+  link: test_input
+  activities: []
+sample_hash: a406ca974c3a0e8d688a8927c4a4b63822baa73051db1703250775621b71a891
+allowed_side_effects: []
+max_latency_ms: 10000
+retry_policy:
+  max_retries: 3
+  backoff_multiplier: 1.5
+  initial_delay_ms: 100
+  max_delay_ms: 5000

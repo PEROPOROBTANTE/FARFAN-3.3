@@ -1,0 +1,27 @@
+adapter: ContradictionDetectionAdapter
+method: has_temporal_conflict
+input_schema:
+  type: object
+  properties:
+    event1:
+      type: string
+    event2:
+      type: string
+  required:
+  - event1
+  - event2
+output_schema:
+  type: boolean
+deterministic: false
+rng_seed_param: null
+canonical_canary:
+  event1: test_input
+  event2: test_input
+sample_hash: a406ca974c3a0e8d688a8927c4a4b63822baa73051db1703250775621b71a891
+allowed_side_effects: []
+max_latency_ms: 5000
+retry_policy:
+  max_retries: 3
+  backoff_multiplier: 1.5
+  initial_delay_ms: 100
+  max_delay_ms: 5000
