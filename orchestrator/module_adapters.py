@@ -1,3 +1,4 @@
+# coding=utf-8
 """
 Complete Module Adapters Framework - ALL 9 ADAPTERS MERGED
 ===========================================================
