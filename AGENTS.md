@@ -17,6 +17,7 @@ Not applicable (Python project)
 ```bash
 black *.py orchestrator/*.py
 flake8 *.py orchestrator/*.py
+isort *.py orchestrator/*.py
 mypy *.py orchestrator/*.py
 ```
 
@@ -29,24 +30,25 @@ python test_orchestrator_integration.py
 
 ### Run
 ```bash
-python run_farfan.py --plan path/to/plan.pdf
+python run_farfan.py --plan <path> [--workers N]
 python run_farfan.py --health
 ```
 
 ## Tech Stack
-- **Language:** Python 3.11+
-- **NLP:** spaCy (Spanish models), transformers, sentence-transformers
-- **Data:** pandas, numpy, scikit-learn
+- **Language:** Python 3.10+
+- **NLP:** spaCy (Spanish models), transformers, sentence-transformers, NLTK
+- **ML/Data:** scikit-learn, torch, tensorflow, pandas, numpy
 - **Testing:** pytest
-- **Linting:** black, flake8, mypy
+- **Linting:** black, flake8, isort, mypy
 
 ## Architecture
-- **orchestrator/**: Core orchestration engine with module adapters, choreographer, circuit breaker, question router
+- **orchestrator/**: Core orchestration engine with router, choreographer, circuit breaker, adapters, reports
 - **Main modules:** Analyzer_one.py, policy_processor.py, causal_proccesor.py, contradiction_deteccion.py, etc.
-- **Entry point:** run_farfan.py
+- **Entry point:** run_farfan.py - Main entry point for single/batch plan analysis
 
 ## Code Style
-- Follow PEP 8 (enforced by black and flake8)
-- Type hints required (checked by mypy)
+- Follow PEP 8, use type hints
+- Classes: PascalCase, functions/vars: snake_case
+- Comprehensive docstrings for public APIs
+- No logging of secrets/keys
 - Spanish text in comments/docstrings is acceptable (domain-specific)
-- Module files: lowercase_underscore.py
