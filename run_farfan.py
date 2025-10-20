@@ -23,8 +23,9 @@ import sys
 from pathlib import Path
 from datetime import datetime
 
-# Add parent directory to path
-sys.path.insert(0, str(Path(__file__).parent))
+# Setup absolute imports from project root
+PROJECT_ROOT = Path(__file__).parent.absolute()
+sys.path.insert(0, str(PROJECT_ROOT))
 
 from orchestrator import FARFANOrchestrator
 from orchestrator.config import CONFIG
@@ -37,7 +38,7 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s [%(levelname)s] %(name)s: %(message)s',
     handlers=[
-        logging.FileHandler(CONFIG.logs_dir / f"farfan_{datetime.now():%Y%m%d_%H%M%S}.log"),
+        logging.FileHandler(Path("logs") / f"farfan_{datetime.now():%Y%m%d_%H%M%S}.log"),
         logging.StreamHandler(sys.stdout)
     ]
 )

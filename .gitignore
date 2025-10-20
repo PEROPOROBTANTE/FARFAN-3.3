@@ -19,6 +19,7 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
 
 # Virtual environments
 venv/
@@ -32,29 +33,85 @@ env/
 *.swp
 *.swo
 *~
+.spyderproject
+.spyproject
 
 # OS files
 .DS_Store
 Thumbs.db
+ehthumbs.db
+Desktop.ini
 
 # Testing
 .pytest_cache/
 .coverage
+.coverage.*
 htmlcov/
 .tox/
-*.log
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_tmp/
 
-# FARFAN specific
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Type checking
+.pyre/
+.pytype/
+
+# Logs - execution traces
+logs/
+*.log
+*.log.*
+
+# Data artifacts - pipeline data
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+data/output/*
+!data/output/.gitkeep
+
+# FARFAN specific - legacy/temp
 artifact/
+delivery_package/
+unified_diffs/
 temp/
 *.pdf
 orchestrator_integration_report.txt
 test_architecture.log
+validation_report.txt
+
+# Models and embeddings
+*.model
+*.pkl
+*.joblib
+*.h5
+*.pt
+*.pth
 
 # Large files
 *.zip
 *.tar.gz
+*.rar
 
-# Node modules (if any)
+# Node modules (web dashboard)
 node_modules/
 FARFAN-3.0/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Documentation builds
+docs/_build/
+docs/_static/
+docs/_templates/
+
+# CI/CD artifacts
+.github/workflows/*.log
+cicd/reports/
