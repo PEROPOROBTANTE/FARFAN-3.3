@@ -60,34 +60,52 @@ class FARFANOrchestrator:
 
     def __init__(
             self,
-            module_controller: Any,
-            questionnaire_parser: Any,
+            module_adapter_registry: Optional[Any] = None,
+            questionnaire_parser: Optional[Any] = None,
             config: Optional[Dict[str, Any]] = None
     ) -> None:
         """
         Initialize FARFAN Orchestrator with required components
         
         Args:
-            module_controller: ModuleController instance for question routing and adapter invocation
-            questionnaire_parser: QuestionnaireParser with 300 question definitions
+            module_adapter_registry: ModuleAdapterRegistry instance with 9 adapters (auto-created if None)
+            questionnaire_parser: QuestionnaireParser with 300 question definitions (auto-created if None)
             config: Optional configuration dictionary
         """
         logger.info("Initializing FARFAN Orchestrator")
 
-        self.module_controller = module_controller
+        # Auto-create registry if not provided
+        if module_adapter_registry is None:
+            logger.info("Creating ModuleAdapterRegistry")
+            from .module_adapters import ModuleAdapterRegistry
+            module_adapter_registry = ModuleAdapterRegistry()
+        
+        # Auto-create parser if not provided
+        if questionnaire_parser is None:
+            logger.info("Creating QuestionnaireParser")
+            from .questionnaire_parser import QuestionnaireParser
+            questionnaire_parser = QuestionnaireParser(
+                cuestionario_path=Path("cuestionario.json")
+            )
+
+        self.module_registry = module_adapter_registry
         self.questionnaire_parser = questionnaire_parser
         self.config = config or {}
         
-        from .choreographer import Choreographer
+        from .choreographer import ExecutionChoreographer
         from .circuit_breaker import CircuitBreaker
         from .report_assembly import ReportAssembler
+        from .module_controller import ModuleController
         
-        self.choreographer = Choreographer(
-            module_controller=self.module_controller,
-            max_workers=self.config.get('max_workers', 4)
-        )
+        self.choreographer = ExecutionChoreographer()
         self.circuit_breaker = CircuitBreaker()
         self.report_assembler = ReportAssembler()
+        
+        # Create ModuleController with all adapters and circuit breaker
+        self.module_controller = ModuleController(
+            module_adapter_registry=self.module_registry,
+            circuit_breaker=self.circuit_breaker
+        )
 
         self.execution_stats: Dict[str, Any] = {
             "total_plans_processed": 0,
@@ -102,10 +120,9 @@ class FARFANOrchestrator:
             })
         }
 
-        available_adapters = len(self.module_controller.module_registry.adapters)
         logger.info(
             f"FARFAN Orchestrator initialized: "
-            f"{available_adapters} adapters, "
+            f"{len(self.module_registry.adapters)} adapters, "
             f"300 questions ready"
         )
 
@@ -178,15 +195,16 @@ class FARFANOrchestrator:
                 logger.info(f"Processing question {i}/{len(questions)}: {question.canonical_id}")
                 
                 try:
-                    execution_results = self.choreographer.execute_question(
+                    execution_results = self.choreographer.execute_question_chain(
                         question_spec=question,
                         plan_text=plan_text,
+                        module_adapter_registry=self.module_registry,
                         circuit_breaker=self.circuit_breaker
                     )
                     
                     micro_answer = self.report_assembler.generate_micro_answer(
                         question_spec=question,
-                        execution_results=execution_results,
+                        execution_results=self._convert_execution_results(execution_results),
                         plan_text=plan_text
                     )
                     
@@ -313,7 +331,38 @@ class FARFANOrchestrator:
         else:
             raise ValueError(f"Unsupported file format: {suffix}")
 
-
+    def _convert_execution_results(
+            self,
+            execution_results: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Convert ExecutionResult objects from choreographer to dict format for ReportAssembler
+        
+        Normalizes the output of choreographer.execute_question_chain() into a format
+        compatible with report_assembler.generate_micro_answer()
+        
+        Args:
+            execution_results: Dictionary of ExecutionResult objects keyed by adapter.method
+            
+        Returns:
+            Dictionary with normalized structure for report assembly
+        """
+        converted: Dict[str, Any] = {}
+        
+        for key, result in execution_results.items():
+            if hasattr(result, 'to_dict'):
+                converted[key] = result.to_dict()
+            else:
+                converted[key] = {
+                    "module_name": getattr(result, 'module_name', key),
+                    "status": getattr(result, 'status', 'unknown'),
+                    "data": getattr(result, 'output', {}),
+                    "confidence": getattr(result, 'confidence', 0.0),
+                    "evidence": getattr(result, 'evidence_extracted', {}),
+                    "execution_time": getattr(result, 'execution_time', 0.0)
+                }
+        
+        return converted
 
     def _generate_meso_clusters(
             self,
@@ -431,8 +480,8 @@ class FARFANOrchestrator:
             Dictionary with adapter availability, circuit breaker status, and execution statistics
         """
         return {
-            "adapters_available": self.module_controller.module_registry.get_available_modules(),
-            "total_adapters": len(self.module_controller.module_registry.adapters),
+            "adapters_available": self.module_registry.get_available_modules(),
+            "total_adapters": len(self.module_registry.adapters),
             "circuit_breaker_status": self.circuit_breaker.get_all_status(),
             "execution_stats": dict(self.execution_stats),
             "questions_available": 300

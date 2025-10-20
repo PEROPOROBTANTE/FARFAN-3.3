@@ -1,0 +1,269 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "created": "2025-01-15",
+    "updated": "2025-01-15",
+    "description": "Responsibility mapping for FARFAN 3.0 - Maps dimensions and policy areas to adapter responsibilities",
+    "total_adapters": 11,
+    "total_dimensions": 6,
+    "total_policy_areas": 10
+  },
+  
+  "dimensions": {
+    "D1": {
+      "name": "Diagnóstico y Recursos (Insumos)",
+      "description": "Analysis of diagnostic information, resources, and inputs for development plans",
+      "primary_adapters": ["policy_segmenter", "policy_processor"],
+      "secondary_adapters": ["semantic_chunking_policy", "financial_viability"],
+      "execution_strategy": "parallel",
+      "confidence_threshold": 0.70,
+      "typical_questions": ["resource availability", "diagnostic quality", "input adequacy"]
+    },
+    "D2": {
+      "name": "Diseño de Intervención (Procesos)",
+      "description": "Analysis of intervention design, processes, and methodological approaches",
+      "primary_adapters": ["embedding_policy", "policy_processor"],
+      "secondary_adapters": ["dereck_beach", "teoria_cambio"],
+      "execution_strategy": "parallel",
+      "confidence_threshold": 0.75,
+      "typical_questions": ["intervention design", "process quality", "methodological rigor"]
+    },
+    "D3": {
+      "name": "Productos y Outputs",
+      "description": "Analysis of deliverables, outputs, and tangible products from interventions",
+      "primary_adapters": ["financial_viability", "analyzer_one"],
+      "secondary_adapters": ["policy_processor"],
+      "execution_strategy": "sequential",
+      "confidence_threshold": 0.70,
+      "typical_questions": ["deliverable quality", "output measurement", "product specification"]
+    },
+    "D4": {
+      "name": "Resultados y Outcomes",
+      "description": "Analysis of results, outcomes, and intermediate impacts",
+      "primary_adapters": ["analyzer_one", "teoria_cambio"],
+      "secondary_adapters": ["dereck_beach"],
+      "execution_strategy": "parallel",
+      "confidence_threshold": 0.75,
+      "typical_questions": ["outcome achievement", "result measurement", "intermediate impacts"]
+    },
+    "D5": {
+      "name": "Impactos de Largo Plazo",
+      "description": "Analysis of long-term impacts and sustainability",
+      "primary_adapters": ["teoria_cambio", "dereck_beach"],
+      "secondary_adapters": ["contradiction_detection"],
+      "execution_strategy": "sequential",
+      "confidence_threshold": 0.80,
+      "typical_questions": ["long-term impacts", "sustainability", "transformational change"]
+    },
+    "D6": {
+      "name": "Teoría de Cambio y Causalidad",
+      "description": "Analysis of theory of change, causal mechanisms, and logical frameworks",
+      "primary_adapters": ["teoria_cambio", "dereck_beach"],
+      "secondary_adapters": ["analyzer_one", "contradiction_detection"],
+      "execution_strategy": "parallel",
+      "confidence_threshold": 0.80,
+      "typical_questions": ["causal mechanisms", "theory of change", "logical coherence"]
+    }
+  },
+  
+  "policy_areas": {
+    "P1": {
+      "name": "Salud",
+      "description": "Health policies and programs",
+      "specialized_adapters": ["financial_viability"],
+      "priority_dimensions": ["D1", "D3", "D4"],
+      "scoring_weights": {"D1": 0.20, "D2": 0.15, "D3": 0.20, "D4": 0.20, "D5": 0.15, "D6": 0.10}
+    },
+    "P2": {
+      "name": "Educación",
+      "description": "Education policies and programs",
+      "specialized_adapters": ["financial_viability", "analyzer_one"],
+      "priority_dimensions": ["D2", "D4", "D5"],
+      "scoring_weights": {"D1": 0.15, "D2": 0.20, "D3": 0.15, "D4": 0.20, "D5": 0.20, "D6": 0.10}
+    },
+    "P3": {
+      "name": "Infraestructura",
+      "description": "Infrastructure development policies",
+      "specialized_adapters": ["financial_viability"],
+      "priority_dimensions": ["D1", "D3", "D5"],
+      "scoring_weights": {"D1": 0.20, "D2": 0.10, "D3": 0.25, "D4": 0.15, "D5": 0.20, "D6": 0.10}
+    },
+    "P4": {
+      "name": "Economía y Desarrollo Productivo",
+      "description": "Economic development and productive sector policies",
+      "specialized_adapters": ["financial_viability", "contradiction_detection"],
+      "priority_dimensions": ["D2", "D4", "D5"],
+      "scoring_weights": {"D1": 0.15, "D2": 0.20, "D3": 0.15, "D4": 0.20, "D5": 0.20, "D6": 0.10}
+    },
+    "P5": {
+      "name": "Medio Ambiente y Sostenibilidad",
+      "description": "Environmental and sustainability policies",
+      "specialized_adapters": ["contradiction_detection", "teoria_cambio"],
+      "priority_dimensions": ["D5", "D6"],
+      "scoring_weights": {"D1": 0.10, "D2": 0.15, "D3": 0.15, "D4": 0.20, "D5": 0.25, "D6": 0.15}
+    },
+    "P6": {
+      "name": "Seguridad Ciudadana",
+      "description": "Public security and safety policies",
+      "specialized_adapters": ["analyzer_one"],
+      "priority_dimensions": ["D3", "D4"],
+      "scoring_weights": {"D1": 0.15, "D2": 0.15, "D3": 0.20, "D4": 0.25, "D5": 0.15, "D6": 0.10}
+    },
+    "P7": {
+      "name": "Cultura y Patrimonio",
+      "description": "Cultural and heritage policies",
+      "specialized_adapters": [],
+      "priority_dimensions": ["D2", "D4"],
+      "scoring_weights": {"D1": 0.15, "D2": 0.20, "D3": 0.15, "D4": 0.20, "D5": 0.20, "D6": 0.10}
+    },
+    "P8": {
+      "name": "Deporte y Recreación",
+      "description": "Sports and recreation policies",
+      "specialized_adapters": [],
+      "priority_dimensions": ["D3", "D4"],
+      "scoring_weights": {"D1": 0.15, "D2": 0.15, "D3": 0.20, "D4": 0.20, "D5": 0.20, "D6": 0.10}
+    },
+    "P9": {
+      "name": "Tecnología e Innovación",
+      "description": "Technology and innovation policies",
+      "specialized_adapters": ["analyzer_one"],
+      "priority_dimensions": ["D2", "D5", "D6"],
+      "scoring_weights": {"D1": 0.10, "D2": 0.20, "D3": 0.15, "D4": 0.15, "D5": 0.25, "D6": 0.15}
+    },
+    "P10": {
+      "name": "Desarrollo Social e Inclusión",
+      "description": "Social development and inclusion policies",
+      "specialized_adapters": ["analyzer_one", "teoria_cambio"],
+      "priority_dimensions": ["D4", "D5", "D6"],
+      "scoring_weights": {"D1": 0.10, "D2": 0.15, "D3": 0.15, "D4": 0.20, "D5": 0.25, "D6": 0.15}
+    }
+  },
+  
+  "method_routing": {
+    "semantic_analysis": {
+      "adapters": ["embedding_policy", "semantic_chunking_policy"],
+      "typical_use_cases": ["text similarity", "semantic search", "concept extraction"],
+      "confidence_threshold": 0.75
+    },
+    "causal_inference": {
+      "adapters": ["teoria_cambio", "dereck_beach"],
+      "typical_use_cases": ["causal chains", "mechanism identification", "counterfactual analysis"],
+      "confidence_threshold": 0.80
+    },
+    "financial_analysis": {
+      "adapters": ["financial_viability"],
+      "typical_use_cases": ["budget analysis", "cost estimation", "resource allocation"],
+      "confidence_threshold": 0.70
+    },
+    "contradiction_detection": {
+      "adapters": ["contradiction_detection"],
+      "typical_use_cases": ["inconsistency detection", "logical validation", "coherence checking"],
+      "confidence_threshold": 0.75
+    },
+    "text_processing": {
+      "adapters": ["policy_processor", "policy_segmenter"],
+      "typical_use_cases": ["document segmentation", "text normalization", "entity extraction"],
+      "confidence_threshold": 0.65
+    },
+    "municipal_analysis": {
+      "adapters": ["analyzer_one"],
+      "typical_use_cases": ["municipal development", "local governance", "territorial analysis"],
+      "confidence_threshold": 0.75
+    }
+  },
+  
+  "scoring_integration": {
+    "description": "Integration with rubric_scoring.json for question-level and aggregate scoring",
+    "question_level": {
+      "scoring_range": [0.0, 3.0],
+      "modalities": ["TYPE_A", "TYPE_B", "TYPE_C", "TYPE_D", "TYPE_E", "TYPE_F"],
+      "confidence_weighting": true
+    },
+    "dimension_level": {
+      "scoring_range": [0.0, 100.0],
+      "aggregation_formula": "(sum_of_questions / max_possible) * 100",
+      "questions_per_dimension": 5
+    },
+    "policy_area_level": {
+      "scoring_range": [0.0, 100.0],
+      "aggregation_formula": "weighted_average_of_dimensions",
+      "uses_policy_weights": true
+    }
+  },
+  
+  "adapter_capabilities": {
+    "teoria_cambio": {
+      "primary_capabilities": ["causal_inference", "theory_of_change", "mechanism_analysis"],
+      "supported_dimensions": ["D2", "D4", "D5", "D6"],
+      "typical_methods": ["analyze_causal_chain", "identify_mechanisms", "validate_theory"]
+    },
+    "analyzer_one": {
+      "primary_capabilities": ["municipal_analysis", "development_assessment", "territorial_evaluation"],
+      "supported_dimensions": ["D3", "D4", "D6"],
+      "typical_methods": ["analyze_municipal_plan", "assess_development_strategy"]
+    },
+    "dereck_beach": {
+      "primary_capabilities": ["cdaf_analysis", "causal_process_tracing", "mechanism_validation"],
+      "supported_dimensions": ["D2", "D4", "D5", "D6"],
+      "typical_methods": ["trace_causal_process", "validate_mechanism", "assess_sufficiency"]
+    },
+    "embedding_policy": {
+      "primary_capabilities": ["semantic_embedding", "concept_extraction", "similarity_analysis"],
+      "supported_dimensions": ["D2", "D3", "D4"],
+      "typical_methods": ["generate_embeddings", "calculate_similarity", "extract_concepts"]
+    },
+    "semantic_chunking_policy": {
+      "primary_capabilities": ["semantic_segmentation", "coherent_chunking", "topic_extraction"],
+      "supported_dimensions": ["D1", "D2", "D3"],
+      "typical_methods": ["segment_semantically", "extract_topics", "chunk_document"]
+    },
+    "contradiction_detection": {
+      "primary_capabilities": ["inconsistency_detection", "logical_validation", "coherence_analysis"],
+      "supported_dimensions": ["D5", "D6"],
+      "typical_methods": ["detect_contradictions", "validate_consistency", "check_coherence"]
+    },
+    "financial_viability": {
+      "primary_capabilities": ["financial_analysis", "budget_assessment", "viability_evaluation"],
+      "supported_dimensions": ["D1", "D3"],
+      "typical_methods": ["analyze_budget", "assess_viability", "evaluate_resources"]
+    },
+    "policy_processor": {
+      "primary_capabilities": ["text_processing", "pattern_matching", "evidence_extraction"],
+      "supported_dimensions": ["D1", "D2", "D3"],
+      "typical_methods": ["process_text", "match_patterns", "extract_evidence"]
+    },
+    "policy_segmenter": {
+      "primary_capabilities": ["document_segmentation", "structure_extraction", "section_analysis"],
+      "supported_dimensions": ["D1"],
+      "typical_methods": ["segment_document", "extract_structure", "analyze_sections"]
+    },
+    "causal_processor": {
+      "primary_capabilities": ["causal_analysis", "relationship_extraction", "chain_construction"],
+      "supported_dimensions": ["D4", "D5", "D6"],
+      "typical_methods": ["analyze_causality", "extract_relationships", "build_causal_chain"]
+    },
+    "impact_assessment": {
+      "primary_capabilities": ["impact_evaluation", "outcome_assessment", "effectiveness_analysis"],
+      "supported_dimensions": ["D4", "D5"],
+      "typical_methods": ["assess_impact", "evaluate_outcomes", "measure_effectiveness"]
+    }
+  },
+  
+  "fallback_strategies": {
+    "dimension_fallback": {
+      "description": "Fallback adapters when primary adapters fail",
+      "D1": ["policy_processor", "policy_segmenter"],
+      "D2": ["policy_processor", "embedding_policy"],
+      "D3": ["analyzer_one", "policy_processor"],
+      "D4": ["analyzer_one", "teoria_cambio"],
+      "D5": ["teoria_cambio", "dereck_beach"],
+      "D6": ["teoria_cambio", "dereck_beach"]
+    },
+    "degraded_mode": {
+      "description": "Simplified analysis when adapters are unavailable",
+      "enabled": true,
+      "minimum_adapters_required": 2,
+      "fallback_to_basic_processing": true
+    }
+  }
+}

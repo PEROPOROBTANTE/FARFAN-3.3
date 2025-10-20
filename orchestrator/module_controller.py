@@ -1,889 +1,698 @@
 """
-Module Controller - Canonical Pipeline Execution with Contract Enforcement
-===========================================================================
+ModuleController - Unified Interface for Adapter Orchestration
+==============================================================
 
-CORE RESPONSIBILITY: Enforce deterministic execution path with typed contracts
+CORE RESPONSIBILITY: Centralized adapter invocation with responsibility mapping
 -------------------------------------------------------------------------------
-Defines canonical pipeline stages, typed input/output contracts, and runtime
-validation to ensure modules execute in correct order with valid data.
+Accepts all 11 adapter instances via constructor dependency injection and provides
+a unified interface for processing questions by delegating to the appropriate 
+adapter based on responsibility mapping loaded from responsibility_map.json.
 
-PIPELINE STAGES (Canonical Execution Order):
----------------------------------------------
-1. PDF_PROCESSING: Document loading and text extraction
-2. SEMANTIC_CHUNKING: Segment text into semantic units
-3. EMBEDDING_GENERATION: Generate vector embeddings for chunks
-4. POLICY_ANALYSIS: Analyze policy content and alignment
-5. CONTRADICTION_DETECTION: Detect internal contradictions
-6. FINANCIAL_VIABILITY: Assess financial feasibility
-7. REPORTING: Generate final reports and outputs
+KEY FEATURES:
+- Constructor dependency injection for all adapters
+- Responsibility-based routing via JSON configuration
+- Circuit breaker integration for fault tolerance
+- Standardized result format across all adapters
+- Performance tracking and monitoring
 
-CONTRACT ENFORCEMENT:
----------------------
-- Each stage has frozen dataclass defining exact input/output fields
-- Runtime validation ensures outputs match expected contracts
-- Typed exceptions raised for contract violations
-- Immutability guarantees prevent data corruption between stages
+ARCHITECTURE:
+-------------
+1. Adapters injected at construction (dependency injection pattern)
+2. Responsibility map loaded from JSON configuration
+3. Question routing based on dimension/policy area mapping
+4. Circuit breaker wraps each adapter method call
+5. Results aggregated and normalized
 
-FLOW TOPOLOGY:
---------------
-- FlowComposition declares complete pipeline graph
-- Validates flow completeness before execution
-- Detects missing stage implementations
-- Enforces sequential dependencies
-
-Author: FARFAN 3.0 Team
+Author: FARFAN Integration Team
 Version: 3.0.0
 Python: 3.10+
 """
 
 import logging
-from enum import Enum, auto
-from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Any, Set, Callable, Type
-from pathlib import Path
+import json
 import time
+from pathlib import Path
+from typing import Dict, List, Any, Optional, Tuple
+from dataclasses import dataclass
+from collections import defaultdict
 
 logger = logging.getLogger(__name__)
 
 
-class PipelineStage(Enum):
-    """
-    Canonical execution stages in required order
-    
-    Each stage must complete before next stage can begin.
-    Stages are executed sequentially with validated contracts.
-    """
-    PDF_PROCESSING = auto()
-    SEMANTIC_CHUNKING = auto()
-    EMBEDDING_GENERATION = auto()
-    POLICY_ANALYSIS = auto()
-    CONTRADICTION_DETECTION = auto()
-    FINANCIAL_VIABILITY = auto()
-    REPORTING = auto()
-    
-    def __lt__(self, other):
-        """Enable stage ordering comparison"""
-        if self.__class__ is other.__class__:
-            return self.value < other.value
-        return NotImplemented
-    
-    @classmethod
-    def get_execution_order(cls) -> List['PipelineStage']:
-        """Return stages in canonical execution order"""
-        return [
-            cls.PDF_PROCESSING,
-            cls.SEMANTIC_CHUNKING,
-            cls.EMBEDDING_GENERATION,
-            cls.POLICY_ANALYSIS,
-            cls.CONTRADICTION_DETECTION,
-            cls.FINANCIAL_VIABILITY,
-            cls.REPORTING
-        ]
-
-
-@dataclass(frozen=True)
-class PDFProcessingOutput:
-    """
-    Immutable contract for PDF processing stage output
-    
-    Fields:
-        plan_text: Extracted text content from document
-        page_count: Number of pages processed
-        metadata: Document metadata (title, author, etc.)
-        extraction_method: Method used (PyPDF2, pdfplumber, etc.)
-    """
-    plan_text: str
-    page_count: int
-    metadata: Dict[str, Any]
-    extraction_method: str
-    
-    def __post_init__(self):
-        """Validate contract requirements"""
-        if not self.plan_text or len(self.plan_text) < 100:
-            raise ContractViolationError(
-                stage=PipelineStage.PDF_PROCESSING,
-                field="plan_text",
-                message="Plan text must be at least 100 characters"
-            )
-        if self.page_count < 1:
-            raise ContractViolationError(
-                stage=PipelineStage.PDF_PROCESSING,
-                field="page_count",
-                message="Page count must be at least 1"
-            )
-
-
-@dataclass(frozen=True)
-class SemanticChunkingOutput:
-    """
-    Immutable contract for semantic chunking stage output
-    
-    Fields:
-        chunks: List of semantic text chunks
-        chunk_metadata: Metadata for each chunk (position, length, etc.)
-        chunking_strategy: Strategy used (sentence, paragraph, semantic)
-        total_chunks: Total number of chunks created
-    """
-    chunks: tuple  # Using tuple for immutability
-    chunk_metadata: tuple
-    chunking_strategy: str
-    total_chunks: int
-    
-    def __post_init__(self):
-        """Validate contract requirements"""
-        if self.total_chunks != len(self.chunks):
-            raise ContractViolationError(
-                stage=PipelineStage.SEMANTIC_CHUNKING,
-                field="total_chunks",
-                message=f"total_chunks ({self.total_chunks}) must match chunks length ({len(self.chunks)})"
-            )
-        if self.total_chunks < 1:
-            raise ContractViolationError(
-                stage=PipelineStage.SEMANTIC_CHUNKING,
-                field="total_chunks",
-                message="Must produce at least 1 chunk"
-            )
-
-
-@dataclass(frozen=True)
-class EmbeddingGenerationOutput:
-    """
-    Immutable contract for embedding generation stage output
-    
-    Fields:
-        embeddings: Vector embeddings for chunks
-        embedding_model: Model used (sentence-transformers, OpenAI, etc.)
-        embedding_dimension: Dimensionality of vectors
-        chunk_indices: Indices mapping embeddings to chunks
-    """
-    embeddings: tuple  # Tuple of vectors for immutability
-    embedding_model: str
-    embedding_dimension: int
-    chunk_indices: tuple
-    
-    def __post_init__(self):
-        """Validate contract requirements"""
-        if len(self.embeddings) != len(self.chunk_indices):
-            raise ContractViolationError(
-                stage=PipelineStage.EMBEDDING_GENERATION,
-                field="embeddings",
-                message="Number of embeddings must match chunk_indices"
-            )
-        if self.embedding_dimension < 1:
-            raise ContractViolationError(
-                stage=PipelineStage.EMBEDDING_GENERATION,
-                field="embedding_dimension",
-                message="Embedding dimension must be positive"
-            )
-
-
-@dataclass(frozen=True)
-class PolicyAnalysisOutput:
-    """
-    Immutable contract for policy analysis stage output
-    
-    Fields:
-        policy_segments: Identified policy segments
-        alignment_scores: Alignment with frameworks (Decálogo, SDGs)
-        policy_areas: Categorization into P1-P10 areas
-        dimensions: Analysis across D1-D6 dimensions
-    """
-    policy_segments: tuple
-    alignment_scores: Dict[str, float]
-    policy_areas: Dict[str, Any]
-    dimensions: Dict[str, Any]
-    
-    def __post_init__(self):
-        """Validate contract requirements"""
-        if not self.policy_segments:
-            raise ContractViolationError(
-                stage=PipelineStage.POLICY_ANALYSIS,
-                field="policy_segments",
-                message="Must identify at least one policy segment"
-            )
-        required_dimensions = {"D1", "D2", "D3", "D4", "D5", "D6"}
-        if not required_dimensions.issubset(self.dimensions.keys()):
-            raise ContractViolationError(
-                stage=PipelineStage.POLICY_ANALYSIS,
-                field="dimensions",
-                message=f"Must include all dimensions: {required_dimensions}"
-            )
-
-
-@dataclass(frozen=True)
-class ContradictionDetectionOutput:
-    """
-    Immutable contract for contradiction detection stage output
-    
-    Fields:
-        contradictions: List of detected contradictions
-        contradiction_scores: Severity scores for each contradiction
-        contradiction_pairs: Pairs of contradicting segments
-        total_contradictions: Total number detected
-    """
-    contradictions: tuple
-    contradiction_scores: tuple
-    contradiction_pairs: tuple
-    total_contradictions: int
-    
-    def __post_init__(self):
-        """Validate contract requirements"""
-        if self.total_contradictions != len(self.contradictions):
-            raise ContractViolationError(
-                stage=PipelineStage.CONTRADICTION_DETECTION,
-                field="total_contradictions",
-                message="total_contradictions must match contradictions length"
-            )
-        if len(self.contradiction_scores) != len(self.contradictions):
-            raise ContractViolationError(
-                stage=PipelineStage.CONTRADICTION_DETECTION,
-                field="contradiction_scores",
-                message="Must have score for each contradiction"
-            )
-
-
-@dataclass(frozen=True)
-class FinancialViabilityOutput:
-    """
-    Immutable contract for financial viability stage output
-    
-    Fields:
-        viability_score: Overall financial viability score (0-100)
-        budget_analysis: Budget adequacy and allocation analysis
-        financial_risks: Identified financial risks
-        recommendations: Financial recommendations
-    """
-    viability_score: float
-    budget_analysis: Dict[str, Any]
-    financial_risks: tuple
-    recommendations: tuple
-    
-    def __post_init__(self):
-        """Validate contract requirements"""
-        if not 0 <= self.viability_score <= 100:
-            raise ContractViolationError(
-                stage=PipelineStage.FINANCIAL_VIABILITY,
-                field="viability_score",
-                message="Viability score must be between 0 and 100"
-            )
-        if not self.budget_analysis:
-            raise ContractViolationError(
-                stage=PipelineStage.FINANCIAL_VIABILITY,
-                field="budget_analysis",
-                message="Budget analysis cannot be empty"
-            )
-
-
-@dataclass(frozen=True)
-class ReportingOutput:
-    """
-    Immutable contract for reporting stage output
-    
-    Fields:
-        micro_report: Question-level report
-        meso_report: Cluster-level report
-        macro_report: Plan-level report
-        report_path: Path to saved report
-    """
-    micro_report: Dict[str, Any]
-    meso_report: Dict[str, Any]
-    macro_report: Dict[str, Any]
-    report_path: str
-    
-    def __post_init__(self):
-        """Validate contract requirements"""
-        if not self.micro_report:
-            raise ContractViolationError(
-                stage=PipelineStage.REPORTING,
-                field="micro_report",
-                message="Micro report cannot be empty"
-            )
-        if not Path(self.report_path).suffix == '.json':
-            raise ContractViolationError(
-                stage=PipelineStage.REPORTING,
-                field="report_path",
-                message="Report path must have .json extension"
-            )
-
-
-class ContractViolationError(Exception):
-    """
-    Exception raised when stage output violates contract
-    
-    Provides detailed information about which stage, field, and constraint failed
-    """
-    
-    def __init__(self, stage: PipelineStage, field: str, message: str):
-        self.stage = stage
-        self.field = field
-        self.message = message
-        super().__init__(
-            f"Contract violation in {stage.name} stage, field '{field}': {message}"
-        )
-
-
-class StageSequenceError(Exception):
-    """
-    Exception raised when stages execute out of order
-    
-    Ensures canonical pipeline sequence is followed
-    """
-    
-    def __init__(self, attempted_stage: PipelineStage, expected_stage: PipelineStage):
-        self.attempted_stage = attempted_stage
-        self.expected_stage = expected_stage
-        super().__init__(
-            f"Stage sequence violation: attempted {attempted_stage.name} "
-            f"but expected {expected_stage.name}"
-        )
-
-
-class MissingStageImplementationError(Exception):
-    """
-    Exception raised when pipeline stage lacks implementation
-    
-    Raised during flow validation if stage has no registered module
-    """
-    
-    def __init__(self, stage: PipelineStage):
-        self.stage = stage
-        super().__init__(f"No implementation registered for stage: {stage.name}")
-
-
 @dataclass
-class StageContract:
+class RoutingDecision:
     """
-    Contract definition for a pipeline stage
-    
-    Defines input requirements, output type, and validation logic
+    Encapsulates routing decision for a question
     """
-    stage: PipelineStage
-    input_type: Optional[Type]
-    output_type: Type
-    module_name: str
-    method_name: str
-    validator: Optional[Callable[[Any], bool]] = None
+    question_id: str
+    dimension: str
+    policy_area: str
+    primary_adapter: str
+    secondary_adapters: List[str]
+    execution_strategy: str
+    confidence_threshold: float
     
-    def validate_output(self, output: Any) -> bool:
-        """
-        Validate that output matches contract
-        
-        Args:
-            output: Output data to validate
-            
-        Returns:
-            True if valid, raises exception otherwise
-        """
-        if not isinstance(output, self.output_type):
-            raise ContractViolationError(
-                stage=self.stage,
-                field="__type__",
-                message=f"Expected {self.output_type.__name__}, got {type(output).__name__}"
-            )
-        
-        if self.validator and not self.validator(output):
-            raise ContractViolationError(
-                stage=self.stage,
-                field="__custom_validation__",
-                message="Custom validation failed"
-            )
-        
-        return True
-
-
-class FlowComposition:
-    """
-    Declares complete pipeline topology and validates flow graph
-    
-    Manages:
-    - Stage-to-stage data flow
-    - Module-to-stage mapping
-    - Data transformations at boundaries
-    - Flow completeness validation
-    """
-    
-    def __init__(self):
-        """Initialize flow composition with empty topology"""
-        self.stage_contracts: Dict[PipelineStage, StageContract] = {}
-        self.stage_dependencies: Dict[PipelineStage, List[PipelineStage]] = {}
-        self.data_transformations: Dict[tuple, Callable] = {}
-        
-        self._initialize_default_topology()
-        
-        logger.info("FlowComposition initialized")
-    
-    def _initialize_default_topology(self):
-        """Initialize default FARFAN pipeline topology"""
-        
-        self.stage_contracts = {
-            PipelineStage.PDF_PROCESSING: StageContract(
-                stage=PipelineStage.PDF_PROCESSING,
-                input_type=None,
-                output_type=PDFProcessingOutput,
-                module_name="document_loader",
-                method_name="load_plan"
-            ),
-            PipelineStage.SEMANTIC_CHUNKING: StageContract(
-                stage=PipelineStage.SEMANTIC_CHUNKING,
-                input_type=PDFProcessingOutput,
-                output_type=SemanticChunkingOutput,
-                module_name="semantic_chunking_policy",
-                method_name="chunk_text"
-            ),
-            PipelineStage.EMBEDDING_GENERATION: StageContract(
-                stage=PipelineStage.EMBEDDING_GENERATION,
-                input_type=SemanticChunkingOutput,
-                output_type=EmbeddingGenerationOutput,
-                module_name="embedding_policy",
-                method_name="generate_embeddings"
-            ),
-            PipelineStage.POLICY_ANALYSIS: StageContract(
-                stage=PipelineStage.POLICY_ANALYSIS,
-                input_type=EmbeddingGenerationOutput,
-                output_type=PolicyAnalysisOutput,
-                module_name="analyzer_one",
-                method_name="analyze_policy"
-            ),
-            PipelineStage.CONTRADICTION_DETECTION: StageContract(
-                stage=PipelineStage.CONTRADICTION_DETECTION,
-                input_type=PolicyAnalysisOutput,
-                output_type=ContradictionDetectionOutput,
-                module_name="contradiction_detection",
-                method_name="detect_contradictions"
-            ),
-            PipelineStage.FINANCIAL_VIABILITY: StageContract(
-                stage=PipelineStage.FINANCIAL_VIABILITY,
-                input_type=ContradictionDetectionOutput,
-                output_type=FinancialViabilityOutput,
-                module_name="financial_viability",
-                method_name="assess_viability"
-            ),
-            PipelineStage.REPORTING: StageContract(
-                stage=PipelineStage.REPORTING,
-                input_type=FinancialViabilityOutput,
-                output_type=ReportingOutput,
-                module_name="report_assembly",
-                method_name="generate_report"
-            )
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "question_id": self.question_id,
+            "dimension": self.dimension,
+            "policy_area": self.policy_area,
+            "primary_adapter": self.primary_adapter,
+            "secondary_adapters": self.secondary_adapters,
+            "execution_strategy": self.execution_strategy,
+            "confidence_threshold": self.confidence_threshold
         }
-        
-        self.stage_dependencies = {
-            PipelineStage.PDF_PROCESSING: [],
-            PipelineStage.SEMANTIC_CHUNKING: [PipelineStage.PDF_PROCESSING],
-            PipelineStage.EMBEDDING_GENERATION: [PipelineStage.SEMANTIC_CHUNKING],
-            PipelineStage.POLICY_ANALYSIS: [PipelineStage.EMBEDDING_GENERATION],
-            PipelineStage.CONTRADICTION_DETECTION: [PipelineStage.POLICY_ANALYSIS],
-            PipelineStage.FINANCIAL_VIABILITY: [PipelineStage.CONTRADICTION_DETECTION],
-            PipelineStage.REPORTING: [PipelineStage.FINANCIAL_VIABILITY]
-        }
-    
-    def register_stage(
-        self,
-        stage: PipelineStage,
-        contract: StageContract,
-        dependencies: List[PipelineStage]
-    ):
-        """
-        Register a custom stage implementation
-        
-        Args:
-            stage: Pipeline stage to register
-            contract: Stage contract defining inputs/outputs
-            dependencies: List of prerequisite stages
-        """
-        self.stage_contracts[stage] = contract
-        self.stage_dependencies[stage] = dependencies
-        
-        logger.info(f"Registered stage: {stage.name}")
-    
-    def register_transformation(
-        self,
-        from_stage: PipelineStage,
-        to_stage: PipelineStage,
-        transformer: Callable[[Any], Any]
-    ):
-        """
-        Register data transformation between stages
-        
-        Args:
-            from_stage: Source stage
-            to_stage: Destination stage
-            transformer: Function to transform data
-        """
-        self.data_transformations[(from_stage, to_stage)] = transformer
-        
-        logger.info(f"Registered transformation: {from_stage.name} -> {to_stage.name}")
-    
-    def validate_flow_completeness(self) -> bool:
-        """
-        Validate that all stages have implementations
-        
-        Returns:
-            True if complete, raises exception otherwise
-        """
-        execution_order = PipelineStage.get_execution_order()
-        
-        for stage in execution_order:
-            if stage not in self.stage_contracts:
-                raise MissingStageImplementationError(stage)
-        
-        logger.info("Flow completeness validated: all stages implemented")
-        return True
-    
-    def validate_stage_dependencies(self) -> bool:
-        """
-        Validate that stage dependencies are satisfied
-        
-        Returns:
-            True if valid, raises exception otherwise
-        """
-        for stage, deps in self.stage_dependencies.items():
-            for dep in deps:
-                if dep not in self.stage_contracts:
-                    raise MissingStageImplementationError(dep)
-                
-                if dep >= stage:
-                    raise ValueError(
-                        f"Invalid dependency: {stage.name} depends on "
-                        f"{dep.name} which executes later or at same time"
-                    )
-        
-        logger.info("Stage dependencies validated")
-        return True
-    
-    def get_contract(self, stage: PipelineStage) -> StageContract:
-        """Get contract for specified stage"""
-        if stage not in self.stage_contracts:
-            raise MissingStageImplementationError(stage)
-        return self.stage_contracts[stage]
-    
-    def get_dependencies(self, stage: PipelineStage) -> List[PipelineStage]:
-        """Get dependencies for specified stage"""
-        return self.stage_dependencies.get(stage, [])
-    
-    def get_transformation(
-        self,
-        from_stage: PipelineStage,
-        to_stage: PipelineStage
-    ) -> Optional[Callable]:
-        """Get transformation function between stages"""
-        return self.data_transformations.get((from_stage, to_stage))
 
 
 class ModuleController:
     """
-    Enforces canonical pipeline execution with contract validation
+    Unified controller for all 9+ adapter instances
     
-    Features:
-    - Module registration with stage binding
-    - Sequence enforcement (prevents out-of-order execution)
-    - Contract validation at each stage boundary
-    - Runtime type checking
-    - Automatic flow validation before execution
+    Manages adapter lifecycle, routing decisions, and result aggregation
+    through dependency injection and responsibility mapping.
     """
-    
-    def __init__(self, flow_composition: Optional[FlowComposition] = None):
-        """
-        Initialize module controller
-        
-        Args:
-            flow_composition: Optional flow composition (uses default if None)
-        """
-        self.flow = flow_composition or FlowComposition()
-        self.registered_modules: Dict[PipelineStage, Any] = {}
-        self.execution_state: Dict[str, Any] = {
-            "current_stage": None,
-            "completed_stages": set(),
-            "stage_outputs": {},
-            "execution_history": []
-        }
-        
-        logger.info("ModuleController initialized")
-    
-    def register_module(
-        self,
-        stage: PipelineStage,
-        module_instance: Any,
-        validate: bool = True
+
+    def __init__(
+            self,
+            # Core adapters (9 primary)
+            teoria_cambio_adapter=None,
+            analyzer_one_adapter=None,
+            dereck_beach_adapter=None,
+            embedding_policy_adapter=None,
+            semantic_chunking_policy_adapter=None,
+            contradiction_detection_adapter=None,
+            financial_viability_adapter=None,
+            policy_processor_adapter=None,
+            policy_segmenter_adapter=None,
+            # Additional adapters (2 for future expansion)
+            causal_processor_adapter=None,
+            impact_assessment_adapter=None,
+            # Configuration
+            responsibility_map_path: Optional[Path] = None,
+            circuit_breaker=None,
+            # Alternative: Pass ModuleAdapterRegistry directly
+            module_adapter_registry=None
     ):
         """
-        Register module implementation for stage
+        Initialize ModuleController with all adapter instances via dependency injection
         
         Args:
-            stage: Pipeline stage
-            module_instance: Module instance implementing stage
-            validate: Whether to validate module has required method
-            
-        Raises:
-            ValueError: If module doesn't implement required method
+            teoria_cambio_adapter: ModulosAdapter instance
+            analyzer_one_adapter: AnalyzerOneAdapter instance
+            dereck_beach_adapter: DerekBeachAdapter instance
+            embedding_policy_adapter: EmbeddingPolicyAdapter instance
+            semantic_chunking_policy_adapter: SemanticChunkingPolicyAdapter instance
+            contradiction_detection_adapter: ContradictionDetectionAdapter instance
+            financial_viability_adapter: FinancialViabilityAdapter instance
+            policy_processor_adapter: PolicyProcessorAdapter instance
+            policy_segmenter_adapter: PolicySegmenterAdapter instance
+            causal_processor_adapter: Optional CausalProcessorAdapter instance
+            impact_assessment_adapter: Optional ImpactAssessmentAdapter instance
+            responsibility_map_path: Path to responsibility_map.json
+            circuit_breaker: Optional CircuitBreaker instance for fault tolerance
         """
-        contract = self.flow.get_contract(stage)
+        logger.info("Initializing ModuleController with dependency injection")
         
-        if validate:
-            if not hasattr(module_instance, contract.method_name):
-                raise ValueError(
-                    f"Module {module_instance.__class__.__name__} does not implement "
-                    f"required method: {contract.method_name}"
-                )
+        # If module_adapter_registry is provided, use it to get adapters
+        if module_adapter_registry is not None:
+            logger.info("Using ModuleAdapterRegistry to populate adapters")
+            self.adapters = module_adapter_registry.adapters.copy()
+            self.module_adapter_registry = module_adapter_registry
+        else:
+            # Store all adapter instances (11 total)
+            self.adapters = {
+                "teoria_cambio": teoria_cambio_adapter,
+                "analyzer_one": analyzer_one_adapter,
+                "dereck_beach": dereck_beach_adapter,
+                "embedding_policy": embedding_policy_adapter,
+                "semantic_chunking_policy": semantic_chunking_policy_adapter,
+                "contradiction_detection": contradiction_detection_adapter,
+                "financial_viability": financial_viability_adapter,
+                "policy_processor": policy_processor_adapter,
+                "policy_segmenter": policy_segmenter_adapter,
+                "causal_processor": causal_processor_adapter,
+                "impact_assessment": impact_assessment_adapter
+            }
+            
+            # Filter out None values (optional adapters)
+            self.adapters = {k: v for k, v in self.adapters.items() if v is not None}
+            self.module_adapter_registry = None
         
-        self.registered_modules[stage] = module_instance
+        self.circuit_breaker = circuit_breaker
+        self.responsibility_map_path = responsibility_map_path or Path(__file__).parent / "responsibility_map.json"
+        
+        # Load responsibility mapping
+        self.responsibility_map = self._load_responsibility_map()
+        
+        # Performance tracking
+        self.performance_metrics = defaultdict(lambda: {
+            "total_calls": 0,
+            "successful_calls": 0,
+            "failed_calls": 0,
+            "avg_execution_time": 0.0
+        })
         
         logger.info(
-            f"Registered module for {stage.name}: "
-            f"{module_instance.__class__.__name__}.{contract.method_name}"
+            f"ModuleController initialized: {len(self.adapters)} adapters registered, "
+            f"responsibility map loaded from {self.responsibility_map_path}"
         )
-    
-    def validate_pipeline(self) -> bool:
+
+    def _load_responsibility_map(self) -> Dict[str, Any]:
         """
-        Validate complete pipeline before execution
-        
-        Checks:
-        - Flow completeness (all stages implemented)
-        - Stage dependencies satisfied
-        - All required modules registered
+        Load responsibility mapping from JSON configuration
         
         Returns:
-            True if valid, raises exception otherwise
-        """
-        self.flow.validate_flow_completeness()
-        self.flow.validate_stage_dependencies()
-        
-        execution_order = PipelineStage.get_execution_order()
-        for stage in execution_order:
-            if stage not in self.registered_modules:
-                raise MissingStageImplementationError(stage)
-        
-        logger.info("Pipeline validation successful")
-        return True
-    
-    def execute_stage(
-        self,
-        stage: PipelineStage,
-        input_data: Any = None,
-        **kwargs
-    ) -> Any:
-        """
-        Execute single pipeline stage with contract enforcement
-        
-        Enforcement:
-        - Validates stage is next in sequence
-        - Validates input matches contract
-        - Executes module method
-        - Validates output matches contract
-        - Records execution in state
-        
-        Args:
-            stage: Stage to execute
-            input_data: Input data (must match contract)
-            **kwargs: Additional arguments for module method
-            
-        Returns:
-            Stage output (validated against contract)
+            Dictionary with dimension/policy area to adapter mappings
             
         Raises:
-            StageSequenceError: If stage executed out of order
-            ContractViolationError: If input/output violates contract
-            MissingStageImplementationError: If stage not registered
+            FileNotFoundError: If responsibility_map.json not found
+            ValueError: If JSON is invalid
         """
-        self._validate_stage_sequence(stage)
+        if not self.responsibility_map_path.exists():
+            logger.warning(f"Responsibility map not found at {self.responsibility_map_path}, creating default")
+            return self._create_default_responsibility_map()
         
-        contract = self.flow.get_contract(stage)
-        
-        if contract.input_type and input_data is not None:
-            if not isinstance(input_data, contract.input_type):
-                raise ContractViolationError(
-                    stage=stage,
-                    field="__input__",
-                    message=f"Expected {contract.input_type.__name__}, "
-                            f"got {type(input_data).__name__}"
-                )
-        
-        if stage not in self.registered_modules:
-            raise MissingStageImplementationError(stage)
-        
-        module = self.registered_modules[stage]
-        method = getattr(module, contract.method_name)
-        
-        logger.info(f"Executing stage: {stage.name}")
-        start_time = time.time()
+        logger.info(f"Loading responsibility map from {self.responsibility_map_path}")
         
         try:
-            if input_data is not None:
-                output = method(input_data, **kwargs)
-            else:
-                output = method(**kwargs)
+            with open(self.responsibility_map_path, 'r', encoding='utf-8') as f:
+                mapping = json.load(f)
             
-            contract.validate_output(output)
+            logger.info(
+                f"Loaded responsibility map: "
+                f"{len(mapping.get('dimensions', {}))} dimensions, "
+                f"{len(mapping.get('policy_areas', {}))} policy areas"
+            )
+            
+            return mapping
+            
+        except json.JSONDecodeError as e:
+            logger.error(f"Invalid JSON in responsibility_map.json: {e}")
+            raise ValueError(f"Invalid responsibility map JSON: {e}")
+
+    def _create_default_responsibility_map(self) -> Dict[str, Any]:
+        """
+        Create default responsibility mapping based on FARFAN architecture
+        
+        Returns:
+            Default responsibility map structure
+        """
+        default_map = {
+            "metadata": {
+                "version": "1.0",
+                "created": "2025-01-15",
+                "description": "Default responsibility mapping for FARFAN 3.0"
+            },
+            "dimensions": {
+                "D1": {
+                    "name": "Diagnóstico y Recursos",
+                    "primary_adapters": ["policy_segmenter", "policy_processor"],
+                    "secondary_adapters": ["semantic_chunking_policy", "financial_viability"],
+                    "execution_strategy": "parallel"
+                },
+                "D2": {
+                    "name": "Diseño de Intervención",
+                    "primary_adapters": ["embedding_policy", "policy_processor"],
+                    "secondary_adapters": ["dereck_beach", "teoria_cambio"],
+                    "execution_strategy": "parallel"
+                },
+                "D3": {
+                    "name": "Productos y Outputs",
+                    "primary_adapters": ["financial_viability", "analyzer_one"],
+                    "secondary_adapters": ["policy_processor"],
+                    "execution_strategy": "sequential"
+                },
+                "D4": {
+                    "name": "Resultados y Outcomes",
+                    "primary_adapters": ["analyzer_one", "teoria_cambio"],
+                    "secondary_adapters": ["dereck_beach"],
+                    "execution_strategy": "parallel"
+                },
+                "D5": {
+                    "name": "Impactos de Largo Plazo",
+                    "primary_adapters": ["teoria_cambio", "dereck_beach"],
+                    "secondary_adapters": ["contradiction_detection"],
+                    "execution_strategy": "sequential"
+                },
+                "D6": {
+                    "name": "Teoría de Cambio",
+                    "primary_adapters": ["teoria_cambio", "dereck_beach"],
+                    "secondary_adapters": ["analyzer_one", "contradiction_detection"],
+                    "execution_strategy": "parallel"
+                }
+            },
+            "policy_areas": {
+                "P1": {"name": "Salud", "specialized_adapters": ["financial_viability"]},
+                "P2": {"name": "Educación", "specialized_adapters": ["financial_viability"]},
+                "P3": {"name": "Infraestructura", "specialized_adapters": ["financial_viability"]},
+                "P4": {"name": "Economía", "specialized_adapters": ["financial_viability"]},
+                "P5": {"name": "Medio Ambiente", "specialized_adapters": ["contradiction_detection"]},
+                "P6": {"name": "Seguridad", "specialized_adapters": []},
+                "P7": {"name": "Cultura", "specialized_adapters": []},
+                "P8": {"name": "Deporte", "specialized_adapters": []},
+                "P9": {"name": "Tecnología", "specialized_adapters": []},
+                "P10": {"name": "Desarrollo Social", "specialized_adapters": ["analyzer_one"]}
+            },
+            "method_routing": {
+                "semantic_analysis": ["embedding_policy", "semantic_chunking_policy"],
+                "causal_inference": ["teoria_cambio", "dereck_beach"],
+                "financial_analysis": ["financial_viability"],
+                "contradiction_detection": ["contradiction_detection"],
+                "text_processing": ["policy_processor", "policy_segmenter"]
+            }
+        }
+        
+        return default_map
+
+    def route_question(
+            self,
+            question_id: str,
+            dimension: str,
+            policy_area: str
+    ) -> RoutingDecision:
+        """
+        Route question to appropriate adapters based on responsibility map
+        
+        Args:
+            question_id: Canonical question ID (e.g., "P1-D1-Q1")
+            dimension: Dimension ID (e.g., "D1")
+            policy_area: Policy area ID (e.g., "P1")
+            
+        Returns:
+            RoutingDecision with primary and secondary adapters
+        """
+        dimension_map = self.responsibility_map.get("dimensions", {}).get(dimension, {})
+        policy_map = self.responsibility_map.get("policy_areas", {}).get(policy_area, {})
+        
+        primary_adapters = dimension_map.get("primary_adapters", [])
+        secondary_adapters = dimension_map.get("secondary_adapters", [])
+        specialized_adapters = policy_map.get("specialized_adapters", [])
+        
+        # Merge and deduplicate adapters
+        all_secondary = list(set(secondary_adapters + specialized_adapters))
+        
+        execution_strategy = dimension_map.get("execution_strategy", "sequential")
+        
+        decision = RoutingDecision(
+            question_id=question_id,
+            dimension=dimension,
+            policy_area=policy_area,
+            primary_adapter=primary_adapters[0] if primary_adapters else "policy_processor",
+            secondary_adapters=all_secondary,
+            execution_strategy=execution_strategy,
+            confidence_threshold=0.70
+        )
+        
+        logger.debug(f"Routed {question_id} → primary={decision.primary_adapter}, secondary={all_secondary}")
+        
+        return decision
+
+    def execute_adapter_method(
+            self,
+            adapter_name: str,
+            method_name: str,
+            args: List[Any],
+            kwargs: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Execute method on specified adapter with circuit breaker protection
+        
+        This is the unified interface that replaces direct adapter calls throughout
+        the orchestrator modules.
+        
+        Args:
+            adapter_name: Name of adapter (e.g., "teoria_cambio")
+            method_name: Name of method to call
+            args: Positional arguments
+            kwargs: Keyword arguments
+            
+        Returns:
+            Dictionary with standardized result format
+        """
+        start_time = time.time()
+        
+        # Validate adapter exists
+        if adapter_name not in self.adapters:
+            logger.error(f"Adapter '{adapter_name}' not found in controller")
+            return self._create_error_result(
+                adapter_name,
+                method_name,
+                f"Adapter not found. Available: {list(self.adapters.keys())}",
+                start_time
+            )
+        
+        adapter = self.adapters[adapter_name]
+        
+        # Check if adapter is available
+        if hasattr(adapter, 'available') and not adapter.available:
+            logger.warning(f"Adapter '{adapter_name}' is not available")
+            return self._create_error_result(
+                adapter_name,
+                method_name,
+                "Adapter not available",
+                start_time
+            )
+        
+        # Check circuit breaker
+        if self.circuit_breaker and not self.circuit_breaker.can_execute(adapter_name):
+            logger.warning(f"Circuit breaker OPEN for '{adapter_name}'")
+            return self._create_error_result(
+                adapter_name,
+                method_name,
+                "Circuit breaker open",
+                start_time
+            )
+        
+        # Execute adapter method
+        try:
+            logger.debug(f"Executing {adapter_name}.{method_name}")
+            
+            # Use adapter's execute method if available (standardized in module_adapters.py)
+            if hasattr(adapter, 'execute'):
+                result = adapter.execute(method_name, args, kwargs)
+            elif self.module_adapter_registry:
+                # Use registry's execute_module_method for standardized execution
+                module_result = self.module_adapter_registry.execute_module_method(
+                    module_name=adapter_name,
+                    method_name=method_name,
+                    args=args,
+                    kwargs=kwargs
+                )
+                # Convert ModuleResult to dict
+                result = module_result.to_dict() if hasattr(module_result, 'to_dict') else {
+                    'status': module_result.status,
+                    'data': module_result.data,
+                    'evidence': module_result.evidence,
+                    'confidence': module_result.confidence
+                }
+            else:
+                # Direct method call (fallback)
+                method = getattr(adapter, method_name)
+                result = method(*args, **kwargs)
             
             execution_time = time.time() - start_time
             
-            self._record_stage_execution(stage, output, execution_time)
+            # Record success
+            self._record_success(adapter_name, execution_time)
             
-            logger.info(
-                f"Stage {stage.name} completed successfully in {execution_time:.2f}s"
-            )
+            if self.circuit_breaker:
+                self.circuit_breaker.record_success(adapter_name, execution_time)
             
-            return output
+            # Normalize result format
+            normalized_result = self._normalize_result(result, adapter_name, method_name, execution_time)
             
-        except ContractViolationError:
-            raise
+            return normalized_result
+            
         except Exception as e:
-            logger.error(f"Error executing stage {stage.name}: {e}", exc_info=True)
-            raise
-    
-    def execute_pipeline(
-        self,
-        initial_input: Any = None,
-        **kwargs
-    ) -> Dict[PipelineStage, Any]:
+            execution_time = time.time() - start_time
+            logger.error(f"Error executing {adapter_name}.{method_name}: {e}", exc_info=True)
+            
+            # Record failure
+            self._record_failure(adapter_name, execution_time)
+            
+            if self.circuit_breaker:
+                self.circuit_breaker.record_failure(adapter_name, str(e), execution_time)
+            
+            return self._create_error_result(adapter_name, method_name, str(e), start_time)
+
+    def process_question(
+            self,
+            question_spec: Any,
+            plan_text: str
+    ) -> Dict[str, Any]:
         """
-        Execute complete pipeline from start to finish
+        Process complete question using routed adapters
+        
+        High-level method that:
+        1. Routes question to appropriate adapters
+        2. Executes adapters in order (parallel or sequential)
+        3. Aggregates results
+        4. Returns unified response
         
         Args:
-            initial_input: Initial input for first stage (e.g., file path)
-            **kwargs: Additional arguments passed to all stages
+            question_spec: Question specification from questionnaire parser
+            plan_text: Plan document text
             
         Returns:
-            Dictionary mapping stages to their outputs
-            
-        Raises:
-            Various exceptions if validation or execution fails
+            Dictionary with aggregated results from all adapters
         """
-        self.validate_pipeline()
+        question_id = getattr(question_spec, 'canonical_id', 'unknown')
+        dimension = self._extract_dimension(question_id)
+        policy_area = self._extract_policy_area(question_id)
         
-        logger.info("Starting complete pipeline execution")
-        start_time = time.time()
+        routing_decision = self.route_question(question_id, dimension, policy_area)
         
-        execution_order = PipelineStage.get_execution_order()
-        outputs: Dict[PipelineStage, Any] = {}
+        results = {
+            "question_id": question_id,
+            "routing_decision": routing_decision.to_dict(),
+            "adapter_results": {},
+            "aggregated_confidence": 0.0,
+            "execution_strategy": routing_decision.execution_strategy
+        }
         
-        current_input = initial_input
+        # Execute primary adapter
+        primary_result = self._execute_adapter_for_question(
+            routing_decision.primary_adapter,
+            question_spec,
+            plan_text
+        )
+        results["adapter_results"][routing_decision.primary_adapter] = primary_result
         
-        for stage in execution_order:
-            transformation = None
-            if outputs:
-                prev_stage = execution_order[execution_order.index(stage) - 1]
-                transformation = self.flow.get_transformation(prev_stage, stage)
-            
-            if transformation:
-                current_input = transformation(current_input)
-            
-            output = self.execute_stage(stage, current_input, **kwargs)
-            outputs[stage] = output
-            current_input = output
-        
-        total_time = time.time() - start_time
-        logger.info(f"Pipeline execution completed in {total_time:.2f}s")
-        
-        return outputs
-    
-    def _validate_stage_sequence(self, stage: PipelineStage):
-        """
-        Validate that stage is next in canonical sequence
-        
-        Args:
-            stage: Stage to validate
-            
-        Raises:
-            StageSequenceError: If stage is out of order
-        """
-        execution_order = PipelineStage.get_execution_order()
-        completed = self.execution_state["completed_stages"]
-        
-        expected_index = len(completed)
-        
-        if expected_index >= len(execution_order):
-            raise ValueError("All pipeline stages already completed")
-        
-        expected_stage = execution_order[expected_index]
-        
-        if stage != expected_stage:
-            raise StageSequenceError(stage, expected_stage)
-        
-        deps = self.flow.get_dependencies(stage)
-        for dep in deps:
-            if dep not in completed:
-                raise StageSequenceError(
-                    stage,
-                    dep
+        # Execute secondary adapters
+        for adapter_name in routing_decision.secondary_adapters:
+            if adapter_name in self.adapters:
+                secondary_result = self._execute_adapter_for_question(
+                    adapter_name,
+                    question_spec,
+                    plan_text
                 )
-    
-    def _record_stage_execution(
-        self,
-        stage: PipelineStage,
-        output: Any,
-        execution_time: float
-    ):
-        """Record stage execution in internal state"""
-        self.execution_state["current_stage"] = stage
-        self.execution_state["completed_stages"].add(stage)
-        self.execution_state["stage_outputs"][stage] = output
-        self.execution_state["execution_history"].append({
-            "stage": stage.name,
-            "timestamp": time.time(),
-            "execution_time": execution_time,
-            "output_type": type(output).__name__
-        })
-    
-    def reset_execution_state(self):
-        """Reset execution state for new pipeline run"""
-        self.execution_state = {
-            "current_stage": None,
-            "completed_stages": set(),
-            "stage_outputs": {},
-            "execution_history": []
-        }
-        logger.info("Execution state reset")
-    
-    def get_execution_status(self) -> Dict[str, Any]:
+                results["adapter_results"][adapter_name] = secondary_result
+        
+        # Aggregate confidence scores
+        all_confidences = [
+            r.get("confidence", 0.0)
+            for r in results["adapter_results"].values()
+            if r.get("status") == "success"
+        ]
+        
+        if all_confidences:
+            results["aggregated_confidence"] = sum(all_confidences) / len(all_confidences)
+        
+        return results
+
+    def _execute_adapter_for_question(
+            self,
+            adapter_name: str,
+            question_spec: Any,
+            plan_text: str
+    ) -> Dict[str, Any]:
         """
-        Get current execution status
+        Execute adapter for a specific question
+        
+        Determines appropriate method based on question type and adapter capabilities
+        
+        Args:
+            adapter_name: Name of adapter
+            question_spec: Question specification
+            plan_text: Plan document text
+            
+        Returns:
+            Result dictionary from adapter execution
+        """
+        # Get execution chain from question spec if available
+        execution_chain = getattr(question_spec, 'execution_chain', [])
+        
+        # Find matching step for this adapter
+        matching_step = None
+        for step in execution_chain:
+            if isinstance(step, dict) and step.get('adapter') == adapter_name:
+                matching_step = step
+                break
+        
+        if matching_step:
+            return self.execute_adapter_method(
+                adapter_name=adapter_name,
+                method_name=matching_step.get('method', 'analyze'),
+                args=[plan_text],
+                kwargs={}
+            )
+        else:
+            # Default to generic analysis method
+            return self.execute_adapter_method(
+                adapter_name=adapter_name,
+                method_name="analyze",
+                args=[plan_text],
+                kwargs={}
+            )
+
+    def _normalize_result(
+            self,
+            result: Any,
+            adapter_name: str,
+            method_name: str,
+            execution_time: float
+    ) -> Dict[str, Any]:
+        """
+        Normalize adapter result to standardized format
+        
+        Args:
+            result: Raw result from adapter
+            adapter_name: Name of adapter
+            method_name: Name of method
+            execution_time: Execution time in seconds
+            
+        Returns:
+            Normalized result dictionary
+        """
+        # Handle ModuleResult dataclass
+        if hasattr(result, 'module_name'):
+            return {
+                "status": "success",
+                "adapter_name": adapter_name,
+                "method_name": method_name,
+                "data": result.data,
+                "evidence": result.evidence,
+                "confidence": result.confidence,
+                "execution_time": execution_time,
+                "errors": result.errors,
+                "warnings": result.warnings
+            }
+        
+        # Handle dictionary result
+        elif isinstance(result, dict):
+            return {
+                "status": "success",
+                "adapter_name": adapter_name,
+                "method_name": method_name,
+                "data": result,
+                "evidence": [],
+                "confidence": result.get("confidence", 0.75),
+                "execution_time": execution_time,
+                "errors": [],
+                "warnings": []
+            }
+        
+        # Handle other types
+        else:
+            return {
+                "status": "success",
+                "adapter_name": adapter_name,
+                "method_name": method_name,
+                "data": {"result": str(result)},
+                "evidence": [],
+                "confidence": 0.50,
+                "execution_time": execution_time,
+                "errors": [],
+                "warnings": []
+            }
+
+    def _create_error_result(
+            self,
+            adapter_name: str,
+            method_name: str,
+            error_message: str,
+            start_time: float
+    ) -> Dict[str, Any]:
+        """Create standardized error result"""
+        return {
+            "status": "failed",
+            "adapter_name": adapter_name,
+            "method_name": method_name,
+            "data": {},
+            "evidence": [],
+            "confidence": 0.0,
+            "execution_time": time.time() - start_time,
+            "errors": [error_message],
+            "warnings": []
+        }
+
+    def _record_success(self, adapter_name: str, execution_time: float):
+        """Record successful execution for metrics"""
+        metrics = self.performance_metrics[adapter_name]
+        metrics["total_calls"] += 1
+        metrics["successful_calls"] += 1
+        
+        # Update average execution time
+        prev_avg = metrics["avg_execution_time"]
+        total = metrics["total_calls"]
+        metrics["avg_execution_time"] = (prev_avg * (total - 1) + execution_time) / total
+
+    def _record_failure(self, adapter_name: str, execution_time: float):
+        """Record failed execution for metrics"""
+        metrics = self.performance_metrics[adapter_name]
+        metrics["total_calls"] += 1
+        metrics["failed_calls"] += 1
+        
+        # Update average execution time
+        prev_avg = metrics["avg_execution_time"]
+        total = metrics["total_calls"]
+        metrics["avg_execution_time"] = (prev_avg * (total - 1) + execution_time) / total
+
+    def _extract_dimension(self, question_id: str) -> str:
+        """Extract dimension from question ID (e.g., P1-D1-Q1 → D1)"""
+        import re
+        match = re.search(r'D(\d+)', question_id)
+        return f"D{match.group(1)}" if match else "D1"
+
+    def _extract_policy_area(self, question_id: str) -> str:
+        """Extract policy area from question ID (e.g., P1-D1-Q1 → P1)"""
+        import re
+        match = re.search(r'P(\d+)', question_id)
+        return f"P{match.group(1)}" if match else "P1"
+
+    def get_controller_status(self) -> Dict[str, Any]:
+        """
+        Get current controller status and health metrics
         
         Returns:
-            Dictionary with execution state information
+            Dictionary with adapter availability and performance metrics
         """
-        execution_order = PipelineStage.get_execution_order()
-        completed = self.execution_state["completed_stages"]
-        
         return {
-            "current_stage": self.execution_state["current_stage"].name 
-                           if self.execution_state["current_stage"] else None,
-            "completed_stages": [s.name for s in completed],
-            "remaining_stages": [s.name for s in execution_order if s not in completed],
-            "progress_percentage": (len(completed) / len(execution_order)) * 100,
-            "execution_history": self.execution_state["execution_history"]
+            "total_adapters": len(self.adapters),
+            "available_adapters": [
+                name for name, adapter in self.adapters.items()
+                if not hasattr(adapter, 'available') or adapter.available
+            ],
+            "performance_metrics": dict(self.performance_metrics),
+            "circuit_breaker_status": (
+                self.circuit_breaker.get_all_status()
+                if self.circuit_breaker else None
+            ),
+            "responsibility_map_loaded": bool(self.responsibility_map)
         }
-    
-    def get_stage_output(self, stage: PipelineStage) -> Optional[Any]:
-        """Get output from specific stage"""
-        return self.execution_state["stage_outputs"].get(stage)
+
+    def get_adapter_methods(self, adapter_name: str) -> List[str]:
+        """
+        Get list of available methods for an adapter
+        
+        Args:
+            adapter_name: Name of adapter
+            
+        Returns:
+            List of method names
+        """
+        if adapter_name not in self.adapters:
+            return []
+        
+        adapter = self.adapters[adapter_name]
+        
+        # Get all non-private methods
+        methods = [
+            method for method in dir(adapter)
+            if not method.startswith('_') and callable(getattr(adapter, method))
+        ]
+        
+        return methods
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-    
+    # Example usage (would need real adapter instances)
     print("=" * 80)
-    print("Module Controller - Canonical Pipeline Execution")
+    print("MODULE CONTROLLER - Unified Adapter Interface")
     print("=" * 80)
-    
-    controller = ModuleController()
-    
-    print("\nPipeline Stages (Execution Order):")
-    for i, stage in enumerate(PipelineStage.get_execution_order(), 1):
-        print(f"  {i}. {stage.name}")
-    
-    print("\nStage Contracts:")
-    for stage in PipelineStage.get_execution_order():
-        contract = controller.flow.get_contract(stage)
-        print(f"  {stage.name}:")
-        print(f"    Module: {contract.module_name}.{contract.method_name}")
-        print(f"    Output: {contract.output_type.__name__}")
-    
-    print("\nStage Dependencies:")
-    for stage in PipelineStage.get_execution_order():
-        deps = controller.flow.get_dependencies(stage)
-        if deps:
-            dep_names = [d.name for d in deps]
-            print(f"  {stage.name} <- {dep_names}")
-    
-    print("\n" + "=" * 80)
+    print("\nThis module provides centralized adapter orchestration with:")
+    print("  - Constructor dependency injection for all adapters")
+    print("  - Responsibility-based routing via JSON configuration")
+    print("  - Circuit breaker integration for fault tolerance")
+    print("  - Standardized result format")
+    print("=" * 80)

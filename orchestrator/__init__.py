@@ -6,6 +6,7 @@ for development plan analysis.
 
 Architecture:
 - Orchestrator: Question routing and execution coordination
+- ModuleController: Unified adapter interface with responsibility mapping
 - Choreographer: Module sequencing and dependency management
 - Circuit Breaker: Fault tolerance and graceful degradation
 - Report Assembly: MICRO/MESO/MACRO multi-level reporting
@@ -21,6 +22,7 @@ __author__ = "FARFAN Policy Analysis Team"
 # Lazy imports to avoid heavyweight dependencies at module load time
 __all__ = [
     "FARFANOrchestrator",
+    "ModuleController",
     "ExecutionChoreographer",
     "CircuitBreaker",
     "ReportAssembler",
@@ -37,6 +39,9 @@ def __getattr__(name):
     if name == "FARFANOrchestrator":
         from .core_orchestrator import FARFANOrchestrator
         return FARFANOrchestrator
+    elif name == "ModuleController":
+        from .module_controller import ModuleController
+        return ModuleController
     elif name == "ExecutionChoreographer":
         from .choreographer import ExecutionChoreographer
         return ExecutionChoreographer
