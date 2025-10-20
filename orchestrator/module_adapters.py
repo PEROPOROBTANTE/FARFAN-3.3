@@ -5464,7 +5464,8 @@ class ContradictionDetectionAdapter(BaseAdapter):
             data={"temporal_type": temporal_type, "marker": marker},
             evidence=[{"type": "temporal_classification", "type": temporal_type}],
             confidence=0.85,
-            execution_time=0.0)
+            execution_time=0.0
+        )
     def _execute_detect(self, document: str, metadata: dict = None, **kwargs) -> ModuleResult:
         """Execute PolicyContradictionDetector.detect()"""
         model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')

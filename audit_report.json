@@ -1,0 +1,4269 @@
+{
+  "file_exists": true,
+  "syntax_valid": true,
+  "importable": true,
+  "classes_found": [
+    "ModuleResult",
+    "BaseAdapter",
+    "PolicyProcessorAdapter",
+    "PolicySegmenterAdapter",
+    "AnalyzerOneAdapter",
+    "EmbeddingPolicyAdapter",
+    "SemanticChunkingPolicyAdapter",
+    "FinancialViabilityAdapter",
+    "DerekBeachAdapter",
+    "ContradictionDetectionAdapter",
+    "ModulosAdapter",
+    "ModuleAdapterRegistry",
+    "ModuleController"
+  ],
+  "methods_found": {
+    "ModuleResult": [],
+    "BaseAdapter": [
+      {
+        "name": "__init__",
+        "args": [
+          "self",
+          "module_name"
+        ],
+        "lineno": 62,
+        "returns": null,
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_create_unavailable_result",
+        "args": [
+          "self",
+          "method_name",
+          "start_time"
+        ],
+        "lineno": 67,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_create_error_result",
+        "args": [
+          "self",
+          "method_name",
+          "start_time",
+          "error"
+        ],
+        "lineno": 80,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      }
+    ],
+    "PolicyProcessorAdapter": [
+      {
+        "name": "__init__",
+        "args": [
+          "self"
+        ],
+        "lineno": 107,
+        "returns": null,
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_load_module",
+        "args": [
+          "self"
+        ],
+        "lineno": 111,
+        "returns": null,
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "execute",
+        "args": [
+          "self",
+          "method_name",
+          "args",
+          "kwargs"
+        ],
+        "lineno": 141,
+        "returns": "ModuleResult",
+        "is_private": false,
+        "decorators": []
+      },
+      {
+        "name": "_execute_from_legacy",
+        "args": [
+          "self",
+          "legacy_config"
+        ],
+        "lineno": 286,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_validate",
+        "args": [
+          "self",
+          "config"
+        ],
+        "lineno": 301,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_compute_evidence_score",
+        "args": [
+          "self",
+          "matches",
+          "context"
+        ],
+        "lineno": 322,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_calculate_shannon_entropy",
+        "args": [
+          "self",
+          "distribution"
+        ],
+        "lineno": 338,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_normalize_unicode",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 358,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_segment_into_sentences",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 374,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_extract_contextual_window",
+        "args": [
+          "self",
+          "text",
+          "position",
+          "size"
+        ],
+        "lineno": 390,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_compile_pattern",
+        "args": [
+          "self",
+          "pattern_str"
+        ],
+        "lineno": 406,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_to_dict",
+        "args": [
+          "self",
+          "evidence_bundle"
+        ],
+        "lineno": 426,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_process",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 448,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_load_questionnaire",
+        "args": [
+          "self",
+          "path"
+        ],
+        "lineno": 465,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_compile_pattern_registry",
+        "args": [
+          "self",
+          "questionnaire"
+        ],
+        "lineno": 481,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_build_point_patterns",
+        "args": [
+          "self",
+          "point_data"
+        ],
+        "lineno": 497,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_match_patterns_in_sentences",
+        "args": [
+          "self",
+          "sentences"
+        ],
+        "lineno": 513,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_compute_evidence_confidence",
+        "args": [
+          "self",
+          "matches",
+          "context"
+        ],
+        "lineno": 529,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_construct_evidence_bundle",
+        "args": [
+          "self",
+          "matches",
+          "point"
+        ],
+        "lineno": 545,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_extract_point_evidence",
+        "args": [
+          "self",
+          "text",
+          "point"
+        ],
+        "lineno": 561,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_analyze_causal_dimensions",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 577,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_extract_metadata",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 593,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_compute_avg_confidence",
+        "args": [
+          "self",
+          "results"
+        ],
+        "lineno": 609,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_empty_result",
+        "args": [
+          "self"
+        ],
+        "lineno": 625,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_export_results",
+        "args": [
+          "self",
+          "results",
+          "format"
+        ],
+        "lineno": 641,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_sanitize",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 661,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_protect_structure",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 677,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_restore_structure",
+        "args": [
+          "self",
+          "text",
+          "protected"
+        ],
+        "lineno": 693,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_read_text",
+        "args": [
+          "self",
+          "path",
+          "encoding"
+        ],
+        "lineno": 713,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_write_text",
+        "args": [
+          "self",
+          "path",
+          "content",
+          "encoding"
+        ],
+        "lineno": 729,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_analyze_file",
+        "args": [
+          "self",
+          "file_path"
+        ],
+        "lineno": 749,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_analyze_text",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 765,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      }
+    ],
+    "PolicySegmenterAdapter": [
+      {
+        "name": "__init__",
+        "args": [
+          "self"
+        ],
+        "lineno": 818,
+        "returns": null,
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_load_module",
+        "args": [
+          "self"
+        ],
+        "lineno": 822,
+        "returns": null,
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "execute",
+        "args": [
+          "self",
+          "method_name",
+          "args",
+          "kwargs"
+        ],
+        "lineno": 846,
+        "returns": "ModuleResult",
+        "is_private": false,
+        "decorators": []
+      },
+      {
+        "name": "_execute_segment",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 989,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_protect_abbreviations",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 1005,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_restore_abbreviations",
+        "args": [
+          "self",
+          "text",
+          "protected"
+        ],
+        "lineno": 1021,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_score_boundaries",
+        "args": [
+          "self",
+          "sentences",
+          "embeddings"
+        ],
+        "lineno": 1041,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_semantic_boundary_scores",
+        "args": [
+          "self",
+          "embeddings"
+        ],
+        "lineno": 1057,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_structural_boundary_scores",
+        "args": [
+          "self",
+          "sentences"
+        ],
+        "lineno": 1073,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_bayesian_posterior",
+        "args": [
+          "self",
+          "prior",
+          "likelihood"
+        ],
+        "lineno": 1089,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_detect_structures",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 1109,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_find_table_regions",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 1125,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_find_list_regions",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 1141,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_optimize_cuts",
+        "args": [
+          "self",
+          "scores",
+          "target_size",
+          "tolerance"
+        ],
+        "lineno": 1161,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_cumulative_chars",
+        "args": [
+          "self",
+          "sentences"
+        ],
+        "lineno": 1177,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_segment_cost",
+        "args": [
+          "self",
+          "start",
+          "end",
+          "target"
+        ],
+        "lineno": 1193,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_segment_document",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 1213,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_get_segmentation_report",
+        "args": [
+          "self",
+          "segmenter"
+        ],
+        "lineno": 1230,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_normalize_text",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 1247,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_materialize_segments",
+        "args": [
+          "self",
+          "sentences",
+          "cut_indices"
+        ],
+        "lineno": 1263,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_compute_metrics",
+        "args": [
+          "self",
+          "segments"
+        ],
+        "lineno": 1279,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_infer_section_type",
+        "args": [
+          "self",
+          "segment"
+        ],
+        "lineno": 1295,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_fallback_segmentation",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 1311,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_post_process_segments",
+        "args": [
+          "self",
+          "segments"
+        ],
+        "lineno": 1327,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_merge_tiny_segments",
+        "args": [
+          "self",
+          "segments",
+          "threshold"
+        ],
+        "lineno": 1343,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_split_oversized_segments",
+        "args": [
+          "self",
+          "segments",
+          "max_size"
+        ],
+        "lineno": 1359,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_force_split_segment",
+        "args": [
+          "self",
+          "segment",
+          "max_size"
+        ],
+        "lineno": 1375,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_split_by_words",
+        "args": [
+          "self",
+          "text",
+          "max_size"
+        ],
+        "lineno": 1391,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_compute_stats",
+        "args": [
+          "self",
+          "segments"
+        ],
+        "lineno": 1407,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_compute_char_distribution",
+        "args": [
+          "self",
+          "segments"
+        ],
+        "lineno": 1423,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_compute_sentence_distribution",
+        "args": [
+          "self",
+          "segments"
+        ],
+        "lineno": 1439,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_compute_consistency_score",
+        "args": [
+          "self",
+          "segments"
+        ],
+        "lineno": 1455,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_compute_adherence_score",
+        "args": [
+          "self",
+          "segments",
+          "target_size"
+        ],
+        "lineno": 1471,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      }
+    ],
+    "AnalyzerOneAdapter": [
+      {
+        "name": "__init__",
+        "args": [
+          "self"
+        ],
+        "lineno": 1520,
+        "returns": null,
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_load_module",
+        "args": [
+          "self"
+        ],
+        "lineno": 1524,
+        "returns": null,
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "execute",
+        "args": [
+          "self",
+          "method_name",
+          "args",
+          "kwargs"
+        ],
+        "lineno": 1558,
+        "returns": "ModuleResult",
+        "is_private": false,
+        "decorators": []
+      },
+      {
+        "name": "_execute_analyze_document",
+        "args": [
+          "self",
+          "file_path"
+        ],
+        "lineno": 1722,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_load_document",
+        "args": [
+          "self",
+          "file_path"
+        ],
+        "lineno": 1752,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_generate_summary",
+        "args": [
+          "self",
+          "results"
+        ],
+        "lineno": 1768,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_extract_semantic_cube",
+        "args": [
+          "self",
+          "document_segments"
+        ],
+        "lineno": 1788,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_empty_semantic_cube",
+        "args": [
+          "self"
+        ],
+        "lineno": 1811,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_vectorize_segments",
+        "args": [
+          "self",
+          "segments"
+        ],
+        "lineno": 1828,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_process_segment",
+        "args": [
+          "self",
+          "segment",
+          "idx",
+          "vector"
+        ],
+        "lineno": 1845,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_classify_value_chain_link",
+        "args": [
+          "self",
+          "segment"
+        ],
+        "lineno": 1862,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_classify_policy_domain",
+        "args": [
+          "self",
+          "segment"
+        ],
+        "lineno": 1879,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_classify_cross_cutting_themes",
+        "args": [
+          "self",
+          "segment"
+        ],
+        "lineno": 1896,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_calculate_semantic_complexity",
+        "args": [
+          "self",
+          "semantic_cube"
+        ],
+        "lineno": 1913,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_analyze_performance",
+        "args": [
+          "self",
+          "value_chain_data"
+        ],
+        "lineno": 1934,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_calculate_throughput_metrics",
+        "args": [
+          "self",
+          "link_data"
+        ],
+        "lineno": 1957,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_detect_bottlenecks",
+        "args": [
+          "self",
+          "link_data"
+        ],
+        "lineno": 1974,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_calculate_loss_functions",
+        "args": [
+          "self",
+          "link_data"
+        ],
+        "lineno": 1991,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_generate_recommendations",
+        "args": [
+          "self",
+          "performance_data"
+        ],
+        "lineno": 2008,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_diagnose_critical_links_performance",
+        "args": [
+          "self",
+          "value_chain"
+        ],
+        "lineno": 2025,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_diagnose_critical_links_textmining",
+        "args": [
+          "self",
+          "value_chain"
+        ],
+        "lineno": 2046,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_identify_critical_links",
+        "args": [
+          "self",
+          "value_chain"
+        ],
+        "lineno": 2063,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_analyze_link_text",
+        "args": [
+          "self",
+          "link_name",
+          "text"
+        ],
+        "lineno": 2080,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_assess_risks",
+        "args": [
+          "self",
+          "link_data"
+        ],
+        "lineno": 2097,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_generate_interventions",
+        "args": [
+          "self",
+          "risks"
+        ],
+        "lineno": 2114,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_load_pdf",
+        "args": [
+          "self",
+          "file_path"
+        ],
+        "lineno": 2135,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_load_docx",
+        "args": [
+          "self",
+          "file_path"
+        ],
+        "lineno": 2151,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_segment_text",
+        "args": [
+          "self",
+          "text",
+          "method"
+        ],
+        "lineno": 2167,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_export_to_json",
+        "args": [
+          "self",
+          "results",
+          "output_path"
+        ],
+        "lineno": 2187,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_export_to_excel",
+        "args": [
+          "self",
+          "results",
+          "output_path"
+        ],
+        "lineno": 2202,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_export_summary_report",
+        "args": [
+          "self",
+          "results",
+          "output_path"
+        ],
+        "lineno": 2217,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_load_config",
+        "args": [
+          "self",
+          "config_path"
+        ],
+        "lineno": 2236,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_save_config",
+        "args": [
+          "self",
+          "config",
+          "config_path"
+        ],
+        "lineno": 2252,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_process_directory",
+        "args": [
+          "self",
+          "directory_path",
+          "pattern"
+        ],
+        "lineno": 2274,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_export_batch_results",
+        "args": [
+          "self",
+          "batch_results",
+          "output_dir"
+        ],
+        "lineno": 2291,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_create_batch_summary",
+        "args": [
+          "self",
+          "batch_results",
+          "output_path"
+        ],
+        "lineno": 2308,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_create_ontology",
+        "args": [
+          "self"
+        ],
+        "lineno": 2329,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      }
+    ],
+    "EmbeddingPolicyAdapter": [
+      {
+        "name": "__init__",
+        "args": [
+          "self"
+        ],
+        "lineno": 2386,
+        "returns": null,
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_load_module",
+        "args": [
+          "self"
+        ],
+        "lineno": 2390,
+        "returns": null,
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "execute",
+        "args": [
+          "self",
+          "method_name",
+          "args",
+          "kwargs"
+        ],
+        "lineno": 2428,
+        "returns": "ModuleResult",
+        "is_private": false,
+        "decorators": []
+      },
+      {
+        "name": "_execute_chunk_document",
+        "args": [
+          "self",
+          "text",
+          "metadata"
+        ],
+        "lineno": 2573,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_normalize_text",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 2596,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_recursive_split",
+        "args": [
+          "self",
+          "text",
+          "max_tokens"
+        ],
+        "lineno": 2613,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_find_sentence_boundary",
+        "args": [
+          "self",
+          "text",
+          "position"
+        ],
+        "lineno": 2630,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_extract_sections",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 2647,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_extract_tables",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 2664,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_extract_lists",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 2681,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_infer_pdq_context",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 2698,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_contains_table",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 2715,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_contains_list",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 2732,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_find_section",
+        "args": [
+          "self",
+          "sections",
+          "position"
+        ],
+        "lineno": 2749,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_evaluate_policy_metric",
+        "args": [
+          "self",
+          "metric_value",
+          "context"
+        ],
+        "lineno": 2770,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_beta_binomial_posterior",
+        "args": [
+          "self",
+          "successes",
+          "trials"
+        ],
+        "lineno": 2790,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_normal_normal_posterior",
+        "args": [
+          "self",
+          "observation",
+          "prior_mean",
+          "prior_std"
+        ],
+        "lineno": 2806,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_classify_evidence_strength",
+        "args": [
+          "self",
+          "credible_interval"
+        ],
+        "lineno": 2822,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_compute_coherence",
+        "args": [
+          "self",
+          "samples",
+          "metric_type"
+        ],
+        "lineno": 2838,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_null_evaluation",
+        "args": [
+          "self"
+        ],
+        "lineno": 2854,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_compare_policies",
+        "args": [
+          "self",
+          "policy_a",
+          "policy_b"
+        ],
+        "lineno": 2870,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_rerank",
+        "args": [
+          "self",
+          "query",
+          "candidates",
+          "top_k"
+        ],
+        "lineno": 2890,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_process_document",
+        "args": [
+          "self",
+          "document_text",
+          "metadata"
+        ],
+        "lineno": 2911,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_semantic_search",
+        "args": [
+          "self",
+          "query",
+          "top_k",
+          "filters"
+        ],
+        "lineno": 2928,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_evaluate_policy_numerical_consistency",
+        "args": [
+          "self",
+          "policy_chunks"
+        ],
+        "lineno": 2947,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_compare_policy_interventions",
+        "args": [
+          "self",
+          "intervention_a",
+          "intervention_b"
+        ],
+        "lineno": 2964,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_generate_pdq_report",
+        "args": [
+          "self",
+          "pdq_identifier"
+        ],
+        "lineno": 2981,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_embed_texts",
+        "args": [
+          "self",
+          "texts"
+        ],
+        "lineno": 2998,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_filter_by_pdq",
+        "args": [
+          "self",
+          "chunks",
+          "pdq_filter"
+        ],
+        "lineno": 3015,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_apply_mmr",
+        "args": [
+          "self",
+          "query_embedding",
+          "chunk_embeddings",
+          "chunks",
+          "lambda_param"
+        ],
+        "lineno": 3032,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_extract_numerical_values",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 3049,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_generate_query_from_pdq",
+        "args": [
+          "self",
+          "pdq_id"
+        ],
+        "lineno": 3066,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_compute_overall_confidence",
+        "args": [
+          "self",
+          "results"
+        ],
+        "lineno": 3083,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_cached_similarity",
+        "args": [
+          "self",
+          "emb1",
+          "emb2"
+        ],
+        "lineno": 3100,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_get_diagnostics",
+        "args": [
+          "self"
+        ],
+        "lineno": 3117,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_create_policy_embedder",
+        "args": [
+          "self",
+          "config"
+        ],
+        "lineno": 3138,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      }
+    ],
+    "SemanticChunkingPolicyAdapter": [
+      {
+        "name": "__init__",
+        "args": [
+          "self"
+        ],
+        "lineno": 3187,
+        "returns": null,
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_load_module",
+        "args": [
+          "self"
+        ],
+        "lineno": 3191,
+        "returns": null,
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "execute",
+        "args": [
+          "self",
+          "method_name",
+          "args",
+          "kwargs"
+        ],
+        "lineno": 3211,
+        "returns": "ModuleResult",
+        "is_private": false,
+        "decorators": []
+      },
+      {
+        "name": "_execute_chunk_text",
+        "args": [
+          "self",
+          "text",
+          "max_chunk_size"
+        ],
+        "lineno": 3294,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_lazy_load",
+        "args": [
+          "self"
+        ],
+        "lineno": 3317,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_detect_pdm_structure",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 3334,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_detect_table",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 3351,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_detect_numerical_data",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 3368,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_embed_batch",
+        "args": [
+          "self",
+          "texts"
+        ],
+        "lineno": 3385,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_embed_single",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 3402,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_integrate_evidence",
+        "args": [
+          "self",
+          "evidence_list"
+        ],
+        "lineno": 3423,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_similarity_to_probability",
+        "args": [
+          "self",
+          "similarity"
+        ],
+        "lineno": 3443,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_compute_reliability_weights",
+        "args": [
+          "self",
+          "evidence_list"
+        ],
+        "lineno": 3459,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_null_evidence",
+        "args": [
+          "self"
+        ],
+        "lineno": 3475,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_causal_strength",
+        "args": [
+          "self",
+          "cause",
+          "effect",
+          "context"
+        ],
+        "lineno": 3491,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_analyze",
+        "args": [
+          "self",
+          "document_text"
+        ],
+        "lineno": 3516,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_init_dimension_embeddings",
+        "args": [
+          "self"
+        ],
+        "lineno": 3536,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_extract_key_excerpts",
+        "args": [
+          "self",
+          "chunks",
+          "dimension"
+        ],
+        "lineno": 3553,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      }
+    ],
+    "FinancialViabilityAdapter": [
+      {
+        "name": "__init__",
+        "args": [
+          "self"
+        ],
+        "lineno": 3606,
+        "returns": null,
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_load_module",
+        "args": [
+          "self"
+        ],
+        "lineno": 3610,
+        "returns": null,
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "execute",
+        "args": [
+          "self",
+          "method_name",
+          "args",
+          "kwargs"
+        ],
+        "lineno": 3624,
+        "returns": "ModuleResult",
+        "is_private": false,
+        "decorators": []
+      },
+      {
+        "name": "_execute_get_spanish_stopwords",
+        "args": [
+          "self"
+        ],
+        "lineno": 3788,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_clean_dataframe",
+        "args": [
+          "self",
+          "df"
+        ],
+        "lineno": 3804,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_is_likely_header",
+        "args": [
+          "self",
+          "row"
+        ],
+        "lineno": 3820,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_deduplicate_tables",
+        "args": [
+          "self",
+          "tables"
+        ],
+        "lineno": 3836,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_classify_tables",
+        "args": [
+          "self",
+          "tables"
+        ],
+        "lineno": 3852,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_analyze_financial_feasibility",
+        "args": [
+          "self",
+          "tables",
+          "text"
+        ],
+        "lineno": 3872,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_extract_financial_amounts",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 3892,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_identify_funding_source",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 3908,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_extract_from_budget_table",
+        "args": [
+          "self",
+          "table"
+        ],
+        "lineno": 3924,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_analyze_funding_sources",
+        "args": [
+          "self",
+          "allocations"
+        ],
+        "lineno": 3940,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_assess_financial_sustainability",
+        "args": [
+          "self",
+          "metrics"
+        ],
+        "lineno": 3956,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_bayesian_risk_inference",
+        "args": [
+          "self",
+          "metrics"
+        ],
+        "lineno": 3972,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_interpret_risk",
+        "args": [
+          "self",
+          "risk_score"
+        ],
+        "lineno": 3988,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_identify_responsible_entities",
+        "args": [
+          "self",
+          "text",
+          "tables"
+        ],
+        "lineno": 4007,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_extract_entities_ner",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 4023,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_extract_entities_syntax",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 4039,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_classify_entity_type",
+        "args": [
+          "self",
+          "entity"
+        ],
+        "lineno": 4055,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_extract_from_responsibility_tables",
+        "args": [
+          "self",
+          "tables"
+        ],
+        "lineno": 4071,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_consolidate_entities",
+        "args": [
+          "self",
+          "entities"
+        ],
+        "lineno": 4087,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_score_entity_specificity",
+        "args": [
+          "self",
+          "entity"
+        ],
+        "lineno": 4103,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      }
+    ],
+    "DerekBeachAdapter": [
+      {
+        "name": "__init__",
+        "args": [
+          "self"
+        ],
+        "lineno": 4147,
+        "returns": null,
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_load_module",
+        "args": [
+          "self"
+        ],
+        "lineno": 4151,
+        "returns": null,
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "execute",
+        "args": [
+          "self",
+          "method_name",
+          "args",
+          "kwargs"
+        ],
+        "lineno": 4196,
+        "returns": "ModuleResult",
+        "is_private": false,
+        "decorators": []
+      },
+      {
+        "name": "_execute_classify_test",
+        "args": [
+          "self",
+          "necessity",
+          "sufficiency"
+        ],
+        "lineno": 4488,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_apply_test_logic",
+        "args": [
+          "self",
+          "test_type",
+          "evidence_found",
+          "prior",
+          "bayes_factor"
+        ],
+        "lineno": 4504,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_load_config",
+        "args": [
+          "self",
+          "config_path"
+        ],
+        "lineno": 4523,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_load_default_config",
+        "args": [
+          "self"
+        ],
+        "lineno": 4529,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_validate_config",
+        "args": [
+          "self",
+          "config"
+        ],
+        "lineno": 4534,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_get",
+        "args": [
+          "self",
+          "key",
+          "default"
+        ],
+        "lineno": 4539,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_get_bayesian_threshold",
+        "args": [
+          "self",
+          "threshold_name"
+        ],
+        "lineno": 4544,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_get_mechanism_prior",
+        "args": [
+          "self",
+          "mechanism_type"
+        ],
+        "lineno": 4549,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_get_performance_setting",
+        "args": [
+          "self",
+          "setting_name"
+        ],
+        "lineno": 4554,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_update_priors_from_feedback",
+        "args": [
+          "self",
+          "feedback"
+        ],
+        "lineno": 4559,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_save_prior_history",
+        "args": [
+          "self",
+          "priors"
+        ],
+        "lineno": 4564,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_load_uncertainty_history",
+        "args": [
+          "self"
+        ],
+        "lineno": 4569,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_check_uncertainty_reduction_criterion",
+        "args": [
+          "self"
+        ],
+        "lineno": 4574,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_load_document",
+        "args": [
+          "self",
+          "pdf_path"
+        ],
+        "lineno": 4590,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_load_with_retry",
+        "args": [
+          "self",
+          "pdf_path",
+          "max_retries"
+        ],
+        "lineno": 4606,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_extract_text",
+        "args": [
+          "self",
+          "doc"
+        ],
+        "lineno": 4622,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_extract_tables",
+        "args": [
+          "self",
+          "doc"
+        ],
+        "lineno": 4638,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_extract_sections",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 4654,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_extract_causal_hierarchy",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 4670,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_extract_goals",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 4687,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_parse_goal_context",
+        "args": [
+          "self",
+          "goal_text"
+        ],
+        "lineno": 4704,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_add_node_to_graph",
+        "args": [
+          "self",
+          "graph",
+          "goal"
+        ],
+        "lineno": 4721,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_extract_causal_links",
+        "args": [
+          "self",
+          "graph",
+          "goals"
+        ],
+        "lineno": 4738,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_calculate_semantic_distance",
+        "args": [
+          "self",
+          "text1",
+          "text2"
+        ],
+        "lineno": 4755,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_calculate_type_transition_prior",
+        "args": [
+          "self",
+          "source_type",
+          "target_type"
+        ],
+        "lineno": 4772,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_check_structural_violation",
+        "args": [
+          "self",
+          "source_type",
+          "target_type"
+        ],
+        "lineno": 4789,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_calculate_language_specificity",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 4795,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_assess_temporal_coherence",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 4801,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_assess_financial_consistency",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 4807,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_calculate_textual_proximity",
+        "args": [
+          "self",
+          "idx1",
+          "idx2",
+          "total"
+        ],
+        "lineno": 4813,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_initialize_prior",
+        "args": [
+          "self",
+          "source_type",
+          "target_type"
+        ],
+        "lineno": 4819,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_calculate_composite_likelihood",
+        "args": [
+          "self",
+          "factors"
+        ],
+        "lineno": 4825,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_build_type_hierarchy",
+        "args": [
+          "self"
+        ],
+        "lineno": 4831,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_extract_entity_activity",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 4837,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_normalize_entity",
+        "args": [
+          "self",
+          "entity_text"
+        ],
+        "lineno": 4843,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_trace_financial_allocation",
+        "args": [
+          "self",
+          "nodes",
+          "tables"
+        ],
+        "lineno": 4849,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_process_financial_table",
+        "args": [
+          "self",
+          "table"
+        ],
+        "lineno": 4855,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_parse_amount",
+        "args": [
+          "self",
+          "amount_str"
+        ],
+        "lineno": 4861,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_match_program_to_node",
+        "args": [
+          "self",
+          "program_name",
+          "nodes"
+        ],
+        "lineno": 4867,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_perform_counterfactual_budget_check",
+        "args": [
+          "self",
+          "allocations",
+          "nodes"
+        ],
+        "lineno": 4873,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_audit_evidence_traceability",
+        "args": [
+          "self",
+          "nodes",
+          "links"
+        ],
+        "lineno": 4879,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_audit_sequence_logic",
+        "args": [
+          "self",
+          "nodes",
+          "links"
+        ],
+        "lineno": 4885,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_bayesian_counterfactual_audit",
+        "args": [
+          "self",
+          "nodes",
+          "links"
+        ],
+        "lineno": 4891,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_build_normative_dag",
+        "args": [
+          "self"
+        ],
+        "lineno": 4897,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_get_default_historical_priors",
+        "args": [
+          "self"
+        ],
+        "lineno": 4903,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_audit_direct_evidence",
+        "args": [
+          "self",
+          "node"
+        ],
+        "lineno": 4909,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_audit_causal_implications",
+        "args": [
+          "self",
+          "node",
+          "graph"
+        ],
+        "lineno": 4915,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_audit_systemic_risk",
+        "args": [
+          "self",
+          "nodes",
+          "links"
+        ],
+        "lineno": 4921,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_generate_optimal_remediations",
+        "args": [
+          "self",
+          "audit_results"
+        ],
+        "lineno": 4927,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_get_remediation_text",
+        "args": [
+          "self",
+          "issue_type"
+        ],
+        "lineno": 4933,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_infer_mechanisms",
+        "args": [
+          "self",
+          "nodes",
+          "links",
+          "activities"
+        ],
+        "lineno": 4939,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_log_refactored_components",
+        "args": [
+          "self"
+        ],
+        "lineno": 4945,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_infer_single_mechanism",
+        "args": [
+          "self",
+          "link",
+          "activities"
+        ],
+        "lineno": 4951,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_extract_observations",
+        "args": [
+          "self",
+          "link",
+          "activities"
+        ],
+        "lineno": 4957,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_infer_mechanism_type",
+        "args": [
+          "self",
+          "observations"
+        ],
+        "lineno": 4963,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_infer_activity_sequence",
+        "args": [
+          "self",
+          "observations"
+        ],
+        "lineno": 4969,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_calculate_coherence_factor",
+        "args": [
+          "self",
+          "sequence"
+        ],
+        "lineno": 4975,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_test_sufficiency",
+        "args": [
+          "self",
+          "mechanism",
+          "evidence"
+        ],
+        "lineno": 4981,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_test_necessity",
+        "args": [
+          "self",
+          "mechanism",
+          "evidence"
+        ],
+        "lineno": 4987,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_generate_necessity_remediation",
+        "args": [
+          "self",
+          "mechanism"
+        ],
+        "lineno": 4993,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_quantify_uncertainty",
+        "args": [
+          "self",
+          "mechanism"
+        ],
+        "lineno": 4999,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_detect_gaps",
+        "args": [
+          "self",
+          "mechanism"
+        ],
+        "lineno": 5005,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_classify_goal_dynamics",
+        "args": [
+          "self",
+          "goal_text"
+        ],
+        "lineno": 5011,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_assign_probative_value",
+        "args": [
+          "self",
+          "evidence_type"
+        ],
+        "lineno": 5017,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_identify_failure_points",
+        "args": [
+          "self",
+          "causal_chain"
+        ],
+        "lineno": 5023,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_generate_causal_diagram",
+        "args": [
+          "self",
+          "graph",
+          "output_path"
+        ],
+        "lineno": 5029,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_generate_accountability_matrix",
+        "args": [
+          "self",
+          "nodes",
+          "links"
+        ],
+        "lineno": 5035,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_generate_confidence_report",
+        "args": [
+          "self",
+          "mechanisms"
+        ],
+        "lineno": 5041,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_calculate_quality_score",
+        "args": [
+          "self",
+          "mechanism"
+        ],
+        "lineno": 5047,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_generate_causal_model_json",
+        "args": [
+          "self",
+          "graph",
+          "mechanisms",
+          "output_path"
+        ],
+        "lineno": 5053,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_process_document",
+        "args": [
+          "self",
+          "pdf_path",
+          "policy_code"
+        ],
+        "lineno": 5059,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_load_spacy_with_retry",
+        "args": [
+          "self",
+          "model_name"
+        ],
+        "lineno": 5067,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_extract_feedback_from_audit",
+        "args": [
+          "self",
+          "audit_result"
+        ],
+        "lineno": 5072,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_validate_dnp_compliance",
+        "args": [
+          "self",
+          "proyectos",
+          "policy_code"
+        ],
+        "lineno": 5077,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_generate_dnp_report",
+        "args": [
+          "self",
+          "dnp_results",
+          "policy_code"
+        ],
+        "lineno": 5082,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      }
+    ],
+    "ContradictionDetectionAdapter": [
+      {
+        "name": "__init__",
+        "args": [
+          "self"
+        ],
+        "lineno": 5101,
+        "returns": null,
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_load_module",
+        "args": [
+          "self"
+        ],
+        "lineno": 5105,
+        "returns": null,
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "execute",
+        "args": [
+          "self",
+          "method_name",
+          "args",
+          "kwargs"
+        ],
+        "lineno": 5125,
+        "returns": "ModuleResult",
+        "is_private": false,
+        "decorators": []
+      },
+      {
+        "name": "_execute_calculate_posterior",
+        "args": [
+          "self",
+          "prior",
+          "likelihood",
+          "evidence"
+        ],
+        "lineno": 5336,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_verify_temporal_consistency",
+        "args": [
+          "self",
+          "statements"
+        ],
+        "lineno": 5356,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_build_timeline",
+        "args": [
+          "self",
+          "statements"
+        ],
+        "lineno": 5376,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_parse_temporal_marker",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 5392,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_has_temporal_conflict",
+        "args": [
+          "self",
+          "event1",
+          "event2"
+        ],
+        "lineno": 5408,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_are_mutually_exclusive",
+        "args": [
+          "self",
+          "time1",
+          "time2"
+        ],
+        "lineno": 5424,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_extract_resources",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 5440,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_check_deadline_constraints",
+        "args": [
+          "self",
+          "timeline"
+        ],
+        "lineno": 5456,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_should_precede",
+        "args": [
+          "self",
+          "event1",
+          "event2"
+        ],
+        "lineno": 5472,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_classify_temporal_type",
+        "args": [
+          "self",
+          "marker"
+        ],
+        "lineno": 5488,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_detect",
+        "args": [
+          "self",
+          "document",
+          "metadata"
+        ],
+        "lineno": 5504,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_extract_policy_statements",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 5510,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_generate_embeddings",
+        "args": [
+          "self",
+          "statements"
+        ],
+        "lineno": 5516,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_build_knowledge_graph",
+        "args": [
+          "self",
+          "statements"
+        ],
+        "lineno": 5522,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_detect_semantic_contradictions",
+        "args": [
+          "self"
+        ],
+        "lineno": 5528,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_detect_numerical_inconsistencies",
+        "args": [
+          "self"
+        ],
+        "lineno": 5534,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_detect_temporal_conflicts",
+        "args": [
+          "self"
+        ],
+        "lineno": 5540,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_detect_logical_incompatibilities",
+        "args": [
+          "self"
+        ],
+        "lineno": 5546,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_detect_resource_conflicts",
+        "args": [
+          "self"
+        ],
+        "lineno": 5552,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_calculate_coherence_metrics",
+        "args": [
+          "self"
+        ],
+        "lineno": 5558,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_calculate_global_semantic_coherence",
+        "args": [
+          "self"
+        ],
+        "lineno": 5564,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_calculate_objective_alignment",
+        "args": [
+          "self"
+        ],
+        "lineno": 5570,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_calculate_graph_fragmentation",
+        "args": [
+          "self"
+        ],
+        "lineno": 5576,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_calculate_contradiction_entropy",
+        "args": [
+          "self"
+        ],
+        "lineno": 5582,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_calculate_syntactic_complexity",
+        "args": [
+          "self"
+        ],
+        "lineno": 5588,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_get_dependency_depth",
+        "args": [
+          "self",
+          "node_id"
+        ],
+        "lineno": 5594,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_calculate_confidence_interval",
+        "args": [
+          "self",
+          "contradictions"
+        ],
+        "lineno": 5600,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_generate_resolution_recommendations",
+        "args": [
+          "self",
+          "contradictions"
+        ],
+        "lineno": 5606,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_identify_affected_sections",
+        "args": [
+          "self",
+          "contradiction"
+        ],
+        "lineno": 5612,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_suggest_resolutions",
+        "args": [
+          "self",
+          "contradiction"
+        ],
+        "lineno": 5618,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_extract_temporal_markers",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 5624,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_extract_quantitative_claims",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 5630,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_parse_number",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 5636,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_extract_resource_mentions",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 5642,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_determine_semantic_role",
+        "args": [
+          "self",
+          "text"
+        ],
+        "lineno": 5648,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_identify_dependencies",
+        "args": [
+          "self",
+          "statement"
+        ],
+        "lineno": 5654,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_get_context_window",
+        "args": [
+          "self",
+          "statement_id",
+          "window_size"
+        ],
+        "lineno": 5660,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_calculate_similarity",
+        "args": [
+          "self",
+          "emb1",
+          "emb2"
+        ],
+        "lineno": 5666,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_classify_contradiction",
+        "args": [
+          "self",
+          "type",
+          "severity"
+        ],
+        "lineno": 5672,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_get_domain_weight",
+        "args": [
+          "self",
+          "statement"
+        ],
+        "lineno": 5678,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_are_comparable_claims",
+        "args": [
+          "self",
+          "claim1",
+          "claim2"
+        ],
+        "lineno": 5684,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_text_similarity",
+        "args": [
+          "self",
+          "text1",
+          "text2"
+        ],
+        "lineno": 5690,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_calculate_numerical_divergence",
+        "args": [
+          "self",
+          "val1",
+          "val2"
+        ],
+        "lineno": 5696,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_statistical_significance_test",
+        "args": [
+          "self",
+          "val1",
+          "val2"
+        ],
+        "lineno": 5702,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_has_logical_conflict",
+        "args": [
+          "self",
+          "stmt1",
+          "stmt2"
+        ],
+        "lineno": 5708,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_are_conflicting_allocations",
+        "args": [
+          "self",
+          "res1",
+          "res2"
+        ],
+        "lineno": 5714,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_serialize_contradiction",
+        "args": [
+          "self",
+          "contradiction"
+        ],
+        "lineno": 5720,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_get_graph_statistics",
+        "args": [
+          "self"
+        ],
+        "lineno": 5726,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      }
+    ],
+    "ModulosAdapter": [
+      {
+        "name": "__init__",
+        "args": [
+          "self"
+        ],
+        "lineno": 5750,
+        "returns": null,
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_load_module",
+        "args": [
+          "self"
+        ],
+        "lineno": 5754,
+        "returns": null,
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "execute",
+        "args": [
+          "self",
+          "method_name",
+          "args",
+          "kwargs"
+        ],
+        "lineno": 5794,
+        "returns": "ModuleResult",
+        "is_private": false,
+        "decorators": []
+      },
+      {
+        "name": "_execute_construir_grafo_causal",
+        "args": [
+          "self"
+        ],
+        "lineno": 5923,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_validacion_completa",
+        "args": [
+          "self",
+          "grafo"
+        ],
+        "lineno": 5946,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_es_conexion_valida",
+        "args": [
+          "self",
+          "origen",
+          "destino"
+        ],
+        "lineno": 5979,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_extraer_categorias",
+        "args": [
+          "self",
+          "grafo"
+        ],
+        "lineno": 6002,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_validar_orden_causal",
+        "args": [
+          "self",
+          "grafo"
+        ],
+        "lineno": 6024,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_encontrar_caminos_completos",
+        "args": [
+          "self",
+          "grafo"
+        ],
+        "lineno": 6046,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_generar_sugerencias_internas",
+        "args": [
+          "self",
+          "validacion"
+        ],
+        "lineno": 6068,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_add_node",
+        "args": [
+          "self",
+          "name",
+          "dependencies",
+          "metadata",
+          "role"
+        ],
+        "lineno": 6094,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_add_edge",
+        "args": [
+          "self",
+          "from_node",
+          "to_node",
+          "weight"
+        ],
+        "lineno": 6120,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_calculate_acyclicity_pvalue",
+        "args": [
+          "self",
+          "plan_name",
+          "iterations"
+        ],
+        "lineno": 6143,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_get_graph_stats",
+        "args": [
+          "self"
+        ],
+        "lineno": 6179,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_is_acyclic",
+        "args": [
+          "self",
+          "nodes"
+        ],
+        "lineno": 6202,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_generate_subgraph",
+        "args": [
+          "self"
+        ],
+        "lineno": 6224,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_perform_sensitivity_analysis",
+        "args": [
+          "self",
+          "plan_name",
+          "iterations"
+        ],
+        "lineno": 6245,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_calculate_confidence_interval",
+        "args": [
+          "self",
+          "successes",
+          "trials",
+          "confidence"
+        ],
+        "lineno": 6267,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_calculate_statistical_power",
+        "args": [
+          "self",
+          "s",
+          "n",
+          "alpha"
+        ],
+        "lineno": 6291,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_calculate_bayesian_posterior",
+        "args": [
+          "self",
+          "likelihood",
+          "prior"
+        ],
+        "lineno": 6315,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_calculate_node_importance",
+        "args": [
+          "self"
+        ],
+        "lineno": 6338,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_create_empty_result",
+        "args": [
+          "self",
+          "plan_name"
+        ],
+        "lineno": 6360,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_execute_suite",
+        "args": [
+          "self"
+        ],
+        "lineno": 6385,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_validate_engine_readiness",
+        "args": [
+          "self"
+        ],
+        "lineno": 6408,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_validate_causal_categories",
+        "args": [
+          "self"
+        ],
+        "lineno": 6429,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_validate_connection_matrix",
+        "args": [
+          "self"
+        ],
+        "lineno": 6451,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_run_performance_benchmarks",
+        "args": [
+          "self"
+        ],
+        "lineno": 6472,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_benchmark_operation",
+        "args": [
+          "self",
+          "operation_name",
+          "callable_obj",
+          "threshold"
+        ],
+        "lineno": 6495,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_log_metric",
+        "args": [
+          "self",
+          "name",
+          "value",
+          "unit",
+          "threshold"
+        ],
+        "lineno": 6517,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_create_policy_graph",
+        "args": [
+          "self"
+        ],
+        "lineno": 6546,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_create_advanced_seed",
+        "args": [
+          "self",
+          "plan_name",
+          "salt"
+        ],
+        "lineno": 6568,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_execute_configure_logging",
+        "args": [
+          "self"
+        ],
+        "lineno": 6590,
+        "returns": "ModuleResult",
+        "is_private": true,
+        "decorators": []
+      }
+    ],
+    "ModuleAdapterRegistry": [
+      {
+        "name": "__init__",
+        "args": [
+          "self"
+        ],
+        "lineno": 6631,
+        "returns": null,
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_register_all_adapters",
+        "args": [
+          "self"
+        ],
+        "lineno": 6635,
+        "returns": null,
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "execute_module_method",
+        "args": [
+          "self",
+          "module_name",
+          "method_name",
+          "args",
+          "kwargs"
+        ],
+        "lineno": 6693,
+        "returns": "ModuleResult",
+        "is_private": false,
+        "decorators": []
+      },
+      {
+        "name": "get_available_modules",
+        "args": [
+          "self"
+        ],
+        "lineno": 6712,
+        "returns": "List[str]",
+        "is_private": false,
+        "decorators": []
+      },
+      {
+        "name": "get_module_status",
+        "args": [
+          "self"
+        ],
+        "lineno": 6716,
+        "returns": "Dict[str, bool]",
+        "is_private": false,
+        "decorators": []
+      }
+    ],
+    "ModuleController": [
+      {
+        "name": "__init__",
+        "args": [
+          "self",
+          "module_registry",
+          "question_router"
+        ],
+        "lineno": 6736,
+        "returns": null,
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "_build_responsibility_map",
+        "args": [
+          "self"
+        ],
+        "lineno": 6751,
+        "returns": "None",
+        "is_private": true,
+        "decorators": []
+      },
+      {
+        "name": "process_question",
+        "args": [
+          "self",
+          "question_spec",
+          "plan_text",
+          "context"
+        ],
+        "lineno": 6767,
+        "returns": "Dict[str, ModuleResult]",
+        "is_private": false,
+        "decorators": []
+      },
+      {
+        "name": "analyze_with_adapter",
+        "args": [
+          "self",
+          "adapter_name",
+          "question_spec",
+          "plan_text",
+          "context"
+        ],
+        "lineno": 6827,
+        "returns": "ModuleResult",
+        "is_private": false,
+        "decorators": []
+      },
+      {
+        "name": "invoke_adapter_method",
+        "args": [
+          "self",
+          "adapter_name",
+          "method_name",
+          "args",
+          "kwargs"
+        ],
+        "lineno": 6867,
+        "returns": "ModuleResult",
+        "is_private": false,
+        "decorators": []
+      },
+      {
+        "name": "get_responsible_adapters",
+        "args": [
+          "self",
+          "dimension"
+        ],
+        "lineno": 6912,
+        "returns": "List[str]",
+        "is_private": false,
+        "decorators": []
+      },
+      {
+        "name": "get_adapter_capabilities",
+        "args": [
+          "self",
+          "adapter_name"
+        ],
+        "lineno": 6924,
+        "returns": "Dict[str, Any]",
+        "is_private": false,
+        "decorators": []
+      },
+      {
+        "name": "_prepare_args",
+        "args": [
+          "self",
+          "args_spec",
+          "plan_text",
+          "context"
+        ],
+        "lineno": 6948,
+        "returns": "List[Any]",
+        "is_private": true,
+        "decorators": []
+      }
+    ]
+  },
+  "responsibility_map_audit": {
+    "total_mappings": 6,
+    "valid_mappings": 0,
+    "missing_handlers": 6,
+    "signature_mismatches": 0,
+    "details": [
+      {
+        "dimension": "D1",
+        "class": "IndustrialPolicyProcessor",
+        "method": "process",
+        "status": "missing_class",
+        "message": "Class IndustrialPolicyProcessor not found in consolidated file"
+      },
+      {
+        "dimension": "D2",
+        "class": "PolicyDocumentAnalyzer",
+        "method": "analyze_document",
+        "status": "missing_class",
+        "message": "Class PolicyDocumentAnalyzer not found in consolidated file"
+      },
+      {
+        "dimension": "D3",
+        "class": "MunicipalAnalyzer",
+        "method": "analyze",
+        "status": "missing_class",
+        "message": "Class MunicipalAnalyzer not found in consolidated file"
+      },
+      {
+        "dimension": "D4",
+        "class": "ModulosTeoriaCambio",
+        "method": "analizar_teoria_cambio",
+        "status": "missing_class",
+        "message": "Class ModulosTeoriaCambio not found in consolidated file"
+      },
+      {
+        "dimension": "D5",
+        "class": "DerekBeachAnalyzer",
+        "method": "analyze_causal_chain",
+        "status": "missing_class",
+        "message": "Class DerekBeachAnalyzer not found in consolidated file"
+      },
+      {
+        "dimension": "D6",
+        "class": "ModulosTeoriaCambio",
+        "method": "validar_coherencia_causal",
+        "status": "missing_class",
+        "message": "Class ModulosTeoriaCambio not found in consolidated file"
+      }
+    ]
+  },
+  "cuestionario_audit": {
+    "total_questions": 300,
+    "questions_with_handlers": 300,
+    "questions_without_handlers": 0,
+    "dimensions_found": [
+      "D1",
+      "D2",
+      "D3",
+      "D4",
+      "D5",
+      "D6"
+    ],
+    "unmapped_dimensions": [],
+    "question_samples": [
+      {
+        "id": "D1-Q1",
+        "dimension": "D1",
+        "text": "¿El diagnóstico presenta datos numéricos (tasas de VBG, porcentajes de participación, cifras de brec",
+        "has_handler": true
+      },
+      {
+        "id": "D1-Q2",
+        "dimension": "D1",
+        "text": "¿El texto dimensiona el problema de la desigualdad de género cuantificando la brecha o déficit? Se d",
+        "has_handler": true
+      },
+      {
+        "id": "D1-Q3",
+        "dimension": "D1",
+        "text": "¿Se identifican en el Plan Plurianual de Inversiones (PPI) o en tablas presupuestales, recursos mone",
+        "has_handler": true
+      },
+      {
+        "id": "D1-Q4",
+        "dimension": "D1",
+        "text": "¿El PDM describe las capacidades para gestionar la política de género, mencionando entidades (ej. Se",
+        "has_handler": true
+      },
+      {
+        "id": "D1-Q5",
+        "dimension": "D1",
+        "text": "¿El plan justifica su alcance en materia de género mencionando el marco legal (ej. Ley 1257) o recon",
+        "has_handler": true
+      },
+      {
+        "id": "D2-Q1",
+        "dimension": "D2",
+        "text": "¿Las actividades para la equidad de género se presentan en un formato estructurado (tabla, cuadro) q",
+        "has_handler": true
+      },
+      {
+        "id": "D2-Q2",
+        "dimension": "D2",
+        "text": "¿La descripción de las actividades de género detalla el instrumento ('mediante talleres', 'a través ",
+        "has_handler": true
+      },
+      {
+        "id": "D2-Q3",
+        "dimension": "D2",
+        "text": "¿El PDM vincula explícitamente las actividades propuestas con las 'causas raíz' de la desigualdad de",
+        "has_handler": true
+      },
+      {
+        "id": "D2-Q4",
+        "dimension": "D2",
+        "text": "¿El plan identifica posibles riesgos, 'obstáculos' o 'barreras' en la implementación de las activida",
+        "has_handler": true
+      },
+      {
+        "id": "D2-Q5",
+        "dimension": "D2",
+        "text": "¿El conjunto de actividades de género demuestra una estrategia coherente? Se debe buscar evidencia d",
+        "has_handler": true
+      }
+    ],
+    "dimension_question_count": {
+      "D1": 50,
+      "D2": 50,
+      "D3": 50,
+      "D4": 50,
+      "D5": 50,
+      "D6": 50
+    }
+  },
+  "issues": [
+    {
+      "type": "ERROR",
+      "category": "Missing Handler",
+      "dimension": "D1",
+      "class": "IndustrialPolicyProcessor",
+      "method": "process",
+      "message": "Class IndustrialPolicyProcessor referenced in responsibility map not found"
+    },
+    {
+      "type": "ERROR",
+      "category": "Missing Handler",
+      "dimension": "D2",
+      "class": "PolicyDocumentAnalyzer",
+      "method": "analyze_document",
+      "message": "Class PolicyDocumentAnalyzer referenced in responsibility map not found"
+    },
+    {
+      "type": "ERROR",
+      "category": "Missing Handler",
+      "dimension": "D3",
+      "class": "MunicipalAnalyzer",
+      "method": "analyze",
+      "message": "Class MunicipalAnalyzer referenced in responsibility map not found"
+    },
+    {
+      "type": "ERROR",
+      "category": "Missing Handler",
+      "dimension": "D4",
+      "class": "ModulosTeoriaCambio",
+      "method": "analizar_teoria_cambio",
+      "message": "Class ModulosTeoriaCambio referenced in responsibility map not found"
+    },
+    {
+      "type": "ERROR",
+      "category": "Missing Handler",
+      "dimension": "D5",
+      "class": "DerekBeachAnalyzer",
+      "method": "analyze_causal_chain",
+      "message": "Class DerekBeachAnalyzer referenced in responsibility map not found"
+    },
+    {
+      "type": "ERROR",
+      "category": "Missing Handler",
+      "dimension": "D6",
+      "class": "ModulosTeoriaCambio",
+      "method": "validar_coherencia_causal",
+      "message": "Class ModulosTeoriaCambio referenced in responsibility map not found"
+    }
+  ],
+  "warnings": [
+    {
+      "type": "WARNING",
+      "category": "Import",
+      "message": "Could not exec module (may need dependencies): No module named 'numpy'"
+    }
+  ],
+  "summary": {
+    "status": "FAIL",
+    "total_checks": 7,
+    "successful_checks": 5,
+    "total_issues": 6,
+    "critical_issues": 0,
+    "total_warnings": 1,
+    "classes_count": 13,
+    "total_methods": 356,
+    "recommendation": "Issues found. Review and fix before deployment."
+  }
+}
