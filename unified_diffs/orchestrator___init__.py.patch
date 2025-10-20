@@ -1,0 +1,43 @@
+diff --git a/orchestrator/__init__.py b/orchestrator/__init__.py
+index 98a2665..28afa9f 100644
+--- a/orchestrator/__init__.py
++++ b/orchestrator/__init__.py
+@@ -9,6 +9,7 @@ Architecture:
+ - Choreographer: Module sequencing and dependency management
+ - Circuit Breaker: Fault tolerance and graceful degradation
+ - Report Assembly: MICRO/MESO/MACRO multi-level reporting
++- Mapping Loader: Execution integrity validation layer
+ 
+ Author: FARFAN Team
+ Version: 3.0.0
+@@ -18,15 +19,27 @@ __version__ = "3.0.0"
+ __author__ = "FARFAN Policy Analysis Team"
+ 
+ from .core_orchestrator import FARFANOrchestrator
+-from .question_router import QuestionRouter
+ from .choreographer import ExecutionChoreographer
+ from .circuit_breaker import CircuitBreaker
+ from .report_assembly import ReportAssembler
++from .mapping_loader import (
++    YAMLMappingLoader,
++    MappingStartupValidator,
++    MappingValidationError,
++    MappingConflict,
++    ConflictType,
++    ContractRegistry
++)
+ 
+ __all__ = [
+     "FARFANOrchestrator",
+-    "QuestionRouter",
+     "ExecutionChoreographer",
+     "CircuitBreaker",
+-    "ReportAssembler"
++    "ReportAssembler",
++    "YAMLMappingLoader",
++    "MappingStartupValidator",
++    "MappingValidationError",
++    "MappingConflict",
++    "ConflictType",
++    "ContractRegistry",
+ ]

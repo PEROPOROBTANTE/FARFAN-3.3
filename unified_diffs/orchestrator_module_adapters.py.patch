@@ -1,0 +1,180 @@
+diff --git a/orchestrator/module_adapters.py b/orchestrator/module_adapters.py
+index 2d5c0db..c04f1e7 100644
+--- a/orchestrator/module_adapters.py
++++ b/orchestrator/module_adapters.py
+@@ -4540,49 +4540,148 @@ class DerekBeachAdapter(BaseAdapter):
+         """Execute ConfigLoader.check_uncertainty_reduction_criterion()"""
+         loader = self.ConfigLoader(Path("config.yaml"))
+         criterion_met = loader.check_uncertainty_reduction_criterion()
++        
++        return ModuleResult(
++            module_name=self.module_name,
++            class_name="ConfigLoader",
++            method_name="check_uncertainty_reduction_criterion",
++            status="success",
++            data={"criterion_met": criterion_met},
++            evidence=[{"type": "uncertainty_check", "met": criterion_met}],
++            confidence=0.95,
++            execution_time=0.0
++        )
+ 
+     def _execute_load_document(self, pdf_path: str, **kwargs) -> ModuleResult:
+-    """Execute PDFProcessor.load_document()"""
+-    processor = self.PDFProcessor()
+-    doc = processor.load_document(pdf_path)
++        """Execute PDFProcessor.load_document()"""
++        processor = self.PDFProcessor()
++        doc = processor.load_document(pdf_path)
++        
++        return ModuleResult(
++            module_name=self.module_name,
++            class_name="PDFProcessor",
++            method_name="load_document",
++            status="success",
++            data={"document": str(doc)},
++            evidence=[{"type": "pdf_load"}],
++            confidence=0.95,
++            execution_time=0.0
++        )
+ 
+     def _execute_load_with_retry(self, pdf_path: str, max_retries: int = 3, **kwargs) -> ModuleResult:
+-    """Execute PDFProcessor.load_with_retry()"""
+-    processor = self.PDFProcessor()
+-    text = processor.load_with_retry(pdf_path, max_retries)
++        """Execute PDFProcessor.load_with_retry()"""
++        processor = self.PDFProcessor()
++        text = processor.load_with_retry(pdf_path, max_retries)
++        
++        return ModuleResult(
++            module_name=self.module_name,
++            class_name="PDFProcessor",
++            method_name="load_with_retry",
++            status="success",
++            data={"text": text},
++            evidence=[{"type": "pdf_retry_load"}],
++            confidence=0.95,
++            execution_time=0.0
++        )
+ 
+     def _execute_extract_text(self, doc, **kwargs) -> ModuleResult:
+-    """Execute PDFProcessor.extract_text()"""
+-    processor = self.PDFProcessor()
+-    text = processor.extract_text(doc)
++        """Execute PDFProcessor.extract_text()"""
++        processor = self.PDFProcessor()
++        text = processor.extract_text(doc)
++        
++        return ModuleResult(
++            module_name=self.module_name,
++            class_name="PDFProcessor",
++            method_name="extract_text",
++            status="success",
++            data={"text": text},
++            evidence=[{"type": "text_extraction"}],
++            confidence=0.95,
++            execution_time=0.0
++        )
+ 
+     def _execute_extract_tables(self, doc, **kwargs) -> ModuleResult:
+-    """Execute PDFProcessor.extract_tables()"""
+-    processor = self.PDFProcessor()
+-    tables = processor.extract_tables(doc)
++        """Execute PDFProcessor.extract_tables()"""
++        processor = self.PDFProcessor()
++        tables = processor.extract_tables(doc)
++        
++        return ModuleResult(
++            module_name=self.module_name,
++            class_name="PDFProcessor",
++            method_name="extract_tables",
++            status="success",
++            data={"tables": tables},
++            evidence=[{"type": "table_extraction"}],
++            confidence=0.90,
++            execution_time=0.0
++        )
+ 
+     def _execute_extract_sections(self, text: str, **kwargs) -> ModuleResult:
+-    """Execute PDFProcessor.extract_sections()"""
+-    processor = self.PDFProcessor()
+-    sections = processor.extract_sections(text)
++        """Execute PDFProcessor.extract_sections()"""
++        processor = self.PDFProcessor()
++        sections = processor.extract_sections(text)
++        
++        return ModuleResult(
++            module_name=self.module_name,
++            class_name="PDFProcessor",
++            method_name="extract_sections",
++            status="success",
++            data={"sections": sections},
++            evidence=[{"type": "section_extraction"}],
++            confidence=0.90,
++            execution_time=0.0
++        )
+ 
+     def _execute_extract_causal_hierarchy(self, text: str, **kwargs) -> ModuleResult:
+-    """Execute CausalExtractor.extract_causal_hierarchy()"""
+-    config = kwargs.get('config', {})
+-    extractor = self.CausalExtractor(config)
+-    graph, links = extractor.extract_causal_hierarchy(text)
++        """Execute CausalExtractor.extract_causal_hierarchy()"""
++        config = kwargs.get('config', {})
++        extractor = self.CausalExtractor(config)
++        graph, links = extractor.extract_causal_hierarchy(text)
++        
++        return ModuleResult(
++            module_name=self.module_name,
++            class_name="CausalExtractor",
++            method_name="extract_causal_hierarchy",
++            status="success",
++            data={"graph": graph, "links": links},
++            evidence=[{"type": "causal_hierarchy"}],
++            confidence=0.85,
++            execution_time=0.0
++        )
+ 
+     def _execute_extract_goals(self, text: str, **kwargs) -> ModuleResult:
+-    """Execute CausalExtractor._extract_goals()"""
+-    config = kwargs.get('config', {})
+-    extractor = self.CausalExtractor(config)
+-    goals = extractor._extract_goals(text)
++        """Execute CausalExtractor._extract_goals()"""
++        config = kwargs.get('config', {})
++        extractor = self.CausalExtractor(config)
++        goals = extractor._extract_goals(text)
++        
++        return ModuleResult(
++            module_name=self.module_name,
++            class_name="CausalExtractor",
++            method_name="_extract_goals",
++            status="success",
++            data={"goals": goals},
++            evidence=[{"type": "goal_extraction"}],
++            confidence=0.85,
++            execution_time=0.0
++        )
+ 
+     def _execute_parse_goal_context(self, goal_text: str, **kwargs) -> ModuleResult:
+-    """Execute CausalExtractor._parse_goal_context()"""
+-    config = kwargs.get('config', {})
+-    extractor = self.CausalExtractor(config)
+-    context = extractor._parse_goal_context(goal_text)
++        """Execute CausalExtractor._parse_goal_context()"""
++        config = kwargs.get('config', {})
++        extractor = self.CausalExtractor(config)
++        context = extractor._parse_goal_context(goal_text)
++        
++        return ModuleResult(
++            module_name=self.module_name,
++            class_name="CausalExtractor",
++            method_name="_parse_goal_context",
++            status="success",
++            data={"context": context},
++            evidence=[{"type": "goal_context"}],
++            confidence=0.85,
++            execution_time=0.0
++        )
+ 
+     def _execute_add_node_to_graph(self, graph, goal, **kwargs) -> ModuleResult:
+     """Execute CausalExtractor._add_node_to_graph()"""
