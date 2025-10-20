@@ -1,22 +1,9 @@
-# Python virtual environment
-venv/
-env/
-ENV/
-.venv/
-env.bak/
-venv.bak/
-
-# Python cache
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-
-# C extensions
-*.so
-
-# Distribution / packaging
 build/
 develop-eggs/
 dist/
@@ -29,121 +16,44 @@ parts/
 sdist/
 var/
 wheels/
-pip-wheel-metadata/
-share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-MANIFEST
-PYTHONPATH
 
-# PyInstaller
-*.manifest
-*.spec
-
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Testing
-.pytest_cache/
-.coverage
-htmlcov/
-.tox/
-.nox/
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-test_data/
-
-# Dependency tracking
-dependency_graph.json
-dependency_graph_baseline.json
-dependency_graph_current.json
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# IPython
-profile_default/
-ipython_config.py
-
-# pyenv
-.python-version
-
-# Environments
-.env
-.venv
-env/
-ENV/
-env.bak/
-venv.bak/
+# Virtual environments
 venv/
+ENV/
+env/
+.venv
 
-# Spacy
-*.spacy
-
-# IDE
+# IDEs
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 
-# OS
+# OS files
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
 Thumbs.db
 
-# Logs
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
 *.log
-logs/
 
-# Data files
-*.csv
-*.tsv
-*.json
-*.pkl
-*.pickle
-
-# Model files
-models/
-*.model
-*.bin
-
-# Output files
-output/
-results/
+# FARFAN specific
 artifact/
 temp/
-
-# Sphinx documentation
-docs/_build/
-
-# Canary system artifacts
-tests/canaries/
-tests/canaries/*.json
-!tests/canaries/.gitkeep
-
-# Temporary files
-temp/
-tmp/
-*.tmp
-
-# Large artifacts
-artifact/
 *.pdf
-!tests/fixtures/*.pdf
+orchestrator_integration_report.txt
+test_architecture.log
 
-# CI/CD artifacts
-validation_results.json
-performance_history.json
-baselines/**/*.json
-baselines/**/output.json
+# Large files
+*.zip
+*.tar.gz
+
+# Node modules (if any)
+node_modules/

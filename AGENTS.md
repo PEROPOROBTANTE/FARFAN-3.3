@@ -1,66 +1,43 @@
-# AGENTS.md - FARFAN 3.0 Development Guide
+# FARFAN 3.0 - Agent Guide
+
+## Setup
+```bash
+python -m venv venv
+source venv/bin/activate  # or `venv\Scripts\activate` on Windows
+pip install --upgrade pip
+pip install -r requirements.txt
+```
 
 ## Commands
+- **Build**: N/A (Python project, no build step)
+- **Lint**: `flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics`
+- **Test**: `pytest test_architecture_compilation.py test_orchestrator_integration.py -v`
+- **Dev**: `python run_farfan.py --help` (see usage options below)
 
-### Setup
+## Running FARFAN
 ```bash
-python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -r requirements.txt
-python -m spacy download es_core_news_sm
-```
-
-### Build
-No build step required (Python project)
-
-### Lint
-```bash
-flake8 . --max-line-length=120 --exclude=venv,__pycache__,.git
-black --check . --exclude=venv
-isort --check-only .
-```
-
-### Test
-```bash
-python test_architecture_compilation.py
-python test_orchestrator_integration.py
-pytest test_*.py -v
-```
-
-### Run
-```bash
-# Analyze single plan
+# Single plan analysis
 python run_farfan.py --plan path/to/plan.pdf
 
-# Analyze batch of plans
-python run_farfan.py --batch plans/ --max-plans 170 --workers 8
+# Batch analysis
+python run_farfan.py --batch plans_directory/ --workers 8
 
 # System health check
 python run_farfan.py --health
-
-# Run canary regression tests
-python tests/canary_runner.py
 ```
 
 ## Tech Stack
-- **Language**: Python 3.11+
-- **NLP**: spaCy (Spanish models), transformers, NLTK, sentence-transformers, BETO (Spanish BERT)
-- **ML/Analytics**: PyTorch 2.0.1, TensorFlow 2.13.0, scikit-learn, numpy, pandas, NetworkX (causal graphs)
-- **Architecture**: Orchestrator pattern with 8+ specialized modules (dereck_beach, policy_processor, teoria_cambio, etc.) coordinated by `orchestrator/core_orchestrator.py`
+- **Language**: Python 3.10+
+- **NLP**: spaCy (Spanish models), transformers, sentence-transformers, NLTK, Stanza
+- **ML/Science**: PyTorch, TensorFlow, scikit-learn, NumPy, Pandas
+- **Architecture**: Orchestrator pattern with circuit breaker, choreographer, and multi-level reporting
 
-## Repo Structure
-- `orchestrator/` - Core orchestration engine with 9 module adapters
-- `run_farfan.py` - Main entry point for policy analysis
-- `tests/` - Canary regression detection system (413 adapter method tests)
-- Individual analyzer modules: `Analyzer_one.py`, `causal_proccesor.py`, `contradiction_deteccion.py`, `dereck_beach.py`, etc.
-- `requirements.txt` - Python dependencies (includes spaCy models via URLs)
+## Structure
+- `orchestrator/`: Core orchestration engine (routing, execution, fault tolerance, reporting)
+- `run_farfan.py`: Main CLI entry point
+- Root-level modules: Policy processing, contradiction detection, financial analysis, semantic chunking
 
 ## Code Style
-- **Formatting**: Follow existing style, prefer Black defaults (line length: 120 chars)
-- **Imports**: Group by stdlib, third-party, local; no unused imports
-- **Docstrings**: Use for public methods, include types and examples
-- **Naming**: snake_case for functions/variables, PascalCase for classes (Spanish variable names for domain logic, English for infrastructure)
-- **Type hints**: Required (Python 3.11+ features); use dataclasses for config and DTOs
-- **Comments**: Minimal; code should be self-documenting (No docstrings/comments unless complex)
-- **Logging**: Use stdlib `logging`
-- **Focus**: Spanish text analysis focus (Spanish NLP models)
+- Spanish comments/docstrings throughout (domain is Spanish policy analysis)
+- Black formatting, isort for imports, type hints encouraged
+- Functional decomposition with adapter pattern for module integration
