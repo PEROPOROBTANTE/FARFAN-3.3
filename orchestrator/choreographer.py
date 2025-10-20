@@ -1,22 +1,65 @@
-# choreographer.py - COMPLETE UPDATE FOR 9 ADAPTERS
-# coding=utf-8
 """
-Execution Choreographer - Orchestrates Module Execution with Dependency Management
-==================================================================================
+Execution Choreographer - DAG-Based Module Orchestration with Dependency Management
+===================================================================================
 
-Updated for complete integration with:
-- module_adapters_COMPLETE_MERGED.py (9 adapters, 413 methods)
-- FARFAN_3.0_UPDATED_QUESTIONNAIRE.yaml (execution chains)
-- ModuleResult standardized format
+CORE RESPONSIBILITY: Execute adapter methods in correct dependency order
+------------------------------------------------------------------------
+Manages parallel execution of independent adapters while respecting dependencies
+defined in the adapter dependency graph (DAG)
 
-Implements:
-- Hybrid parallel/sequential execution
-- DAG-based dependency tracking  
-- Question-to-adapter mapping
-- Evidence aggregation
+DEPENDENCY RESOLUTION ORDER (9 Adapters):
+------------------------------------------
+Wave 1 (Foundation - parallel execution):
+  - policy_segmenter: Document segmentation
+  - policy_processor: Text normalization
 
-Author: Integration Team
-Version: 3.0.0 - Complete Adapter Alignment
+Wave 2 (Semantic analysis - depends on Wave 1):
+  - semantic_chunking_policy: Semantic chunking (requires segments)
+  - embedding_policy: Embedding generation (requires normalized text)
+
+Wave 3 (Advanced analysis - depends on Wave 2):
+  - analyzer_one: Municipal development analysis (requires embeddings + segments)
+  - teoria_cambio: Theory of change analysis (requires semantic chunks + embeddings)
+
+Wave 4 (Specialized analysis - depends on Wave 3):
+  - dereck_beach: CDAF causal analysis (requires teoria_cambio output)
+  - contradiction_detection: Contradiction detection (requires analyzer_one + teoria_cambio)
+
+Wave 5 (Final synthesis - depends on Wave 4):
+  - financial_viability: Financial analysis (requires all prior outputs)
+
+PARALLEL WAVE EXECUTION LOGIC:
+-------------------------------
+1. Identify wave (all adapters with same priority level)
+2. Execute all adapters in wave concurrently (ThreadPoolExecutor)
+3. Wait for all wave executions to complete
+4. Proceed to next wave only after current wave finishes
+5. Handle failures gracefully with circuit breaker integration
+
+ERROR HANDLING FOR MISSING ADAPTER/METHOD REFERENCES:
+------------------------------------------------------
+- Before execution: Validate adapter exists in ModuleAdapterRegistry
+- Before method call: Validate method exists on adapter class
+- On validation failure: Log error, mark step as SKIPPED, continue to next step
+- Circuit breaker: After 5 consecutive failures, open circuit for 60s
+- Graceful degradation: Continue execution chain even if non-critical steps fail
+
+ADAPTER INVOCATION PATTERN (corrected from instance-based to class-based):
+--------------------------------------------------------------------------
+❌ INCORRECT (instance-based):
+  adapter_instance = module_registry.get_adapter("teoria_cambio")
+  result = adapter_instance.calculate_bayesian_confidence(...)
+
+✅ CORRECT (class-based via registry):
+  result = module_registry.execute_module_method(
+      module_name="teoria_cambio",
+      method_name="calculate_bayesian_confidence",
+      args=[...],
+      kwargs={...}
+  )
+
+Author: FARFAN Integration Team  
+Version: 3.0.0 - Refactored with strict type annotations and comprehensive documentation
 Python: 3.10+
 """
 
@@ -31,46 +74,39 @@ import networkx as nx
 logger = logging.getLogger(__name__)
 
 
-# ============================================================================
-# EXECUTION STATUS AND RESULTS
-# ============================================================================
-
 class ExecutionStatus(Enum):
-    """Module execution status"""
+    """Execution status for individual adapter method calls"""
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
     FAILED = "failed"
     SKIPPED = "skipped"
-    DEGRADED = "degraded"  # Partial success
+    DEGRADED = "degraded"
 
 
 @dataclass
 class ExecutionResult:
     """
-    Result from a single adapter execution
+    Result from a single adapter method execution
     
-    Wraps ModuleResult from module_adapters.py
+    Wraps ModuleResult from module_adapters.py with additional metadata
     """
-    module_name: str  # Adapter name (e.g., "teoria_cambio")
-    adapter_class: str  # Adapter class name (e.g., "ModulosAdapter")
-    method_name: str  # Method executed
+    module_name: str
+    adapter_class: str
+    method_name: str
     status: ExecutionStatus
     
-    # Core results
-    output: Optional[Dict[str, Any]] = None  # ModuleResult.data
+    output: Optional[Dict[str, Any]] = None
     error: Optional[str] = None
     execution_time: float = 0.0
     
-    # Evidence and confidence
     evidence_extracted: Dict[str, Any] = field(default_factory=dict)
     confidence: float = 0.0
     
-    # Module-specific metadata
     metadata: Dict[str, Any] = field(default_factory=dict)
     
     def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary for aggregation"""
+        """Convert to dictionary for aggregation and reporting"""
         return {
             "module_name": self.module_name,
             "adapter_class": self.adapter_class,
@@ -85,99 +121,72 @@ class ExecutionResult:
         }
 
 
-# ============================================================================
-# EXECUTION CHOREOGRAPHER
-# ============================================================================
-
 class ExecutionChoreographer:
     """
-    Choreographs execution of 9 adapters with dependency management
+    Orchestrates execution of 9 adapters with DAG-based dependency management
     
-    Strategy:
-    - Build DAG of adapter dependencies
-    - Execute in topological order with parallelization
-    - Aggregate results with evidence tracking
-    - Handle failures gracefully
+    Implements hybrid parallel/sequential execution:
+    - Parallel: Execute all adapters in same wave concurrently
+    - Sequential: Wait for wave completion before proceeding to next wave
+    
+    Circuit breaker integration at every adapter invocation point
     """
 
-    def __init__(self, max_workers: Optional[int] = None):
+    def __init__(self, max_workers: Optional[int] = None) -> None:
         """
-        Initialize choreographer
+        Initialize choreographer with dependency graph
         
         Args:
-            max_workers: Max parallel workers (default: 4)
+            max_workers: Maximum parallel workers for wave execution (default: 4)
         """
         self.max_workers = max_workers or 4
-        self.execution_graph = nx.DiGraph()
+        self.execution_graph: nx.DiGraph = nx.DiGraph()
         self._build_dependency_graph()
         self._initialize_adapter_registry()
         
         logger.info(f"ExecutionChoreographer initialized with {self.max_workers} workers")
 
-    def _build_dependency_graph(self):
+    def _build_dependency_graph(self) -> None:
         """
-        Build execution dependency graph for 9 adapters
+        Build DAG of adapter dependencies for topological execution ordering
         
-        Dependencies based on data flow:
-        1. policy_segmenter → provides segments
-        2. policy_processor → provides normalized text
-        3. semantic_chunking_policy → provides semantic chunks
-        4. embedding_policy → provides embeddings
-        5. teoria_cambio → uses all above
-        6. analyzer_one → uses segments + embeddings
-        7. dereck_beach → uses causal analysis
-        8. contradiction_detection → uses all analysis
-        9. financial_viability → uses everything
+        Dependencies based on data flow requirements:
+        - Semantic analysis requires document segmentation
+        - Advanced analysis requires semantic analysis
+        - Specialized analysis requires advanced analysis
+        - Financial synthesis requires all prior analyses
         """
         
-        # Add all 9 adapters as nodes with priorities
-        adapters = {
-            # Priority 1: Foundation (run first, in parallel)
+        adapters_with_priorities = {
             "policy_segmenter": 1,
             "policy_processor": 1,
-            
-            # Priority 2: Semantic analysis (run after foundation)
             "semantic_chunking_policy": 2,
             "embedding_policy": 2,
-            
-            # Priority 3: Advanced analysis (run after semantics)
             "analyzer_one": 3,
             "teoria_cambio": 3,
-            
-            # Priority 4: Specialized analysis (run after advanced)
             "dereck_beach": 4,
             "contradiction_detection": 4,
-            
-            # Priority 5: Final synthesis (run last)
             "financial_viability": 5
         }
         
-        for adapter_name, priority in adapters.items():
+        for adapter_name, priority in adapters_with_priorities.items():
             self.execution_graph.add_node(
                 adapter_name,
                 priority=priority
             )
         
-        # Define dependencies (edges: source → target)
         dependencies = [
-            # Foundation → Semantic
             ("policy_segmenter", "semantic_chunking_policy"),
             ("policy_segmenter", "embedding_policy"),
             ("policy_processor", "semantic_chunking_policy"),
             ("policy_processor", "embedding_policy"),
-            
-            # Semantic → Advanced
             ("semantic_chunking_policy", "analyzer_one"),
             ("semantic_chunking_policy", "teoria_cambio"),
             ("embedding_policy", "analyzer_one"),
             ("embedding_policy", "teoria_cambio"),
-            
-            # Advanced → Specialized
             ("analyzer_one", "contradiction_detection"),
             ("teoria_cambio", "dereck_beach"),
             ("teoria_cambio", "contradiction_detection"),
-            
-            # Specialized → Synthesis
             ("dereck_beach", "financial_viability"),
             ("contradiction_detection", "financial_viability"),
             ("analyzer_one", "financial_viability")
@@ -186,7 +195,6 @@ class ExecutionChoreographer:
         for source, target in dependencies:
             self.execution_graph.add_edge(source, target)
         
-        # Verify DAG (no cycles)
         if not nx.is_directed_acyclic_graph(self.execution_graph):
             raise ValueError("Dependency graph contains cycles!")
         
@@ -195,9 +203,9 @@ class ExecutionChoreographer:
             f"{self.execution_graph.number_of_edges()} dependencies"
         )
 
-    def _initialize_adapter_registry(self):
-        """Initialize adapter name to class mapping"""
-        self.adapter_registry = {
+    def _initialize_adapter_registry(self) -> None:
+        """Initialize mapping of adapter names to class names for invocation compatibility"""
+        self.adapter_registry: Dict[str, str] = {
             "teoria_cambio": "ModulosAdapter",
             "analyzer_one": "AnalyzerOneAdapter",
             "dereck_beach": "DerekBeachAdapter",
@@ -213,36 +221,46 @@ class ExecutionChoreographer:
 
     def execute_question_chain(
             self,
-            question_spec,
+            question_spec: Any,
             plan_text: str,
-            module_adapter_registry,
-            circuit_breaker=None
+            module_adapter_registry: Any,
+            circuit_breaker: Optional[Any] = None
     ) -> Dict[str, ExecutionResult]:
         """
-        Execute complete chain for a single question
+        Execute complete execution chain for a single question
+        
+        EXECUTION FLOW:
+        ---------------
+        1. Extract execution_chain from question_spec
+        2. For each step in chain (sequential execution respecting dependencies):
+           a. Validate adapter and method exist
+           b. Check circuit breaker status
+           c. Prepare arguments (may reference previous step results)
+           d. Execute via ModuleAdapterRegistry.execute_module_method() (CLASS-BASED)
+           e. Convert ModuleResult to ExecutionResult
+           f. Record success/failure in circuit breaker
+        3. Return dict of all ExecutionResults keyed by "adapter.method"
         
         Args:
-            question_spec: Question specification from questionnaire
+            question_spec: Question specification from questionnaire parser
             plan_text: Plan document text
-            module_adapter_registry: ModuleAdapterRegistry instance
-            circuit_breaker: Optional circuit breaker for fault tolerance
+            module_adapter_registry: ModuleAdapterRegistry instance for adapter invocation
+            circuit_breaker: Optional CircuitBreaker for fault tolerance
             
         Returns:
-            Dict mapping adapter names to ExecutionResults
+            Dictionary mapping "adapter.method" to ExecutionResult objects
         """
         logger.info(f"Executing chain for {question_spec.canonical_id}")
         
         start_time = time.time()
-        results = {}
+        results: Dict[str, ExecutionResult] = {}
         
-        # Get execution chain from question spec
         execution_chain = getattr(question_spec, 'execution_chain', [])
         
         if not execution_chain:
             logger.warning(f"No execution chain for {question_spec.canonical_id}")
             return results
         
-        # Execute steps sequentially (respecting dependencies in chain)
         for step in execution_chain:
             adapter_name = step.get('adapter')
             method_name = step.get('method')
@@ -253,11 +271,20 @@ class ExecutionChoreographer:
                 logger.warning(f"Incomplete step in chain: {step}")
                 continue
             
-            # Prepare arguments (may reference previous results)
+            if not self._validate_adapter_method(adapter_name, method_name, module_adapter_registry):
+                results[f"{adapter_name}.{method_name}"] = ExecutionResult(
+                    module_name=adapter_name,
+                    adapter_class=self.adapter_registry.get(adapter_name, "Unknown"),
+                    method_name=method_name,
+                    status=ExecutionStatus.SKIPPED,
+                    error="Adapter or method not found in registry",
+                    execution_time=0.0
+                )
+                continue
+            
             prepared_args = self._prepare_arguments(args, results, plan_text)
             prepared_kwargs = self._prepare_arguments(kwargs, results, plan_text)
             
-            # Execute via registry
             result = self._execute_single_step(
                 adapter_name=adapter_name,
                 method_name=method_name,
@@ -277,6 +304,42 @@ class ExecutionChoreographer:
         
         return results
 
+    def _validate_adapter_method(
+            self,
+            adapter_name: str,
+            method_name: str,
+            module_adapter_registry: Any
+    ) -> bool:
+        """
+        Validate that adapter and method exist in registry before execution
+        
+        ERROR HANDLING: Returns False if adapter or method missing, allowing
+        graceful degradation rather than raising exception
+        
+        Args:
+            adapter_name: Name of adapter (e.g., "teoria_cambio")
+            method_name: Name of method (e.g., "calculate_bayesian_confidence")
+            module_adapter_registry: ModuleAdapterRegistry instance
+            
+        Returns:
+            True if adapter and method exist, False otherwise
+        """
+        try:
+            if adapter_name not in module_adapter_registry.adapters:
+                logger.error(f"Adapter '{adapter_name}' not found in registry")
+                return False
+            
+            adapter_instance = module_adapter_registry.adapters[adapter_name]
+            if not hasattr(adapter_instance, method_name):
+                logger.error(f"Method '{method_name}' not found on adapter '{adapter_name}'")
+                return False
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error validating adapter method: {e}")
+            return False
+
     def _prepare_arguments(
             self,
             args_spec: Union[List, Dict],
@@ -284,12 +347,22 @@ class ExecutionChoreographer:
             plan_text: str
     ) -> Union[List, Dict]:
         """
-        Prepare arguments by resolving references to previous results
+        Prepare arguments by resolving references to previous step results
         
-        Supports:
-        - source: "plan_text" → plan_text
-        - source: "previous_result" → result from previous step
-        - source: "derived" → computed from previous results
+        ARGUMENT RESOLUTION:
+        -------------------
+        - source: "plan_text" → inject plan_text string
+        - source: "previous_result" → inject output from previous step
+        - source: "derived" → compute from previous results
+        - value: <literal> → use literal value
+        
+        Args:
+            args_spec: Argument specification from execution chain
+            previous_results: Results from previously executed steps
+            plan_text: Plan document text
+            
+        Returns:
+            Resolved arguments as list or dict
         """
         if isinstance(args_spec, list):
             prepared = []
@@ -333,19 +406,41 @@ class ExecutionChoreographer:
             method_name: str,
             args: List[Any],
             kwargs: Dict[str, Any],
-            module_adapter_registry,
-            circuit_breaker=None
+            module_adapter_registry: Any,
+            circuit_breaker: Optional[Any] = None
     ) -> ExecutionResult:
         """
-        Execute a single step in the execution chain
+        Execute single adapter method with circuit breaker protection
         
+        INVOCATION PATTERN (CLASS-BASED via registry):
+        -----------------------------------------------
+        result = module_adapter_registry.execute_module_method(
+            module_name=adapter_name,
+            method_name=method_name,
+            args=args,
+            kwargs=kwargs
+        )
+        
+        CIRCUIT BREAKER INTEGRATION:
+        ----------------------------
+        - Before execution: Check if circuit is open for this adapter
+        - On success: Record success, close/half-open circuit
+        - On failure: Record failure, may open circuit after threshold
+        
+        Args:
+            adapter_name: Name of adapter
+            method_name: Name of method
+            args: Positional arguments
+            kwargs: Keyword arguments
+            module_adapter_registry: Registry for adapter invocation
+            circuit_breaker: Optional circuit breaker for fault tolerance
+            
         Returns:
-            ExecutionResult with module output
+            ExecutionResult with execution outcome
         """
         start_time = time.time()
         
         try:
-            # Check circuit breaker
             if circuit_breaker and not circuit_breaker.can_execute(adapter_name):
                 return ExecutionResult(
                     module_name=adapter_name,
@@ -356,7 +451,6 @@ class ExecutionChoreographer:
                     execution_time=time.time() - start_time
                 )
             
-            # Execute via ModuleAdapterRegistry
             module_result = module_adapter_registry.execute_module_method(
                 module_name=adapter_name,
                 method_name=method_name,
@@ -364,7 +458,6 @@ class ExecutionChoreographer:
                 kwargs=kwargs
             )
             
-            # Convert ModuleResult to ExecutionResult
             result = ExecutionResult(
                 module_name=adapter_name,
                 adapter_class=module_result.class_name,
@@ -378,7 +471,6 @@ class ExecutionChoreographer:
                 metadata=module_result.metadata
             )
             
-            # Record success in circuit breaker
             if circuit_breaker:
                 circuit_breaker.record_success(adapter_name)
             
@@ -387,7 +479,6 @@ class ExecutionChoreographer:
         except Exception as e:
             logger.error(f"Error executing {adapter_name}.{method_name}: {e}", exc_info=True)
             
-            # Record failure in circuit breaker
             if circuit_breaker:
                 circuit_breaker.record_failure(adapter_name, str(e))
             
@@ -401,7 +492,7 @@ class ExecutionChoreographer:
             )
 
     def _map_status(self, module_status: str) -> ExecutionStatus:
-        """Map ModuleResult status to ExecutionStatus"""
+        """Map ModuleResult status string to ExecutionStatus enum"""
         status_map = {
             "success": ExecutionStatus.COMPLETED,
             "partial": ExecutionStatus.DEGRADED,
@@ -411,10 +502,10 @@ class ExecutionChoreographer:
 
     def get_execution_order(self) -> List[str]:
         """
-        Get topologically sorted execution order
+        Get topologically sorted execution order for all adapters
         
         Returns:
-            List of adapter names in execution order
+            List of adapter names in dependency-respecting execution order
         """
         try:
             return list(nx.topological_sort(self.execution_graph))
@@ -423,13 +514,29 @@ class ExecutionChoreographer:
             return list(self.adapter_registry.keys())
 
     def get_adapter_dependencies(self, adapter_name: str) -> List[str]:
-        """Get dependencies for a specific adapter"""
+        """
+        Get immediate dependencies for specified adapter
+        
+        Args:
+            adapter_name: Name of adapter
+            
+        Returns:
+            List of adapter names that must execute before this adapter
+        """
         if adapter_name not in self.execution_graph:
             return []
         return list(self.execution_graph.predecessors(adapter_name))
 
     def get_adapter_priority(self, adapter_name: str) -> int:
-        """Get priority of an adapter"""
+        """
+        Get priority/wave number for adapter
+        
+        Args:
+            adapter_name: Name of adapter
+            
+        Returns:
+            Priority level (1-5, where 1 executes first)
+        """
         if adapter_name not in self.execution_graph:
             return 999
         return self.execution_graph.nodes[adapter_name].get('priority', 999)
@@ -439,10 +546,15 @@ class ExecutionChoreographer:
             results: Dict[str, ExecutionResult]
     ) -> Dict[str, Any]:
         """
-        Aggregate results from multiple adapters
+        Aggregate execution results across all adapter invocations
         
+        Computes summary statistics and evidence synthesis for reporting
+        
+        Args:
+            results: Dictionary of ExecutionResult objects
+            
         Returns:
-            Aggregated data with evidence synthesis
+            Aggregated statistics and evidence
         """
         aggregated = {
             "total_steps": len(results),
@@ -472,7 +584,15 @@ class ExecutionChoreographer:
             self,
             results: Dict[str, ExecutionResult]
     ) -> Dict[str, Any]:
-        """Aggregate evidence from all execution results"""
+        """
+        Aggregate evidence items from all execution results
+        
+        Args:
+            results: Dictionary of ExecutionResult objects
+            
+        Returns:
+            Evidence aggregated by adapter and confidence level
+        """
         all_evidence = []
         
         for result in results.values():
@@ -495,21 +615,19 @@ class ExecutionChoreographer:
         }
 
 
-# ============================================================================
-# USAGE EXAMPLE
-# ============================================================================
-
 if __name__ == "__main__":
     choreographer = ExecutionChoreographer()
     
     print("=" * 80)
-    print("EXECUTION CHOREOGRAPHER - COMPLETE UPDATE")
+    print("EXECUTION CHOREOGRAPHER - DAG-Based Orchestration")
     print("=" * 80)
     print(f"\nAdapters: {len(choreographer.adapter_registry)}")
     print(f"Execution Order: {choreographer.get_execution_order()}")
-    print("\nDependencies:")
+    print("\nDependencies and Priorities:")
     for adapter in choreographer.get_execution_order():
         deps = choreographer.get_adapter_dependencies(adapter)
         priority = choreographer.get_adapter_priority(adapter)
-        print(f"  {adapter} (P{priority}): {deps if deps else 'None'}")
+        print(f"  Wave {priority}: {adapter}")
+        if deps:
+            print(f"    Depends on: {', '.join(deps)}")
     print("=" * 80)

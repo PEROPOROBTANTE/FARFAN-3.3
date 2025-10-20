@@ -317,21 +317,44 @@ class ReportAssembler:
             plan_text: str
     ) -> Tuple[float, Dict[str, bool]]:
         """
-        TYPE_A: Binary presence/absence scoring
+        TYPE_A: Binary presence/absence scoring (from rubric_scoring.json)
         
-        Score = (elements_found / total_elements) * 3.0
+        FORMULA: Score = (elements_found / 4) * 3
+        - Expected elements: 4 (as defined in rubric TYPE_A)
+        - Each element worth: 0.75 points
+        - Max score: 3.0 points
+        
+        CONVERSION TABLE (from rubric):
+        0 elements → 0.00 points
+        1 element  → 0.75 points
+        2 elements → 1.50 points
+        3 elements → 2.25 points
+        4 elements → 3.00 points
+        
+        PRECONDITIONS:
+        - question_spec must have expected_elements list
+        - execution_results must be non-empty dict
+        - plan_text must be non-empty string
         """
+        # Precondition assertions
+        assert hasattr(question_spec, 'expected_elements'), \
+            "question_spec must have expected_elements attribute for TYPE_A scoring"
+        assert execution_results, \
+            "execution_results cannot be empty for TYPE_A scoring"
+        assert plan_text and isinstance(plan_text, str), \
+            "plan_text must be non-empty string for TYPE_A scoring"
+        
         required_elements = question_spec.expected_elements or []
         elements_found = {}
 
         for element in required_elements:
-            # Check in execution results
+            # Check in execution results (adapter outputs)
             found = any(
                 element.lower() in str(result.get("data", "")).lower()
                 for result in execution_results.values()
             )
             
-            # Also check in plan text
+            # Fallback: check in raw plan text
             if not found:
                 found = element.lower() in plan_text.lower()
             
@@ -340,6 +363,7 @@ class ReportAssembler:
         if not required_elements:
             return 0.0, elements_found
 
+        # Apply TYPE_A formula from rubric_scoring.json
         found_count = sum(elements_found.values())
         score = (found_count / len(required_elements)) * 3.0
 

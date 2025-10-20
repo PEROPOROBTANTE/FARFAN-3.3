@@ -1,24 +1,38 @@
-# core_orchestrator.py - COMPLETE UPDATE FOR 9 ADAPTERS
-# coding=utf-8
 """
-Core Orchestrator - Main Coordination Engine
-============================================
+Core Orchestrator - FARFAN 3.0 Main Coordination Engine
+========================================================
 
-Updated for complete integration with:
-- module_adapters_COMPLETE_MERGED.py (9 adapters, 413 methods)
-- FARFAN_3.0_UPDATED_QUESTIONNAIRE.yaml (300 questions)
-- report_assembly_COMPLETE.py (MICRO/MESO/MACRO reporting)
-- choreographer_UPDATED.py (execution orchestration)
-- circuit_breaker_UPDATED.py (fault tolerance)
+PIPELINE FLOW: PDF Ingestion → MICRO/MESO/MACRO Report Generation
+------------------------------------------------------------------
+1. PDF/Document Ingestion: Load plan document from filesystem
+2. Question Routing: Map 300 questions to execution chains via question_router
+3. Execution Orchestration: Execute adapters through choreographer with dependency management
+4. Circuit Breaker Integration: Fault tolerance at every adapter invocation
+5. Evidence Aggregation: Collect evidence from all 9 adapters
+6. MICRO Generation: Individual question answers with scoring modalities (TYPE_A-F)
+7. MESO Clustering: Aggregate by policy areas (P1-P10) and dimensions (D1-D6)
+8. MACRO Convergence: Global alignment score with Decálogo framework
 
-Coordinates:
-- Question routing (300 questions → execution chains)
-- Module execution with dependency management
-- Fault tolerance and graceful degradation
-- Multi-level report generation
+ADAPTER INVOCATION PATTERN:
+---------------------------
+All adapter methods are invoked through ModuleAdapterRegistry using CLASS-BASED calls:
+  result = module_adapter_registry.execute_module_method(
+      module_name="adapter_name",  # e.g., "teoria_cambio"
+      method_name="method_name",   # e.g., "calculate_bayesian_confidence"
+      args=[...],
+      kwargs={...}
+  )
 
-Author: Integration Team
-Version: 3.0.0 - Complete System Integration
+CIRCUIT BREAKER INTEGRATION POINTS:
+-----------------------------------
+- Before each adapter execution in choreographer.execute_question_chain()
+- Automatic fallback to degraded mode if circuit opens
+- Health status tracked in circuit_breaker.get_all_status()
+- Failure threshold: 5 consecutive failures trigger circuit open
+- Recovery timeout: 60 seconds before attempting HALF_OPEN state
+
+Author: FARFAN Integration Team
+Version: 3.0.0 - Refactored with strict type annotations and comprehensive documentation
 Python: 3.10+
 """
 
@@ -33,54 +47,46 @@ import json
 logger = logging.getLogger(__name__)
 
 
-# ============================================================================
-# FARFAN ORCHESTRATOR - MAIN COORDINATION ENGINE
-# ============================================================================
-
 class FARFANOrchestrator:
     """
-    Main orchestrator for FARFAN 3.0 policy analysis system
+    Main orchestrator coordinating complete FARFAN 3.0 analysis pipeline
     
-    Coordinates complete analysis pipeline:
-    1. Load and parse plan document
-    2. Route 300 questions to execution chains
-    3. Execute adapters with dependency management
-    4. Aggregate results with fault tolerance
-    5. Generate MICRO/MESO/MACRO reports
+    Manages end-to-end flow from document ingestion through multi-level reporting:
+    - Coordinates 9 specialized adapters (413 methods total)
+    - Routes 300 questions through validated execution chains
+    - Generates MICRO (question-level), MESO (cluster-level), and MACRO (plan-level) reports
+    - Enforces fault tolerance through circuit breaker pattern
     """
 
     def __init__(
             self,
-            module_adapter_registry,
-            questionnaire_parser,
-            config=None
-    ):
+            module_adapter_registry: Any,
+            questionnaire_parser: Any,
+            config: Optional[Dict[str, Any]] = None
+    ) -> None:
         """
-        Initialize FARFAN Orchestrator
+        Initialize FARFAN Orchestrator with required components
         
         Args:
-            module_adapter_registry: ModuleAdapterRegistry with 9 adapters
-            questionnaire_parser: QuestionnaireParser with 300 questions
-            config: Optional configuration object
+            module_adapter_registry: ModuleAdapterRegistry instance with 9 adapters
+            questionnaire_parser: QuestionnaireParser with 300 question definitions
+            config: Optional configuration dictionary
         """
         logger.info("Initializing FARFAN Orchestrator")
 
-        # Core components
         self.module_registry = module_adapter_registry
         self.questionnaire_parser = questionnaire_parser
-        self.config = config
+        self.config = config or {}
         
-        # Import and initialize sub-components
-        from .choreographer_UPDATED import ExecutionChoreographer
-        from .circuit_breaker_UPDATED import CircuitBreaker
-        from .report_assembly_COMPLETE import ReportAssembler
+        from .choreographer import ExecutionChoreographer
+        from .circuit_breaker import CircuitBreaker
+        from .report_assembly import ReportAssembler
         
         self.choreographer = ExecutionChoreographer()
         self.circuit_breaker = CircuitBreaker()
         self.report_assembler = ReportAssembler()
 
-        # Execution statistics
-        self.execution_stats = {
+        self.execution_stats: Dict[str, Any] = {
             "total_plans_processed": 0,
             "total_questions_answered": 0,
             "total_adapters_executed": 0,
@@ -107,17 +113,36 @@ class FARFANOrchestrator:
             questions_to_analyze: Optional[List[str]] = None
     ) -> Dict[str, Any]:
         """
-        Analyze a single development plan through complete pipeline
+        Execute complete analysis pipeline for single development plan
+        
+        PIPELINE STAGES:
+        ----------------
+        1. Document Loading: Parse PDF/TXT/DOCX into text
+        2. Question Selection: Get all 300 questions or specified subset
+        3. MICRO Execution: For each question:
+           - Route to execution chain via question_router
+           - Execute adapters via choreographer with circuit breaker protection
+           - Apply scoring modality (TYPE_A through TYPE_F from rubric_scoring.json)
+           - Generate evidence-backed answer with confidence scores
+        4. MESO Aggregation: Cluster MICRO answers by policy areas and dimensions
+        5. MACRO Synthesis: Calculate global convergence with Decálogo alignment
+        6. Report Export: Generate JSON reports and execution summaries
         
         Args:
             plan_path: Path to plan document (PDF/TXT/DOCX)
-            plan_name: Optional plan name (defaults to filename)
-            output_dir: Optional output directory
-            questions_to_analyze: Optional list of question IDs to analyze
-                                 (if None, analyzes all 300)
+            plan_name: Optional plan identifier (defaults to filename)
+            output_dir: Optional directory for report outputs
+            questions_to_analyze: Optional list of question IDs to analyze (e.g., ["P1-D1-Q1"])
         
         Returns:
-            Dict with complete analysis results including MICRO/MESO/MACRO reports
+            Dictionary containing:
+            - success: Boolean indicating completion status
+            - plan_name: Name of analyzed plan
+            - micro_answers: List of MicroLevelAnswer objects
+            - meso_clusters: List of MesoLevelCluster objects
+            - macro_convergence: MacroLevelConvergence object
+            - execution_summary: Performance metrics and statistics
+            - report_path: Path to generated JSON report
         """
         start_time = time.time()
         
@@ -128,11 +153,9 @@ class FARFANOrchestrator:
         logger.info(f"Starting analysis of plan: {plan_name}")
         
         try:
-            # Step 1: Load plan document
             plan_text = self._load_plan_document(plan_path)
             logger.info(f"Loaded plan document: {len(plan_text)} characters")
             
-            # Step 2: Get questions to analyze
             all_questions = self.questionnaire_parser.parse_all_questions()
             
             if questions_to_analyze:
@@ -145,14 +168,12 @@ class FARFANOrchestrator:
                 questions = all_questions
                 logger.info(f"Analyzing all {len(questions)} questions")
             
-            # Step 3: Execute question chains and generate MICRO answers
             micro_answers = []
             
             for i, question in enumerate(questions, 1):
                 logger.info(f"Processing question {i}/{len(questions)}: {question.canonical_id}")
                 
                 try:
-                    # Execute execution chain for question
                     execution_results = self.choreographer.execute_question_chain(
                         question_spec=question,
                         plan_text=plan_text,
@@ -160,7 +181,6 @@ class FARFANOrchestrator:
                         circuit_breaker=self.circuit_breaker
                     )
                     
-                    # Generate MICRO answer
                     micro_answer = self.report_assembler.generate_micro_answer(
                         question_spec=question,
                         execution_results=self._convert_execution_results(execution_results),
@@ -169,7 +189,6 @@ class FARFANOrchestrator:
                     
                     micro_answers.append(micro_answer)
                     
-                    # Update stats
                     self._update_execution_stats(execution_results)
                     
                 except Exception as e:
@@ -178,11 +197,9 @@ class FARFANOrchestrator:
             
             logger.info(f"Completed MICRO analysis: {len(micro_answers)} questions")
             
-            # Step 4: Generate MESO clusters
             meso_clusters = self._generate_meso_clusters(micro_answers)
             logger.info(f"Generated {len(meso_clusters)} MESO clusters")
             
-            # Step 5: Generate MACRO convergence
             macro_convergence = self.report_assembler.generate_macro_convergence(
                 all_micro_answers=micro_answers,
                 all_meso_clusters=meso_clusters,
@@ -194,7 +211,6 @@ class FARFANOrchestrator:
             )
             logger.info(f"Generated MACRO convergence: {macro_convergence.overall_score:.1f}%")
             
-            # Step 6: Export complete report
             report_path = output_dir / f"{plan_name}_complete_report.json"
             self.report_assembler.export_report(
                 micro_answers=micro_answers,
@@ -204,7 +220,6 @@ class FARFANOrchestrator:
             )
             logger.info(f"Exported complete report: {report_path}")
             
-            # Step 7: Generate execution summary
             execution_summary = self._generate_execution_summary(
                 plan_name=plan_name,
                 micro_answers=micro_answers,
@@ -213,14 +228,12 @@ class FARFANOrchestrator:
                 execution_time=time.time() - start_time
             )
             
-            # Save execution summary
             summary_path = output_dir / f"{plan_name}_execution_summary.json"
             with open(summary_path, 'w', encoding='utf-8') as f:
                 json.dump(execution_summary, f, ensure_ascii=False, indent=2)
             
             logger.info(f"Analysis completed in {execution_summary['total_execution_time']:.2f}s")
             
-            # Update global stats
             self.execution_stats["total_plans_processed"] += 1
             self.execution_stats["total_questions_answered"] += len(micro_answers)
             self.execution_stats["total_execution_time"] += execution_summary["total_execution_time"]
@@ -247,9 +260,19 @@ class FARFANOrchestrator:
 
     def _load_plan_document(self, plan_path: Path) -> str:
         """
-        Load plan document from file
+        Load and extract text from plan document
         
-        Supports: TXT, PDF, DOCX
+        Supports PDF (via PyPDF2), TXT (direct read), and DOCX (via python-docx)
+        
+        Args:
+            plan_path: Path to document file
+            
+        Returns:
+            Extracted text content
+            
+        Raises:
+            FileNotFoundError: If plan_path does not exist
+            ValueError: If file format is unsupported
         """
         logger.info(f"Loading plan from {plan_path}")
         
@@ -258,12 +281,10 @@ class FARFANOrchestrator:
         
         suffix = plan_path.suffix.lower()
         
-        # TXT files
         if suffix == '.txt':
             with open(plan_path, 'r', encoding='utf-8') as f:
                 return f.read()
         
-        # PDF files
         elif suffix == '.pdf':
             try:
                 import PyPDF2
@@ -277,7 +298,6 @@ class FARFANOrchestrator:
                 logger.error("PyPDF2 not installed, cannot read PDF")
                 raise
         
-        # DOCX files
         elif suffix in ['.docx', '.doc']:
             try:
                 import docx
@@ -295,15 +315,18 @@ class FARFANOrchestrator:
             execution_results: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
-        Convert ExecutionResult objects to dict format for ReportAssembler
+        Convert ExecutionResult objects from choreographer to dict format for ReportAssembler
+        
+        Normalizes the output of choreographer.execute_question_chain() into a format
+        compatible with report_assembler.generate_micro_answer()
         
         Args:
-            execution_results: Dict of ExecutionResults from choreographer
+            execution_results: Dictionary of ExecutionResult objects keyed by adapter.method
             
         Returns:
-            Dict compatible with ReportAssembler
+            Dictionary with normalized structure for report assembly
         """
-        converted = {}
+        converted: Dict[str, Any] = {}
         
         for key, result in execution_results.items():
             if hasattr(result, 'to_dict'):
@@ -322,24 +345,33 @@ class FARFANOrchestrator:
 
     def _generate_meso_clusters(
             self,
-            micro_answers: List
-    ) -> List:
+            micro_answers: List[Any]
+    ) -> List[Any]:
         """
-        Generate MESO clusters from MICRO answers
+        Generate MESO-level clusters from MICRO-level answers
         
-        Clusters questions by:
-        - Policy areas (P1-P10)
+        Clusters are organized by:
+        - Policy areas (P1-P10 from questionnaire)
         - Dimensions (D1-D6)
-        - Thematic groups
+        - Thematic groupings
+        
+        AGGREGATION FORMULA:
+        - Cluster score = weighted average of dimension scores
+        - Dimension score = (sum of question scores / max possible) * 100
+        - Weights from rubric_scoring.json applied at each level
+        
+        Args:
+            micro_answers: List of MicroLevelAnswer objects from MICRO generation
+            
+        Returns:
+            List of MesoLevelCluster objects
         """
-        # Group by policy area
-        by_policy = defaultdict(list)
+        by_policy: Dict[str, List[Any]] = defaultdict(list)
         for answer in micro_answers:
             policy = answer.metadata.get("policy_area", "Unknown")
             by_policy[policy].append(answer)
         
-        # Generate clusters
-        clusters = []
+        clusters: List[Any] = []
         for policy_area, answers in by_policy.items():
             cluster = self.report_assembler.generate_meso_cluster(
                 cluster_name=f"POLICY_{policy_area}",
@@ -354,8 +386,15 @@ class FARFANOrchestrator:
         
         return clusters
 
-    def _update_execution_stats(self, execution_results: Dict[str, Any]):
-        """Update execution statistics"""
+    def _update_execution_stats(self, execution_results: Dict[str, Any]) -> None:
+        """
+        Update internal execution statistics for monitoring
+        
+        Tracks per-adapter performance metrics including success rate and average execution time
+        
+        Args:
+            execution_results: Dictionary of ExecutionResult objects
+        """
         for key, result in execution_results.items():
             adapter_name = getattr(result, 'module_name', 'unknown')
             success = getattr(result, 'status', None) == 'COMPLETED'
@@ -368,7 +407,6 @@ class FARFANOrchestrator:
             else:
                 stats["failures"] += 1
             
-            # Update average time
             prev_avg = stats["avg_time"]
             calls = stats["calls"]
             stats["avg_time"] = (prev_avg * (calls - 1) + exec_time) / calls
@@ -376,12 +414,24 @@ class FARFANOrchestrator:
     def _generate_execution_summary(
             self,
             plan_name: str,
-            micro_answers: List,
-            meso_clusters: List,
-            macro_convergence,
+            micro_answers: List[Any],
+            meso_clusters: List[Any],
+            macro_convergence: Any,
             execution_time: float
     ) -> Dict[str, Any]:
-        """Generate execution summary"""
+        """
+        Generate comprehensive execution summary for reporting
+        
+        Args:
+            plan_name: Name of analyzed plan
+            micro_answers: List of MICRO-level answers
+            meso_clusters: List of MESO-level clusters
+            macro_convergence: MACRO-level convergence object
+            execution_time: Total execution time in seconds
+            
+        Returns:
+            Dictionary with execution statistics and quality metrics
+        """
         return {
             "plan_name": plan_name,
             "analysis_timestamp": datetime.now().isoformat(),
@@ -402,7 +452,12 @@ class FARFANOrchestrator:
         }
 
     def get_orchestrator_status(self) -> Dict[str, Any]:
-        """Get current orchestrator status"""
+        """
+        Get current orchestrator health status
+        
+        Returns:
+            Dictionary with adapter availability, circuit breaker status, and execution statistics
+        """
         return {
             "adapters_available": self.module_registry.get_available_modules(),
             "total_adapters": len(self.module_registry.adapters),
@@ -417,18 +472,20 @@ class FARFANOrchestrator:
             output_dir: Optional[Path] = None
     ) -> List[Dict[str, Any]]:
         """
-        Analyze multiple plans in batch
+        Analyze multiple plans in batch mode
+        
+        Executes analyze_single_plan() sequentially for each plan in the list
         
         Args:
-            plan_paths: List of plan document paths
-            output_dir: Optional output directory for all results
+            plan_paths: List of paths to plan documents
+            output_dir: Optional output directory for all batch results
             
         Returns:
-            List of analysis results (one per plan)
+            List of analysis results (one dictionary per plan)
         """
         logger.info(f"Starting batch analysis of {len(plan_paths)} plans")
         
-        results = []
+        results: List[Dict[str, Any]] = []
         for i, plan_path in enumerate(plan_paths, 1):
             logger.info(f"Analyzing plan {i}/{len(plan_paths)}: {plan_path.name}")
             
@@ -442,10 +499,6 @@ class FARFANOrchestrator:
         
         return results
 
-
-# ============================================================================
-# USAGE EXAMPLE
-# ============================================================================
 
 if __name__ == "__main__":
     print("=" * 80)
