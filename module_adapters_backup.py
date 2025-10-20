@@ -4719,60 +4719,171 @@ class DerekBeachAdapter(BaseAdapter):
         )
 
     def _execute_add_node_to_graph(self, graph, goal, **kwargs) -> ModuleResult:
-    """Execute CausalExtractor._add_node_to_graph()"""
-    config = kwargs.get('config', {})
-    extractor = self.CausalExtractor(config)
-    extractor._add_node_to_graph(graph, goal)
+        """Execute CausalExtractor._add_node_to_graph()"""
+        config = kwargs.get('config', {})
+        extractor = self.CausalExtractor(config)
+        extractor._add_node_to_graph(graph, goal)
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="CausalExtractor",
+            method_name="_add_node_to_graph",
+            status="success",
+            data={},
+            evidence=[],
+            confidence=0.0,
+            execution_time=0.0
+        )
 
     def _execute_extract_causal_links(self, graph, goals, **kwargs) -> ModuleResult:
-    """Execute CausalExtractor._extract_causal_links()"""
-    config = kwargs.get('config', {})
-    extractor = self.CausalExtractor(config)
-    links = extractor._extract_causal_links(graph, goals)
+        """Execute CausalExtractor._extract_causal_links()"""
+        config = kwargs.get('config', {})
+        extractor = self.CausalExtractor(config)
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="CausalExtractor",
+            method_name="_extract_causal_links",
+            status="success",
+            data={},
+            evidence=[],
+            confidence=0.0,
+            execution_time=0.0
+        )
+        links = extractor._extract_causal_links(graph, goals)
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="CausalExtractor",
+            method_name="_extract_causal_links",
+            status="success",
+            data={"links": links},
+            evidence=[],
+            confidence=0.0,
+            execution_time=0.0
+        )
 
     def _execute_calculate_semantic_distance(self, text1: str, text2: str, **kwargs) -> ModuleResult:
-    """Execute CausalExtractor._calculate_semantic_distance()"""
-    config = kwargs.get('config', {})
-    extractor = self.CausalExtractor(config)
-    distance = extractor._calculate_semantic_distance(text1, text2)
+        """Execute CausalExtractor._calculate_semantic_distance()"""
+        config = kwargs.get('config', {})
+        extractor = self.CausalExtractor(config)
+        distance = extractor._calculate_semantic_distance(text1, text2)
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="CausalExtractor",
+            method_name="_calculate_semantic_distance",
+            status="success",
+            data={"distance": distance},
+            evidence=[],
+            confidence=0.0,
+            execution_time=0.0
+        )
 
     def _execute_calculate_type_transition_prior(self, source_type, target_type, **kwargs) -> ModuleResult:
-    """Execute CausalExtractor._calculate_type_transition_prior()"""
-    config = kwargs.get('config', {})
-    extractor = self.CausalExtractor(config)
-    prior = extractor._calculate_type_transition_prior(source_type, target_type)
+        """Execute CausalExtractor._calculate_type_transition_prior()"""
+        config = kwargs.get('config', {})
+        extractor = self.CausalExtractor(config)
+        prior = extractor._calculate_type_transition_prior(source_type, target_type)
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="CausalExtractor",
+            method_name="_calculate_type_transition_prior",
+            status="success",
+            data={"prior": prior},
+            evidence=[],
+            confidence=0.0,
+            execution_time=0.0
+        )
 
     def _execute_check_structural_violation(self, source_type, target_type, **kwargs) -> ModuleResult:
-    """Execute CausalExtractor._check_structural_violation()"""
-    config = kwargs.get('config', {})
-    extractor = self.CausalExtractor(config)
-    violation = extractor._check_structural_violation(source_type, target_type)
+        """Execute CausalExtractor._check_structural_violation()"""
+        config = kwargs.get('config', {})
+        extractor = self.CausalExtractor(config)
+        violation = extractor._check_structural_violation(source_type, target_type)
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="CausalExtractor",
+            method_name="_check_structural_violation",
+            status="success",
+            data={"violation": violation},
+            evidence=[],
+            confidence=0.0,
+            execution_time=0.0
+        )
 
     def _execute_calculate_language_specificity(self, text: str, **kwargs) -> ModuleResult:
-    """Execute CausalExtractor._calculate_language_specificity()"""
-    config = kwargs.get('config', {})
-    extractor = self.CausalExtractor(config)
-    specificity = extractor._calculate_language_specificity(text)
+        """Execute CausalExtractor._calculate_language_specificity()"""
+        config = kwargs.get('config', {})
+        extractor = self.CausalExtractor(config)
+        specificity = extractor._calculate_language_specificity(text)
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="CausalExtractor",
+            method_name="_calculate_language_specificity",
+            status="success",
+            data={"specificity": specificity},
+            evidence=[],
+            confidence=0.0,
+            execution_time=0.0
+        )
 
     def _execute_assess_temporal_coherence(self, text: str, **kwargs) -> ModuleResult:
-    """Execute CausalExtractor._assess_temporal_coherence()"""
-    config = kwargs.get('config', {})
-    extractor = self.CausalExtractor(config)
-    coherence = extractor._assess_temporal_coherence(text)
+        """Execute CausalExtractor._assess_temporal_coherence()"""
+        config = kwargs.get('config', {})
+        extractor = self.CausalExtractor(config)
+        coherence = extractor._assess_temporal_coherence(text)
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="CausalExtractor",
+            method_name="_assess_temporal_coherence",
+            status="success",
+            data={"coherence": coherence},
+            evidence=[],
+            confidence=0.0,
+            execution_time=0.0
+        )
 
     def _execute_assess_financial_consistency(self, text: str, **kwargs) -> ModuleResult:
-    """Execute CausalExtractor._assess_financial_consistency()"""
-    config = kwargs.get('config', {})
-    extractor = self.CausalExtractor(config)
-    consistency = extractor._assess_financial_consistency(text)
+        """Execute CausalExtractor._assess_financial_consistency()"""
+        config = kwargs.get('config', {})
+        extractor = self.CausalExtractor(config)
+        consistency = extractor._assess_financial_consistency(text)
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="CausalExtractor",
+            method_name="_assess_financial_consistency",
+            status="success",
+            data={"consistency": consistency},
+            evidence=[],
+            confidence=0.0,
+            execution_time=0.0
+        )
 
     def _execute_calculate_textual_proximity(self, idx1: int, idx2: int, total: int, **kwargs) -> ModuleResult:
-    """Execute CausalExtractor._calculate_textual_proximity()"""
-    config = kwargs.get('config', {})
-    extractor = self.CausalExtractor(config)
-    proximity = extractor._calculate_textual_proximity(idx1, idx2, total)
+        """Execute CausalExtractor._calculate_textual_proximity()"""
+        config = kwargs.get('config', {})
+        extractor = self.CausalExtractor(config)
+        proximity = extractor._calculate_textual_proximity(idx1, idx2, total)
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="CausalExtractor",
+            method_name="_calculate_textual_proximity",
+            status="success",
+            data={"proximity": proximity},
+            evidence=[],
+            confidence=0.0,
+            execution_time=0.0
+        )
 
     def _execute_initialize_prior(self, source_type, target_type, **kwargs) -> ModuleResult:
+        """Execute CausalExtractor._initialize_prior()"""
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="CausalExtractor",
+            method_name="_initialize_prior",
+            status="success",
+            data={},
+            evidence=[],
+            confidence=0.0,
+            execution_time=0.0
+        )
     """Execute CausalExtractor._initialize_prior()"""
     config = kwargs.get('config', {})
     extractor = self.CausalExtractor(config)

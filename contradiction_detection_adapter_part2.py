@@ -6,6 +6,20 @@ Continuation of contradiction_detection_adapter_part1.py
 Contains PolicyContradictionDetector method implementations (40 methods).
 """
 
+from typing import Dict, List, Any
+from dataclasses import dataclass
+
+@dataclass
+class ModuleResult:
+    module_name: str
+    class_name: str
+    method_name: str
+    status: str
+    data: Any
+    evidence: List[Dict]
+    confidence: float
+    execution_time: float
+
 # This file continues from Part 1 - add these methods to the ContradictionDetectionAdapter class
 
 # ========================================================================

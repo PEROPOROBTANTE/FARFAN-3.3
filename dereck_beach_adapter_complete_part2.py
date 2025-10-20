@@ -518,7 +518,7 @@ def _execute_audit_sequence_logic(self, nodes, links, **kwargs) -> ModuleResult:
 
 def _execute_bayesian_counterfactual_audit(self, nodes, links, **kwargs) -> ModuleResult:
     """Execute OperationalizationAuditor.bayesian_counterfactual_audit()"""
-    config = kwargs.get('config', {}}
+    config = kwargs.get('config', {})
     auditor = self.OperationalizationAuditor(config)
     result = auditor.bayesian_counterfactual_audit(nodes, links)
 

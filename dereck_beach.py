@@ -21,7 +21,7 @@ import logging
 import re
 import sys
 from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from typing import (
     Any, Dict, List, Optional, Set, Tuple, Union, TypedDict,
@@ -1903,9 +1903,6 @@ class FinancialAuditor:
         self.logger.info(f"D3-Q3 Counterfactual Budget Check completed: "
                          f"{self.d3_q3_analysis['well_traced_count']}/{len(d3_q3_scores)} "
                          f"products with excellent traceability")
-        if best_match:
-            return best_match[0]
-
         return None
 
 
