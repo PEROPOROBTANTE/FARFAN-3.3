@@ -144,8 +144,12 @@ class CircuitBreaker:
         self.success_counts[adapter_name] += 1
         state = self.adapter_states[adapter_name]
         
+        # HALF_OPEN: Check if we have completed all test calls successfully
         if state == CircuitState.HALF_OPEN:
+            # Count successful calls in half-open state by checking call counter
+            # We transition to CLOSED only after recording the last success
             if self.half_open_calls[adapter_name] >= self.half_open_max_calls:
+                # All test calls completed, close circuit
                 self._transition_to_closed(adapter_name)
         
         logger.debug(f"{adapter_name}: Success recorded (state={state.name})")
