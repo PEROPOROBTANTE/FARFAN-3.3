@@ -1,7 +1,8 @@
-# circuit_breaker.py - SOTA Implementation for FARFAN 3.0
+# circuit_breaker.py - Updated for module_adapters.py compatibility
 """
 Advanced Circuit Breaker with AI-driven failure prediction and adaptive thresholds
 Implements cutting-edge fault tolerance with predictive analytics and self-healing
+Compatible with ModuleResult standardized format from module_adapters.py
 """
 import logging
 import time
@@ -13,7 +14,7 @@ from typing import Dict, List, Any, Optional, Callable, Union, Tuple
 from dataclasses import dataclass, field
 from collections import deque, defaultdict
 from concurrent.futures import ThreadPoolExecutor
-import threading
+from threading import Thread, RLock
 import json
 from datetime import datetime, timedelta
 import warnings
@@ -210,6 +211,8 @@ class CircuitBreakerMetrics:
         self.state_transitions = []
         self.failure_events = []
         self.performance_metrics = PerformanceMetrics()
+        self.last_success_time: Optional[float] = None
+        self.last_failure_time: Optional[float] = None
 
     @property
     def failure_rate(self) -> float:
@@ -241,8 +244,8 @@ class CircuitBreakerMetrics:
                                 reason: str, timestamp: float):
         """Record a state transition"""
         self.state_transitions.append({
-            "from": from_state,
-            "to": to_state,
+            "from": from_state.name,
+            "to": to_state.name,
             "reason": reason,
             "timestamp": timestamp
         })
@@ -261,6 +264,7 @@ class AdvancedCircuitBreaker:
     - Comprehensive observability
     - Self-healing capabilities
     - Resource-aware routing
+    - Compatible with ModuleResult format from module_adapters.py
     """
 
     def __init__(
@@ -278,7 +282,7 @@ class AdvancedCircuitBreaker:
 
         # Circuit state
         self.state = CircuitState.CLOSED
-        self.state_lock = threading.RLock()
+        self.state_lock = RLock()
 
         # Configuration
         self.thresholds = AdaptiveThresholds(
@@ -293,8 +297,6 @@ class AdvancedCircuitBreaker:
         self.consecutive_failures = 0
         self.half_open_calls = 0
         self.half_open_successes = 0
-        self.last_failure_time: Optional[float] = None
-        self.last_success_time: Optional[float] = None
 
         # Advanced features
         self.enable_prediction = enable_prediction
@@ -478,7 +480,7 @@ class AdvancedCircuitBreaker:
         """Record a successful execution"""
         with self.state_lock:
             self.metrics.successful_requests += 1
-            self.metrics.consecutive_failures = 0
+            self.consecutive_failures = 0
             self.metrics.last_success_time = time.time()
 
             # Update performance metrics
@@ -507,7 +509,7 @@ class AdvancedCircuitBreaker:
         """Record a failure event"""
         with self.state_lock:
             self.metrics.failed_requests += 1
-            self.metrics.consecutive_failures += 1
+            self.consecutive_failures += 1
             self.metrics.last_failure_time = event.timestamp
             self.metrics.add_failure_event(event)
 
@@ -517,7 +519,7 @@ class AdvancedCircuitBreaker:
             )
 
             # Check if should open circuit
-            if self.metrics.consecutive_failures >= self.thresholds.failure_threshold:
+            if self.consecutive_failures >= self.thresholds.failure_threshold:
                 if event.severity in [FailureSeverity.CRITICAL, FailureSeverity.CATASTROPHIC]:
                     self._transition_to_isolated(f"critical_failure_{event.severity.value}")
                 else:
@@ -526,7 +528,7 @@ class AdvancedCircuitBreaker:
             # Notify observers
             self._notify_observers("failure", {
                 "event": event,
-                "consecutive_failures": self.metrics.consecutive_failures
+                "consecutive_failures": self.consecutive_failures
             })
 
     def _transition_to_open(self, reason: str):
@@ -540,7 +542,7 @@ class AdvancedCircuitBreaker:
 
         self.logger.warning(
             f"Circuit OPENED for {self.module_name} "
-            f"({self.metrics.consecutive_failures} consecutive failures) - {reason}"
+            f"({self.consecutive_failures} consecutive failures) - {reason}"
         )
 
         # Start recovery timer
@@ -671,6 +673,11 @@ class AdvancedCircuitBreaker:
 
     # Public API methods
 
+    def is_available(self) -> bool:
+        """Check if the circuit is available for calls"""
+        with self.state_lock:
+            return self.state in [CircuitState.CLOSED, CircuitState.HALF_OPEN]
+
     def force_open(self, reason: str = "manual"):
         """Manually force the circuit open"""
         with self.state_lock:
@@ -754,59 +761,124 @@ class AdvancedCircuitBreaker:
             }
 
 
-class CircuitBreakerRegistry:
-    """Registry for managing multiple circuit breakers"""
+class CircuitBreaker:
+    """
+    Simplified Circuit Breaker interface for backward compatibility.
+    Wraps AdvancedCircuitBreaker with a simpler API.
+    """
 
     def __init__(self):
         self.circuit_breakers: Dict[str, AdvancedCircuitBreaker] = {}
         self.global_observers = []
         self.metrics_aggregator = CircuitBreakerMetricsAggregator()
+        self.logger = logging.getLogger(__name__)
 
-    def get_circuit_breaker(self, module_name: str, **kwargs) -> AdvancedCircuitBreaker:
+    def call(
+            self,
+            module_name: str,
+            func: Callable,
+            fallback: Optional[Callable] = None,
+            *args,
+            **kwargs
+    ) -> Any:
+        """
+        Execute a function with circuit breaker protection.
+
+        Args:
+            module_name: Name of the module
+            func: Function to execute
+            fallback: Optional fallback function
+            *args, **kwargs: Arguments to pass to func
+
+        Returns:
+            Result from func or fallback
+        """
+        circuit_breaker = self._get_or_create_circuit_breaker(module_name)
+        return circuit_breaker.call(func, *args, fallback=fallback, **kwargs)
+
+    def is_available(self, module_name: str) -> bool:
+        """Check if a module is available (circuit not open)"""
+        if module_name not in self.circuit_breakers:
+            return True
+        return self.circuit_breakers[module_name].is_available()
+
+    def _get_or_create_circuit_breaker(self, module_name: str) -> AdvancedCircuitBreaker:
         """Get or create a circuit breaker for a module"""
         if module_name not in self.circuit_breakers:
             self.circuit_breakers[module_name] = AdvancedCircuitBreaker(
-                module_name, **kwargs
+                module_name,
+                enable_prediction=True,
+                enable_adaptation=True
             )
             # Add global observer
             self.circuit_breakers[module_name].add_observer(
                 self._global_observer
             )
+            self.logger.info(f"Created circuit breaker for module: {module_name}")
         return self.circuit_breakers[module_name]
 
     def _global_observer(self, module_name: str, event_type: str, data: Dict[str, Any]):
         """Global observer for all circuit events"""
         self.metrics_aggregator.record_event(module_name, event_type, data)
 
-    def get_all_health_statuses(self) -> Dict[str, Dict[str, Any]]:
-        """Get health status for all circuit breakers"""
-        return {
-            name: cb.get_health_status()
-            for name, cb in self.circuit_breakers.items()
-        }
-
-    def get_system_health_summary(self) -> Dict[str, Any]:
-        """Get system-wide health summary"""
-        statuses = self.get_all_health_statuses()
+    def get_health_summary(self) -> Dict[str, Any]:
+        """Get health summary for all circuit breakers"""
+        statuses = {}
+        for module_name, cb in self.circuit_breakers.items():
+            statuses[module_name] = cb.get_health_status()
 
         total_modules = len(statuses)
+        if total_modules == 0:
+            return {
+                "total_modules": 0,
+                "healthy_modules": 0,
+                "degraded_modules": 0,
+                "unhealthy_modules": 0,
+                "health_percentage": 100.0,
+                "avg_success_rate": 1.0,
+                "timestamp": datetime.now().isoformat()
+            }
+
         healthy = sum(1 for s in statuses.values() if s["state"] == "CLOSED")
         degraded = sum(1 for s in statuses.values() if s["state"] == "HALF_OPEN")
         unhealthy = sum(1 for s in statuses.values() if s["state"] in ["OPEN", "ISOLATED"])
 
-        avg_success_rate = np.mean([
-            s["success_rate"] for s in statuses.values() if s["total_requests"] > 0
-        ]) if statuses else 0.0
+        success_rates = [s["success_rate"] for s in statuses.values() if s["total_requests"] > 0]
+        avg_success_rate = np.mean(success_rates) if success_rates else 1.0
 
         return {
             "total_modules": total_modules,
             "healthy_modules": healthy,
             "degraded_modules": degraded,
             "unhealthy_modules": unhealthy,
-            "health_percentage": (healthy / total_modules * 100) if total_modules > 0 else 0,
+            "health_percentage": (healthy / total_modules * 100) if total_modules > 0 else 100,
             "avg_success_rate": avg_success_rate,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
+            "module_statuses": statuses
         }
+
+    def get_all_metrics(self) -> Dict[str, Dict[str, Any]]:
+        """Get detailed metrics for all circuit breakers"""
+        return {
+            module_name: cb.get_detailed_metrics()
+            for module_name, cb in self.circuit_breakers.items()
+        }
+
+    def reset_all(self):
+        """Reset all circuit breakers"""
+        for cb in self.circuit_breakers.values():
+            cb.reset()
+        self.logger.info("All circuit breakers reset")
+
+    def force_open(self, module_name: str, reason: str = "manual"):
+        """Force open a specific circuit breaker"""
+        if module_name in self.circuit_breakers:
+            self.circuit_breakers[module_name].force_open(reason)
+
+    def force_close(self, module_name: str, reason: str = "manual"):
+        """Force close a specific circuit breaker"""
+        if module_name in self.circuit_breakers:
+            self.circuit_breakers[module_name].force_close(reason)
 
 
 class CircuitBreakerMetricsAggregator:
@@ -835,7 +907,11 @@ class CircuitBreakerMetricsAggregator:
         ]
 
         if not failure_events:
-            return {}
+            return {
+                "hourly_pattern": {},
+                "error_types": {},
+                "total_failures": 0
+            }
 
         # Group by hour
         hourly_failures = defaultdict(int)
@@ -846,13 +922,32 @@ class CircuitBreakerMetricsAggregator:
         # Group by error type
         error_types = defaultdict(int)
         for event in failure_events:
-            error_type = event["data"]["event"].error_type
-            error_types[error_type] += 1
+            if "event" in event["data"]:
+                error_type = event["data"]["event"].error_type
+                error_types[error_type] += 1
 
         return {
             "hourly_pattern": dict(hourly_failures),
             "error_types": dict(error_types),
             "total_failures": len(failure_events)
+        }
+
+    def get_module_statistics(self, module_name: str) -> Dict[str, Any]:
+        """Get statistics for a specific module"""
+        if module_name not in self.module_metrics:
+            return {}
+
+        metrics = self.module_metrics[module_name]
+        total_events = sum(len(events) for events in metrics.values())
+
+        return {
+            "total_events": total_events,
+            "success_count": len(metrics.get("success", [])),
+            "failure_count": len(metrics.get("failure", [])),
+            "event_types": {
+                event_type: len(events)
+                for event_type, events in metrics.items()
+            }
         }
 
 
@@ -861,57 +956,134 @@ class CircuitBreakerError(Exception):
     pass
 
 
-# Global registry instance
-circuit_breaker_registry = CircuitBreakerRegistry()
-
-
-# Convenience function for backward compatibility
+# Convenience function for creating module-specific fallbacks
 def create_module_specific_fallback(module_name: str) -> Callable:
-    """Create a module-specific fallback function"""
+    """
+    Create a module-specific fallback function that returns degraded responses
+    compatible with ModuleResult format from module_adapters.py
+    """
 
     def fallback(*args, **kwargs) -> Dict[str, Any]:
         logger.warning(f"Using fallback for {module_name}")
 
-        # Return module-specific degraded response
+        # Return module-specific degraded response compatible with ModuleResult
         fallback_responses = {
             "contradiction_detector": {
                 "contradictions": [],
                 "coherence_metrics": {"coherence_score": 0.5},
-                "status": "degraded"
+                "status": "degraded",
+                "message": "Contradiction detection unavailable, using fallback"
             },
             "causal_processor": {
+                "causal_dag": None,
                 "causal_dimensions": {},
                 "information_gain": 0.0,
-                "status": "degraded"
+                "status": "degraded",
+                "message": "Causal processing unavailable, using fallback"
             },
             "dereck_beach": {
+                "causal_hierarchy": None,
                 "mechanism_parts": [],
+                "mechanism_inferences": [],
+                "bayesian_confidence_report": {"mean_confidence": 0.5},
                 "rigor_status": 0.0,
-                "status": "degraded"
+                "status": "degraded",
+                "message": "Derek Beach analysis unavailable, using fallback"
             },
             "policy_processor": {
                 "dimensions": {},
                 "overall_score": 0.5,
-                "status": "degraded"
+                "status": "degraded",
+                "message": "Policy processing unavailable, using fallback"
             },
             "analyzer_one": {
+                "semantic_analysis": {},
+                "value_chain": {},
+                "critical_links": [],
                 "analysis_results": {},
                 "quality_score": 0.5,
-                "status": "degraded"
+                "status": "degraded",
+                "message": "Municipal analysis unavailable, using fallback"
             },
             "embedding_policy": {
+                "chunks": [],
                 "chunks_processed": 0,
                 "embeddings_generated": False,
-                "status": "degraded"
+                "status": "degraded",
+                "message": "Embedding analysis unavailable, using fallback"
             },
             "policy_segmenter": {
                 "segments": [],
-                "status": "degraded"
+                "num_segments": 0,
+                "status": "degraded",
+                "message": "Segmentation unavailable, using fallback"
+            },
+            "semantic_processor": {
+                "semantic_analysis": {},
+                "chunks": [],
+                "status": "degraded",
+                "message": "Semantic processing unavailable, using fallback"
             },
             "financial_analyzer": {
                 "budget_analysis": {},
                 "viability_score": 0.5,
-                "status": "degraded"
+                "financial_indicators": [],
+                "status": "degraded",
+                "message": "Financial analysis unavailable, using fallback"
+            },
+            "bayesian_integrator": {
+                "integrated_evidence": {},
+                "posterior_probability": 0.5,
+                "status": "degraded",
+                "message": "Bayesian integration unavailable, using fallback"
+            },
+            "validation_framework": {
+                "validation_results": {},
+                "is_valid": False,
+                "completeness_score": 0.5,
+                "status": "degraded",
+                "message": "Validation unavailable, using fallback"
+            },
+            "municipal_analyzer": {
+                "municipal_context": {},
+                "institutional_capacity": 0.5,
+                "status": "degraded",
+                "message": "Municipal analysis unavailable, using fallback"
+            },
+            "pdet_analyzer": {
+                "pdet_analysis": {},
+                "financial_feasibility": 0.5,
+                "status": "degraded",
+                "message": "PDET analysis unavailable, using fallback"
+            },
+            "decologo_processor": {
+                "decologo_analysis": {},
+                "alignment_score": 0.5,
+                "status": "degraded",
+                "message": "Decologo processing unavailable, using fallback"
+            },
+            "embedding_analyzer": {
+                "embedding_analysis": {},
+                "semantic_similarity": 0.5,
+                "status": "degraded",
+                "message": "Embedding analysis unavailable, using fallback"
+            },
+            "causal_validator": {
+                "validation_results": {},
+                "is_valid": False,
+                "structural_violations": [],
+                "status": "degraded",
+                "message": "Causal validation unavailable, using fallback"
+            },
+            "modulos_teoria_cambio": {
+                "grafo": None,
+                "validacion": None,
+                "es_valida": False,
+                "monte_carlo_result": None,
+                "p_value": 0.5,
+                "bayesian_posterior": 0.5,
+                "status": "degraded",
+                "message": "Theory of Change validation unavailable, using fallback"
             }
         }
 
@@ -920,8 +1092,87 @@ def create_module_specific_fallback(module_name: str) -> Callable:
             {
                 "status": "degraded",
                 "message": f"Module {module_name} unavailable, using fallback",
-                "data": {}
+                "data": {},
+                "confidence": 0.5
             }
         )
 
     return fallback
+
+
+# Global registry instance for backward compatibility
+circuit_breaker_registry = None
+
+
+def get_circuit_breaker_registry():
+    """Get or create the global circuit breaker registry"""
+    global circuit_breaker_registry
+    if circuit_breaker_registry is None:
+        circuit_breaker_registry = CircuitBreaker()
+    return circuit_breaker_registry
+
+
+# Convenience functions for common operations
+def call_with_circuit_breaker(
+        module_name: str,
+        func: Callable,
+        *args,
+        fallback: Optional[Callable] = None,
+        **kwargs
+) -> Any:
+    """
+    Execute a function with circuit breaker protection.
+    
+    Args:
+        module_name: Name of the module
+        func: Function to execute
+        *args, **kwargs: Arguments to pass to func
+        fallback: Optional fallback function
+        
+    Returns:
+        Result from func or fallback
+    """
+    registry = get_circuit_breaker_registry()
+    return registry.call(module_name, func, fallback, *args, **kwargs)
+
+
+def is_module_available(module_name: str) -> bool:
+    """Check if a module is available (circuit not open)"""
+    registry = get_circuit_breaker_registry()
+    return registry.is_available(module_name)
+
+
+def get_all_circuit_health() -> Dict[str, Any]:
+    """Get health status for all circuit breakers"""
+    registry = get_circuit_breaker_registry()
+    return registry.get_health_summary()
+
+
+def reset_circuit_breaker(module_name: str):
+    """Reset a specific circuit breaker"""
+    registry = get_circuit_breaker_registry()
+    if module_name in registry.circuit_breakers:
+        registry.circuit_breakers[module_name].reset()
+
+
+def reset_all_circuit_breakers():
+    """Reset all circuit breakers"""
+    registry = get_circuit_breaker_registry()
+    registry.reset_all()
+
+
+# Export main classes and functions
+__all__ = [
+    'CircuitBreaker',
+    'AdvancedCircuitBreaker',
+    'CircuitBreakerError',
+    'CircuitState',
+    'FailureSeverity',
+    'create_module_specific_fallback',
+    'call_with_circuit_breaker',
+    'is_module_available',
+    'get_all_circuit_health',
+    'reset_circuit_breaker',
+    'reset_all_circuit_breakers',
+    'get_circuit_breaker_registry'
+]

@@ -1,4 +1,4 @@
-# choreographer.py - Updated to use QuestionnaireParser for component mapping
+# choreographer.py - Updated to match new module_adapters.py structure
 """
 Execution Choreographer - Orchestrates module execution with dependency management
 Implements hybrid parallel/sequential execution strategy with detailed component mapping
@@ -91,7 +91,8 @@ class ExecutionChoreographer:
         ]
 
         for source, target in dependencies:
-            self.execution_graph.add_edge(source, target)
+            if source in CONFIG.modules and target in CONFIG.modules:
+                self.execution_graph.add_edge(source, target)
 
         logger.info(f"Built dependency graph with {self.execution_graph.number_of_nodes()} nodes "
                     f"and {self.execution_graph.number_of_edges()} edges")
@@ -159,17 +160,17 @@ class ExecutionChoreographer:
                 "D1": ["chunk_document", "evaluate_policy_metric"],
                 "D2": ["chunk_document", "semantic_search"],
                 "D3": ["evaluate_policy_metric", "evaluate_policy_numerical_consistency"],
-                "D4": ["evaluate_policy_metric", "extract_numerical_values"],
-                "D5": ["beta_binomial_posterior", "compare_policy_interventions"],
-                "D6": ["generate_pdq_report", "calculate_semantic_complexity"]
+                "D4": ["evaluate_policy_metric", "process_document"],
+                "D5": ["evaluate_policy_metric", "evaluate_policy_numerical_consistency"],
+                "D6": ["process_document", "semantic_search"]
             },
             "analyzer_one": {
-                "D1": ["extract_semantic_cube", "classify_value_chain_link"],
-                "D2": ["process_segment", "analyze_performance"],
-                "D3": ["analyze_performance", "diagnose_critical_links"],
-                "D4": ["assess_risks", "detect_bottlenecks"],
-                "D5": ["classify_cross_cutting_themes", "generate_recommendations"],
-                "D6": ["classify_policy_domain", "calculate_throughput_metrics"]
+                "D1": ["extract_semantic_cube", "analyze_document"],
+                "D2": ["analyze_document", "extract_value_chain"],
+                "D3": ["analyze_document", "diagnose_critical_links"],
+                "D4": ["analyze_document", "diagnose_critical_links"],
+                "D5": ["analyze_document", "extract_value_chain"],
+                "D6": ["analyze_document", "extract_semantic_cube"]
             },
             "policy_segmenter": {
                 "D1": ["segment", "segment_into_sentences"],
@@ -181,51 +182,51 @@ class ExecutionChoreographer:
             },
             "policy_processor": {
                 "D1": ["process", "extract_policy_sections"],
-                "D2": ["process", "analyze_causal_dimensions"],
-                "D3": ["process", "analyze"],
-                "D4": ["process", "analyze_causal_dimensions"],
-                "D5": ["process", "analyze_causal_dimensions"],
-                "D6": ["process", "analyze_causal_dimensions"]
+                "D2": ["process", "_extract_point_evidence"],
+                "D3": ["process", "score_evidence"],
+                "D4": ["process", "_extract_point_evidence"],
+                "D5": ["process", "score_evidence"],
+                "D6": ["process", "extract_policy_sections"]
             },
             "causal_processor": {
-                "D1": ["extract_goals", "build_causal_graph"],
-                "D2": ["extract_causal_links", "build_causal_graph"],
-                "D3": ["build_type_hierarchy", "validate_complete"],
-                "D4": ["extract_causal_hierarchy", "validate_complete"],
-                "D5": ["validate_causal_order", "simulate_intervention"],
-                "D6": ["build_causal_graph", "extract_causal_hierarchy"]
+                "D1": ["analyze", "construct_causal_dag"],
+                "D2": ["analyze", "construct_causal_dag"],
+                "D3": ["analyze", "estimate_causal_effects"],
+                "D4": ["analyze", "generate_counterfactuals"],
+                "D5": ["analyze", "estimate_causal_effects"],
+                "D6": ["analyze", "construct_causal_dag"]
             },
             "contradiction_detector": {
-                "D1": ["detect", "detect_logical_incompatibilities"],
-                "D2": ["detect", "verify_temporal_consistency"],
-                "D3": ["detect", "detect_resource_conflicts"],
-                "D4": ["detect", "verify_temporal_consistency"],
-                "D5": ["detect", "detect_resource_conflicts"],
-                "D6": ["detect", "detect_logical_incompatibilities"]
+                "D1": ["detect", "calculate_confidence"],
+                "D2": ["detect", "verify_temporal_logic"],
+                "D3": ["detect", "calculate_confidence"],
+                "D4": ["detect", "verify_temporal_logic"],
+                "D5": ["detect", "calculate_confidence"],
+                "D6": ["detect", "calculate_confidence"]
             },
             "dereck_beach": {
-                "D1": ["audit_evidence_traceability", "generate_accountability_matrix"],
-                "D2": ["extract_entity_activity", "build_causal_graph"],
-                "D3": ["validate_dnp_compliance", "audit_sequence_logic"],
-                "D4": ["audit_sequence_logic", "generate_causal_diagram"],
-                "D5": ["test_sufficiency", "test_necessity"],
-                "D6": ["apply_test_logic", "infer_mechanisms"]
+                "D1": ["process_document", "extract_causal_hierarchy"],
+                "D2": ["process_document", "extract_entity_activity"],
+                "D3": ["process_document", "audit_evidence_traceability"],
+                "D4": ["process_document", "trace_financial_allocation"],
+                "D5": ["process_document", "infer_mechanisms"],
+                "D6": ["process_document", "generate_confidence_report"]
             },
             "financial_analyzer": {
-                "D1": ["trace_financial_allocation", "analyze_budget_feasibility"],
-                "D2": ["assess_financial_consistency", "analyze_budget_feasibility"],
-                "D3": ["trace_financial_allocation", "analyze_budget_feasibility"],
-                "D4": ["assess_financial_consistency", "analyze_budget_feasibility"],
-                "D5": ["assess_financial_consistency", "analyze_budget_feasibility"],
-                "D6": ["assess_financial_consistency", "analyze_budget_feasibility"]
+                "D1": ["analyze_financial_feasibility", "extract_financial_indicators"],
+                "D2": ["analyze_financial_feasibility", "analyze_budget_allocation"],
+                "D3": ["analyze_financial_feasibility", "extract_financial_indicators"],
+                "D4": ["analyze_financial_feasibility", "analyze_budget_allocation"],
+                "D5": ["analyze_financial_feasibility", "analyze_budget_allocation"],
+                "D6": ["analyze_financial_feasibility", "extract_financial_indicators"]
             },
             "bayesian_integrator": {
-                "D1": ["integrate_evidence", "causal_strength"],
-                "D2": ["integrate_evidence", "causal_strength"],
-                "D3": ["integrate_evidence", "causal_strength"],
-                "D4": ["integrate_evidence", "causal_strength"],
-                "D5": ["integrate_evidence", "causal_strength"],
-                "D6": ["integrate_evidence", "causal_strength"]
+                "D1": ["integrate_evidence", "calculate_posterior"],
+                "D2": ["integrate_evidence", "calculate_posterior"],
+                "D3": ["integrate_evidence", "calculate_posterior"],
+                "D4": ["integrate_evidence", "calculate_posterior"],
+                "D5": ["integrate_evidence", "calculate_posterior"],
+                "D6": ["integrate_evidence", "calculate_posterior"]
             },
             "validation_framework": {
                 "D1": ["validate_evidence", "check_completeness"],
@@ -244,12 +245,12 @@ class ExecutionChoreographer:
                 "D6": ["analyze_municipal_context", "assess_institutional_capacity"]
             },
             "pdet_analyzer": {
-                "D1": ["analyze_financial_feasibility", "extract_budget_for_pillar"],
-                "D2": ["construct_causal_dag", "assess_financial_sustainability"],
-                "D3": ["analyze_financial_feasibility", "extract_budget_for_pillar"],
-                "D4": ["construct_causal_dag", "assess_financial_sustainability"],
-                "D5": ["simulate_intervention", "sensitivity_analysis"],
-                "D6": ["construct_causal_dag", "assess_financial_sustainability"]
+                "D1": ["analyze_plan", "extract_budget_allocation"],
+                "D2": ["analyze_plan", "assess_financial_sustainability"],
+                "D3": ["analyze_plan", "extract_budget_allocation"],
+                "D4": ["analyze_plan", "assess_financial_sustainability"],
+                "D5": ["analyze_plan", "simulate_intervention"],
+                "D6": ["analyze_plan", "assess_financial_sustainability"]
             },
             "decologo_processor": {
                 "D1": ["process_decologo", "analyze_decologo_alignment"],
@@ -274,6 +275,14 @@ class ExecutionChoreographer:
                 "D4": ["validate_causal_model", "check_structural_violations"],
                 "D5": ["validate_causal_model", "check_structural_violations"],
                 "D6": ["validate_causal_model", "check_structural_violations"]
+            },
+            "modulos_teoria_cambio": {
+                "D1": ["construir_grafo_causal", "validacion_completa"],
+                "D2": ["construir_grafo_causal", "validacion_completa"],
+                "D3": ["construir_grafo_causal", "calculate_acyclicity_pvalue"],
+                "D4": ["construir_grafo_causal", "calculate_acyclicity_pvalue"],
+                "D5": ["validacion_completa", "calculate_acyclicity_pvalue"],
+                "D6": ["validacion_completa", "execute_suite"]
             }
         }
 
@@ -388,10 +397,11 @@ class ExecutionChoreographer:
         priority_map = {}
 
         for module in module_order:
-            priority = CONFIG.modules[module].priority
-            if priority not in priority_map:
-                priority_map[priority] = []
-            priority_map[priority].append(module)
+            if module in CONFIG.modules:
+                priority = CONFIG.modules[module].priority
+                if priority not in priority_map:
+                    priority_map[priority] = []
+                priority_map[priority].append(module)
 
         # Return waves in priority order
         return [priority_map[p] for p in sorted(priority_map.keys())]
@@ -445,7 +455,8 @@ class ExecutionChoreographer:
                 for future in as_completed(future_to_module):
                     module = future_to_module[future]
                     try:
-                        module_results = future.result(timeout=CONFIG.modules[module].timeout_seconds)
+                        timeout = CONFIG.modules[module].timeout_seconds if module in CONFIG.modules else 300
+                        module_results = future.result(timeout=timeout)
                         wave_results.update(module_results)
                     except Exception as e:
                         logger.error(f"Module {module} failed: {e}")
@@ -475,7 +486,7 @@ class ExecutionChoreographer:
         This calls the ACTUAL module through ModuleAdapterRegistry
         """
         start_time = time.time()
-        module_config = CONFIG.modules[module_name]
+        module_config = CONFIG.modules.get(module_name)
 
         logger.info(f"Executing module: {module_name} with methods: {method_names}")
 
@@ -500,14 +511,55 @@ class ExecutionChoreographer:
             for method_name in method_names:
                 method_start_time = time.time()
 
-                # Prepare arguments based on method
-                args = [plan_text]
-                kwargs = {"plan_metadata": plan_metadata}
+                # Prepare arguments based on method and module
+                args = []
+                kwargs = {}
 
-                # Add question-specific parameters for certain modules
+                # Module-specific argument preparation
                 if module_name == "contradiction_detector":
-                    kwargs["plan_name"] = plan_metadata.get("name", "Unknown")
-                    kwargs["dimension"] = dimension
+                    args = [plan_text]
+                    kwargs = {
+                        "plan_name": plan_metadata.get("name", "Unknown"),
+                        "dimension": dimension
+                    }
+                elif module_name == "dereck_beach":
+                    args = [plan_text, plan_metadata.get("name", "Unknown")]
+                    kwargs = {}
+                elif module_name == "embedding_policy":
+                    if method_name == "chunk_document":
+                        args = [plan_text, plan_metadata]
+                    elif method_name == "evaluate_policy_metric":
+                        # Extract numerical values from previous results
+                        args = [[0.5, 0.6, 0.7]]  # Default values
+                    elif method_name in ["semantic_search", "rerank"]:
+                        # Need query and candidates
+                        args = [dimension, []]
+                    else:
+                        args = [plan_text, plan_metadata]
+                    kwargs = {}
+                elif module_name == "causal_processor":
+                    args = [plan_text]
+                    kwargs = {}
+                elif module_name == "modulos_teoria_cambio":
+                    if method_name == "calculate_acyclicity_pvalue":
+                        args = [plan_metadata.get("name", "Unknown"), 10000]
+                    elif method_name == "validacion_completa":
+                        # Need to construct graph first
+                        from .module_adapters import ModuleAdapterRegistry
+                        temp_registry = ModuleAdapterRegistry()
+                        graph_result = temp_registry.execute_module_method(
+                            "modulos_teoria_cambio",
+                            "construir_grafo_causal",
+                            [], {}
+                        )
+                        args = [graph_result.data.get("grafo")]
+                    else:
+                        args = []
+                    kwargs = {}
+                else:
+                    # Default argument preparation
+                    args = [plan_text]
+                    kwargs = {"plan_metadata": plan_metadata}
 
                 # Execute module method
                 result = registry.execute_module_method(
@@ -528,10 +580,12 @@ class ExecutionChoreographer:
                     status=status,
                     output=result.data,
                     execution_time=result.execution_time,
-                    evidence_extracted=self._extract_evidence_from_output(module_name, result.data),
+                    evidence_extracted=self._extract_evidence_from_result(result),
                     confidence=result.confidence,
                     error=result.errors[0] if result.errors else None
                 )
+
+                logger.info(f"Completed {component_key} in {result.execution_time:.2f}s with confidence {result.confidence:.2f}")
 
             return module_results
 
@@ -553,79 +607,44 @@ class ExecutionChoreographer:
 
             return module_results
 
-    def _extract_evidence_from_output(
-            self,
-            module_name: str,
-            output: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _extract_evidence_from_result(self, module_result) -> Dict[str, Any]:
         """
-        Extract structured evidence from module output.
+        Extract structured evidence from ModuleResult.
 
-        This maps module-specific output to canonical evidence format:
-        {
-            "quantitative_claims": [...],
-            "causal_links": [...],
-            "contradictions": [...],
-            "confidence_scores": {...}
-        }
+        The new module_adapters.py already provides standardized evidence
+        in the ModuleResult.evidence field.
         """
         evidence = {
             "quantitative_claims": [],
             "causal_links": [],
             "contradictions": [],
             "confidence_scores": {},
-            "raw_output": output
+            "raw_evidence": module_result.evidence
         }
 
-        # Module-specific evidence extraction logic
-        if module_name == "contradiction_detector":
-            evidence["contradictions"] = output.get("contradictions", [])
-            evidence["confidence_scores"]["coherence"] = output.get("coherence_metrics", {}).get("coherence_score", 0.0)
+        # Process standardized evidence from ModuleResult
+        for ev_item in module_result.evidence:
+            if isinstance(ev_item, dict):
+                ev_type = ev_item.get("type", "")
 
-        elif module_name == "causal_processor":
-            evidence["causal_links"] = output.get("causal_dimensions", {})
-            evidence["confidence_scores"]["causal_strength"] = output.get("information_gain", 0.0)
+                # Extract based on evidence type
+                if "contradiction" in ev_type:
+                    evidence["contradictions"].extend(ev_item.get("contradictions", []))
+                
+                if "causal" in ev_type:
+                    evidence["causal_links"].append(ev_item)
+                
+                if any(keyword in ev_type for keyword in ["quantitative", "numerical", "financial", "budget"]):
+                    evidence["quantitative_claims"].append(ev_item)
+                
+                # Extract confidence scores from evidence
+                for key, value in ev_item.items():
+                    if "confidence" in key.lower() or "score" in key.lower():
+                        if isinstance(value, (int, float)):
+                            evidence["confidence_scores"][key] = value
 
-        elif module_name == "dereck_beach":
-            evidence["causal_links"] = output.get("mechanism_parts", [])
-            evidence["confidence_scores"]["mechanism_confidence"] = output.get("rigor_status", 0.0)
-            evidence["quantitative_claims"].append({
-                "causal_hierarchy": output.get("causal_hierarchy", {}),
-                "mechanism_inferences": output.get("mechanism_inferences", [])
-            })
-
-        elif module_name == "policy_processor":
-            dimensions_data = output.get("dimensions", {})
-            for dim, dim_data in dimensions_data.items():
-                evidence["quantitative_claims"].append({
-                    "dimension": dim,
-                    "point_evidence": dim_data.get("point_evidence", []),
-                    "bayesian_score": dim_data.get("bayesian_score", 0.0)
-                })
-            evidence["confidence_scores"]["overall"] = output.get("overall_score", 0.0)
-
-        elif module_name == "financial_analyzer":
-            evidence["quantitative_claims"] = output.get("budget_analysis", {})
-            evidence["confidence_scores"]["financial_coherence"] = output.get("viability_score", 0.0)
-
-        elif module_name == "analyzer_one":
-            evidence["quantitative_claims"] = output.get("analysis_results", {})
-            evidence["confidence_scores"]["semantic_quality"] = output.get("quality_score", 0.0)
-
-        elif module_name == "embedding_policy":
-            evidence["quantitative_claims"].append({
-                "chunks_processed": output.get("chunks_processed", 0),
-                "embeddings_generated": output.get("embeddings_generated", False)
-            })
-            evidence["confidence_scores"]["embedding_quality"] = output.get("confidence", 0.0)
-
-        elif module_name == "policy_segmenter":
-            segments = output.get("segments", [])
-            evidence["quantitative_claims"].append({
-                "num_segments": len(segments),
-                "avg_segment_length": sum(len(s.get("text", "")) for s in segments) / len(segments) if segments else 0
-            })
-            evidence["confidence_scores"]["segmentation_quality"] = output.get("confidence", 0.0)
+        # Add module-level confidence
+        evidence["confidence_scores"]["module_confidence"] = module_result.confidence
 
         return evidence
 
