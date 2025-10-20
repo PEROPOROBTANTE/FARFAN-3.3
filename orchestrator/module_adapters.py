@@ -4719,130 +4719,130 @@ class DerekBeachAdapter(BaseAdapter):
         )
 
     def _execute_add_node_to_graph(self, graph, goal, **kwargs) -> ModuleResult:
-    """Execute CausalExtractor._add_node_to_graph()"""
-    config = kwargs.get('config', {})
-    extractor = self.CausalExtractor(config)
-    extractor._add_node_to_graph(graph, goal)
+        """Execute CausalExtractor._add_node_to_graph()"""
+        config = kwargs.get('config', {})
+        extractor = self.CausalExtractor(config)
+        extractor._add_node_to_graph(graph, goal)
 
     def _execute_extract_causal_links(self, graph, goals, **kwargs) -> ModuleResult:
-    """Execute CausalExtractor._extract_causal_links()"""
-    config = kwargs.get('config', {})
-    extractor = self.CausalExtractor(config)
-    links = extractor._extract_causal_links(graph, goals)
+        """Execute CausalExtractor._extract_causal_links()"""
+        config = kwargs.get('config', {})
+        extractor = self.CausalExtractor(config)
+        links = extractor._extract_causal_links(graph, goals)
 
     def _execute_calculate_semantic_distance(self, text1: str, text2: str, **kwargs) -> ModuleResult:
-    """Execute CausalExtractor._calculate_semantic_distance()"""
-    config = kwargs.get('config', {})
-    extractor = self.CausalExtractor(config)
-    distance = extractor._calculate_semantic_distance(text1, text2)
+        """Execute CausalExtractor._calculate_semantic_distance()"""
+        config = kwargs.get('config', {})
+        extractor = self.CausalExtractor(config)
+        distance = extractor._calculate_semantic_distance(text1, text2)
 
     def _execute_calculate_type_transition_prior(self, source_type, target_type, **kwargs) -> ModuleResult:
-    """Execute CausalExtractor._calculate_type_transition_prior()"""
-    config = kwargs.get('config', {})
-    extractor = self.CausalExtractor(config)
-    prior = extractor._calculate_type_transition_prior(source_type, target_type)
+        """Execute CausalExtractor._calculate_type_transition_prior()"""
+        config = kwargs.get('config', {})
+        extractor = self.CausalExtractor(config)
+        prior = extractor._calculate_type_transition_prior(source_type, target_type)
 
     def _execute_check_structural_violation(self, source_type, target_type, **kwargs) -> ModuleResult:
-    """Execute CausalExtractor._check_structural_violation()"""
-    config = kwargs.get('config', {})
-    extractor = self.CausalExtractor(config)
-    violation = extractor._check_structural_violation(source_type, target_type)
+        """Execute CausalExtractor._check_structural_violation()"""
+        config = kwargs.get('config', {})
+        extractor = self.CausalExtractor(config)
+        violation = extractor._check_structural_violation(source_type, target_type)
 
     def _execute_calculate_language_specificity(self, text: str, **kwargs) -> ModuleResult:
-    """Execute CausalExtractor._calculate_language_specificity()"""
-    config = kwargs.get('config', {})
-    extractor = self.CausalExtractor(config)
-    specificity = extractor._calculate_language_specificity(text)
+        """Execute CausalExtractor._calculate_language_specificity()"""
+        config = kwargs.get('config', {})
+        extractor = self.CausalExtractor(config)
+        specificity = extractor._calculate_language_specificity(text)
 
     def _execute_assess_temporal_coherence(self, text: str, **kwargs) -> ModuleResult:
-    """Execute CausalExtractor._assess_temporal_coherence()"""
-    config = kwargs.get('config', {})
-    extractor = self.CausalExtractor(config)
-    coherence = extractor._assess_temporal_coherence(text)
+        """Execute CausalExtractor._assess_temporal_coherence()"""
+        config = kwargs.get('config', {})
+        extractor = self.CausalExtractor(config)
+        coherence = extractor._assess_temporal_coherence(text)
 
     def _execute_assess_financial_consistency(self, text: str, **kwargs) -> ModuleResult:
-    """Execute CausalExtractor._assess_financial_consistency()"""
-    config = kwargs.get('config', {})
-    extractor = self.CausalExtractor(config)
-    consistency = extractor._assess_financial_consistency(text)
+        """Execute CausalExtractor._assess_financial_consistency()"""
+        config = kwargs.get('config', {})
+        extractor = self.CausalExtractor(config)
+        consistency = extractor._assess_financial_consistency(text)
 
     def _execute_calculate_textual_proximity(self, idx1: int, idx2: int, total: int, **kwargs) -> ModuleResult:
-    """Execute CausalExtractor._calculate_textual_proximity()"""
-    config = kwargs.get('config', {})
-    extractor = self.CausalExtractor(config)
-    proximity = extractor._calculate_textual_proximity(idx1, idx2, total)
+        """Execute CausalExtractor._calculate_textual_proximity()"""
+        config = kwargs.get('config', {})
+        extractor = self.CausalExtractor(config)
+        proximity = extractor._calculate_textual_proximity(idx1, idx2, total)
 
     def _execute_initialize_prior(self, source_type, target_type, **kwargs) -> ModuleResult:
-    """Execute CausalExtractor._initialize_prior()"""
-    config = kwargs.get('config', {})
-    extractor = self.CausalExtractor(config)
-    prior = extractor._initialize_prior(source_type, target_type)
+        """Execute CausalExtractor._initialize_prior()"""
+        config = kwargs.get('config', {})
+        extractor = self.CausalExtractor(config)
+        prior = extractor._initialize_prior(source_type, target_type)
 
     def _execute_calculate_composite_likelihood(self, factors: Dict, **kwargs) -> ModuleResult:
-    """Execute CausalExtractor._calculate_composite_likelihood()"""
-    config = kwargs.get('config', {})
-    extractor = self.CausalExtractor(config)
-    likelihood = extractor._calculate_composite_likelihood(factors)
+        """Execute CausalExtractor._calculate_composite_likelihood()"""
+        config = kwargs.get('config', {})
+        extractor = self.CausalExtractor(config)
+        likelihood = extractor._calculate_composite_likelihood(factors)
 
     def _execute_build_type_hierarchy(self, **kwargs) -> ModuleResult:
-    """Execute CausalExtractor._build_type_hierarchy()"""
-    config = kwargs.get('config', {})
-    extractor = self.CausalExtractor(config)
-    hierarchy = extractor._build_type_hierarchy()
+        """Execute CausalExtractor._build_type_hierarchy()"""
+        config = kwargs.get('config', {})
+        extractor = self.CausalExtractor(config)
+        hierarchy = extractor._build_type_hierarchy()
 
     def _execute_extract_entity_activity(self, text: str, **kwargs) -> ModuleResult:
-    """Execute MechanismPartExtractor.extract_entity_activity()"""
-    config = kwargs.get('config', {})
-    extractor = self.MechanismPartExtractor(config)
-    activities = extractor.extract_entity_activity(text)
+        """Execute MechanismPartExtractor.extract_entity_activity()"""
+        config = kwargs.get('config', {})
+        extractor = self.MechanismPartExtractor(config)
+        activities = extractor.extract_entity_activity(text)
 
     def _execute_normalize_entity(self, entity_text: str, **kwargs) -> ModuleResult:
-    """Execute MechanismPartExtractor._normalize_entity()"""
-    config = kwargs.get('config', {})
-    extractor = self.MechanismPartExtractor(config)
-    normalized = extractor._normalize_entity(entity_text)
+        """Execute MechanismPartExtractor._normalize_entity()"""
+        config = kwargs.get('config', {})
+        extractor = self.MechanismPartExtractor(config)
+        normalized = extractor._normalize_entity(entity_text)
 
     def _execute_trace_financial_allocation(self, nodes, tables, **kwargs) -> ModuleResult:
-    """Execute FinancialAuditor.trace_financial_allocation()"""
-    config = kwargs.get('config', {})
-    auditor = self.FinancialAuditor(config)
-    audit_result = auditor.trace_financial_allocation(nodes, tables)
+        """Execute FinancialAuditor.trace_financial_allocation()"""
+        config = kwargs.get('config', {})
+        auditor = self.FinancialAuditor(config)
+        audit_result = auditor.trace_financial_allocation(nodes, tables)
 
     def _execute_process_financial_table(self, table: Dict, **kwargs) -> ModuleResult:
-    """Execute FinancialAuditor._process_financial_table()"""
-    config = kwargs.get('config', {})
-    auditor = self.FinancialAuditor(config)
-    processed = auditor._process_financial_table(table)
+        """Execute FinancialAuditor._process_financial_table()"""
+        config = kwargs.get('config', {})
+        auditor = self.FinancialAuditor(config)
+        processed = auditor._process_financial_table(table)
 
     def _execute_parse_amount(self, amount_str: str, **kwargs) -> ModuleResult:
-    """Execute FinancialAuditor._parse_amount()"""
-    config = kwargs.get('config', {})
-    auditor = self.FinancialAuditor(config)
-    amount = auditor._parse_amount(amount_str)
+        """Execute FinancialAuditor._parse_amount()"""
+        config = kwargs.get('config', {})
+        auditor = self.FinancialAuditor(config)
+        amount = auditor._parse_amount(amount_str)
 
     def _execute_match_program_to_node(self, program_name: str, nodes, **kwargs) -> ModuleResult:
-    """Execute FinancialAuditor._match_program_to_node()"""
-    config = kwargs.get('config', {})
-    auditor = self.FinancialAuditor(config)
-    matched_node = auditor._match_program_to_node(program_name, nodes)
+        """Execute FinancialAuditor._match_program_to_node()"""
+        config = kwargs.get('config', {})
+        auditor = self.FinancialAuditor(config)
+        matched_node = auditor._match_program_to_node(program_name, nodes)
 
     def _execute_perform_counterfactual_budget_check(self, allocations, nodes, **kwargs) -> ModuleResult:
-    """Execute FinancialAuditor._perform_counterfactual_budget_check()"""
-    config = kwargs.get('config', {})
-    auditor = self.FinancialAuditor(config)
-    issues = auditor._perform_counterfactual_budget_check(allocations, nodes)
+        """Execute FinancialAuditor._perform_counterfactual_budget_check()"""
+        config = kwargs.get('config', {})
+        auditor = self.FinancialAuditor(config)
+        issues = auditor._perform_counterfactual_budget_check(allocations, nodes)
 
     def _execute_audit_evidence_traceability(self, nodes, links, **kwargs) -> ModuleResult:
-    """Execute OperationalizationAuditor.audit_evidence_traceability()"""
-    config = kwargs.get('config', {})
-    auditor = self.OperationalizationAuditor(config)
-    audit_result = auditor.audit_evidence_traceability(nodes, links)
+        """Execute OperationalizationAuditor.audit_evidence_traceability()"""
+        config = kwargs.get('config', {})
+        auditor = self.OperationalizationAuditor(config)
+        audit_result = auditor.audit_evidence_traceability(nodes, links)
 
     def _execute_audit_sequence_logic(self, nodes, links, **kwargs) -> ModuleResult:
-    """Execute OperationalizationAuditor.audit_sequence_logic()"""
-    config = kwargs.get('config', {})
-    auditor = self.OperationalizationAuditor(config)
-    result = auditor.audit_sequence_logic(nodes, links)
+        """Execute OperationalizationAuditor.audit_sequence_logic()"""
+        config = kwargs.get('config', {})
+        auditor = self.OperationalizationAuditor(config)
+        result = auditor.audit_sequence_logic(nodes, links)
 
     def _execute_bayesian_counterfactual_audit(self, nodes, links, **kwargs) -> ModuleResult:
         """Execute OperationalizationAuditor.bayesian_counterfactual_audit()"""
@@ -4851,194 +4851,194 @@ class DerekBeachAdapter(BaseAdapter):
         result = auditor.bayesian_counterfactual_audit(nodes, links)
 
     def _execute_build_normative_dag(self, **kwargs) -> ModuleResult:
-    """Execute OperationalizationAuditor._build_normative_dag()"""
-    config = kwargs.get('config', {})
-    auditor = self.OperationalizationAuditor(config)
-    dag = auditor._build_normative_dag()
+        """Execute OperationalizationAuditor._build_normative_dag()"""
+        config = kwargs.get('config', {})
+        auditor = self.OperationalizationAuditor(config)
+        dag = auditor._build_normative_dag()
 
     def _execute_get_default_historical_priors(self, **kwargs) -> ModuleResult:
-    """Execute OperationalizationAuditor._get_default_historical_priors()"""
-    config = kwargs.get('config', {})
-    auditor = self.OperationalizationAuditor(config)
-    priors = auditor._get_default_historical_priors()
+        """Execute OperationalizationAuditor._get_default_historical_priors()"""
+        config = kwargs.get('config', {})
+        auditor = self.OperationalizationAuditor(config)
+        priors = auditor._get_default_historical_priors()
 
     def _execute_audit_direct_evidence(self, node, **kwargs) -> ModuleResult:
-    """Execute OperationalizationAuditor._audit_direct_evidence()"""
-    config = kwargs.get('config', {})
-    auditor = self.OperationalizationAuditor(config)
-    result = auditor._audit_direct_evidence(node)
+        """Execute OperationalizationAuditor._audit_direct_evidence()"""
+        config = kwargs.get('config', {})
+        auditor = self.OperationalizationAuditor(config)
+        result = auditor._audit_direct_evidence(node)
 
     def _execute_audit_causal_implications(self, node, graph, **kwargs) -> ModuleResult:
-    """Execute OperationalizationAuditor._audit_causal_implications()"""
-    config = kwargs.get('config', {})
-    auditor = self.OperationalizationAuditor(config)
-    result = auditor._audit_causal_implications(node, graph)
+        """Execute OperationalizationAuditor._audit_causal_implications()"""
+        config = kwargs.get('config', {})
+        auditor = self.OperationalizationAuditor(config)
+        result = auditor._audit_causal_implications(node, graph)
 
     def _execute_audit_systemic_risk(self, nodes, links, **kwargs) -> ModuleResult:
-    """Execute OperationalizationAuditor._audit_systemic_risk()"""
-    config = kwargs.get('config', {})
-    auditor = self.OperationalizationAuditor(config)
-    result = auditor._audit_systemic_risk(nodes, links)
+        """Execute OperationalizationAuditor._audit_systemic_risk()"""
+        config = kwargs.get('config', {})
+        auditor = self.OperationalizationAuditor(config)
+        result = auditor._audit_systemic_risk(nodes, links)
 
     def _execute_generate_optimal_remediations(self, audit_results, **kwargs) -> ModuleResult:
-    """Execute OperationalizationAuditor._generate_optimal_remediations()"""
-    config = kwargs.get('config', {})
-    auditor = self.OperationalizationAuditor(config)
-    remediations = auditor._generate_optimal_remediations(audit_results)
+        """Execute OperationalizationAuditor._generate_optimal_remediations()"""
+        config = kwargs.get('config', {})
+        auditor = self.OperationalizationAuditor(config)
+        remediations = auditor._generate_optimal_remediations(audit_results)
 
     def _execute_get_remediation_text(self, issue_type: str, **kwargs) -> ModuleResult:
-    """Execute OperationalizationAuditor._get_remediation_text()"""
-    config = kwargs.get('config', {})
-    auditor = self.OperationalizationAuditor(config)
-    text = auditor._get_remediation_text(issue_type)
+        """Execute OperationalizationAuditor._get_remediation_text()"""
+        config = kwargs.get('config', {})
+        auditor = self.OperationalizationAuditor(config)
+        text = auditor._get_remediation_text(issue_type)
 
     def _execute_infer_mechanisms(self, nodes, links, activities, **kwargs) -> ModuleResult:
-    """Execute BayesianMechanismInference.infer_mechanisms()"""
-    config = kwargs.get('config', {})
-    inference = self.BayesianMechanismInference(config)
-    mechanisms = inference.infer_mechanisms(nodes, links, activities)
+        """Execute BayesianMechanismInference.infer_mechanisms()"""
+        config = kwargs.get('config', {})
+        inference = self.BayesianMechanismInference(config)
+        mechanisms = inference.infer_mechanisms(nodes, links, activities)
 
     def _execute_log_refactored_components(self, **kwargs) -> ModuleResult:
-    """Execute BayesianMechanismInference._log_refactored_components()"""
-    config = kwargs.get('config', {})
-    inference = self.BayesianMechanismInference(config)
-    inference._log_refactored_components()
+        """Execute BayesianMechanismInference._log_refactored_components()"""
+        config = kwargs.get('config', {})
+        inference = self.BayesianMechanismInference(config)
+        inference._log_refactored_components()
 
     def _execute_infer_single_mechanism(self, link, activities, **kwargs) -> ModuleResult:
-    """Execute BayesianMechanismInference._infer_single_mechanism()"""
-    config = kwargs.get('config', {})
-    inference = self.BayesianMechanismInference(config)
-    mechanism = inference._infer_single_mechanism(link, activities)
+        """Execute BayesianMechanismInference._infer_single_mechanism()"""
+        config = kwargs.get('config', {})
+        inference = self.BayesianMechanismInference(config)
+        mechanism = inference._infer_single_mechanism(link, activities)
 
     def _execute_extract_observations(self, link, activities, **kwargs) -> ModuleResult:
-    """Execute BayesianMechanismInference._extract_observations()"""
-    config = kwargs.get('config', {})
-    inference = self.BayesianMechanismInference(config)
-    observations = inference._extract_observations(link, activities)
+        """Execute BayesianMechanismInference._extract_observations()"""
+        config = kwargs.get('config', {})
+        inference = self.BayesianMechanismInference(config)
+        observations = inference._extract_observations(link, activities)
 
     def _execute_infer_mechanism_type(self, observations, **kwargs) -> ModuleResult:
-    """Execute BayesianMechanismInference._infer_mechanism_type()"""
-    config = kwargs.get('config', {})
-    inference = self.BayesianMechanismInference(config)
-    mechanism_type = inference._infer_mechanism_type(observations)
+        """Execute BayesianMechanismInference._infer_mechanism_type()"""
+        config = kwargs.get('config', {})
+        inference = self.BayesianMechanismInference(config)
+        mechanism_type = inference._infer_mechanism_type(observations)
 
     def _execute_infer_activity_sequence(self, observations, **kwargs) -> ModuleResult:
-    """Execute BayesianMechanismInference._infer_activity_sequence()"""
-    config = kwargs.get('config', {})
-    inference = self.BayesianMechanismInference(config)
-    sequence = inference._infer_activity_sequence(observations)
+        """Execute BayesianMechanismInference._infer_activity_sequence()"""
+        config = kwargs.get('config', {})
+        inference = self.BayesianMechanismInference(config)
+        sequence = inference._infer_activity_sequence(observations)
 
     def _execute_calculate_coherence_factor(self, sequence, **kwargs) -> ModuleResult:
-    """Execute BayesianMechanismInference._calculate_coherence_factor()"""
-    config = kwargs.get('config', {})
-    inference = self.BayesianMechanismInference(config)
-    coherence = inference._calculate_coherence_factor(sequence)
+        """Execute BayesianMechanismInference._calculate_coherence_factor()"""
+        config = kwargs.get('config', {})
+        inference = self.BayesianMechanismInference(config)
+        coherence = inference._calculate_coherence_factor(sequence)
 
     def _execute_test_sufficiency(self, mechanism, evidence, **kwargs) -> ModuleResult:
-    """Execute BayesianMechanismInference._test_sufficiency()"""
-    config = kwargs.get('config', {})
-    inference = self.BayesianMechanismInference(config)
-    sufficiency = inference._test_sufficiency(mechanism, evidence)
+        """Execute BayesianMechanismInference._test_sufficiency()"""
+        config = kwargs.get('config', {})
+        inference = self.BayesianMechanismInference(config)
+        sufficiency = inference._test_sufficiency(mechanism, evidence)
 
     def _execute_test_necessity(self, mechanism, evidence, **kwargs) -> ModuleResult:
-    """Execute BayesianMechanismInference._test_necessity()"""
-    config = kwargs.get('config', {})
-    inference = self.BayesianMechanismInference(config)
-    necessity = inference._test_necessity(mechanism, evidence)
+        """Execute BayesianMechanismInference._test_necessity()"""
+        config = kwargs.get('config', {})
+        inference = self.BayesianMechanismInference(config)
+        necessity = inference._test_necessity(mechanism, evidence)
 
     def _execute_generate_necessity_remediation(self, mechanism, **kwargs) -> ModuleResult:
-    """Execute BayesianMechanismInference._generate_necessity_remediation()"""
-    config = kwargs.get('config', {})
-    inference = self.BayesianMechanismInference(config)
-    remediation = inference._generate_necessity_remediation(mechanism)
+        """Execute BayesianMechanismInference._generate_necessity_remediation()"""
+        config = kwargs.get('config', {})
+        inference = self.BayesianMechanismInference(config)
+        remediation = inference._generate_necessity_remediation(mechanism)
 
     def _execute_quantify_uncertainty(self, mechanism, **kwargs) -> ModuleResult:
-    """Execute BayesianMechanismInference._quantify_uncertainty()"""
-    config = kwargs.get('config', {})
-    inference = self.BayesianMechanismInference(config)
-    uncertainty = inference._quantify_uncertainty(mechanism)
+        """Execute BayesianMechanismInference._quantify_uncertainty()"""
+        config = kwargs.get('config', {})
+        inference = self.BayesianMechanismInference(config)
+        uncertainty = inference._quantify_uncertainty(mechanism)
 
     def _execute_detect_gaps(self, mechanism, **kwargs) -> ModuleResult:
-    """Execute BayesianMechanismInference._detect_gaps()"""
-    config = kwargs.get('config', {})
-    inference = self.BayesianMechanismInference(config)
-    gaps = inference._detect_gaps(mechanism)
+        """Execute BayesianMechanismInference._detect_gaps()"""
+        config = kwargs.get('config', {})
+        inference = self.BayesianMechanismInference(config)
+        gaps = inference._detect_gaps(mechanism)
 
     def _execute_classify_goal_dynamics(self, goal_text: str, **kwargs) -> ModuleResult:
-    """Execute CausalInferenceSetup.classify_goal_dynamics()"""
-    config = kwargs.get('config', {})
-    setup = self.CausalInferenceSetup(config)
-    dynamics = setup.classify_goal_dynamics(goal_text)
+        """Execute CausalInferenceSetup.classify_goal_dynamics()"""
+        config = kwargs.get('config', {})
+        setup = self.CausalInferenceSetup(config)
+        dynamics = setup.classify_goal_dynamics(goal_text)
 
     def _execute_assign_probative_value(self, evidence_type: str, **kwargs) -> ModuleResult:
-    """Execute CausalInferenceSetup.assign_probative_value()"""
-    config = kwargs.get('config', {})
-    setup = self.CausalInferenceSetup(config)
-    value = setup.assign_probative_value(evidence_type)
+        """Execute CausalInferenceSetup.assign_probative_value()"""
+        config = kwargs.get('config', {})
+        setup = self.CausalInferenceSetup(config)
+        value = setup.assign_probative_value(evidence_type)
 
     def _execute_identify_failure_points(self, causal_chain: List, **kwargs) -> ModuleResult:
-    """Execute CausalInferenceSetup.identify_failure_points()"""
-    config = kwargs.get('config', {})
-    setup = self.CausalInferenceSetup(config)
-    failure_points = setup.identify_failure_points(causal_chain)
+        """Execute CausalInferenceSetup.identify_failure_points()"""
+        config = kwargs.get('config', {})
+        setup = self.CausalInferenceSetup(config)
+        failure_points = setup.identify_failure_points(causal_chain)
 
     def _execute_generate_causal_diagram(self, graph, output_path: str, **kwargs) -> ModuleResult:
-    """Execute ReportingEngine.generate_causal_diagram()"""
-    config = kwargs.get('config', {})
-    engine = self.ReportingEngine(config)
-    engine.generate_causal_diagram(graph, output_path)
+        """Execute ReportingEngine.generate_causal_diagram()"""
+        config = kwargs.get('config', {})
+        engine = self.ReportingEngine(config)
+        engine.generate_causal_diagram(graph, output_path)
 
     def _execute_generate_accountability_matrix(self, nodes, links, **kwargs) -> ModuleResult:
-    """Execute ReportingEngine.generate_accountability_matrix()"""
-    config = kwargs.get('config', {})
-    engine = self.ReportingEngine(config)
-    matrix = engine.generate_accountability_matrix(nodes, links)
+        """Execute ReportingEngine.generate_accountability_matrix()"""
+        config = kwargs.get('config', {})
+        engine = self.ReportingEngine(config)
+        matrix = engine.generate_accountability_matrix(nodes, links)
 
     def _execute_generate_confidence_report(self, mechanisms, **kwargs) -> ModuleResult:
-    """Execute ReportingEngine.generate_confidence_report()"""
-    config = kwargs.get('config', {})
-    engine = self.ReportingEngine(config)
-    report = engine.generate_confidence_report(mechanisms)
+        """Execute ReportingEngine.generate_confidence_report()"""
+        config = kwargs.get('config', {})
+        engine = self.ReportingEngine(config)
+        report = engine.generate_confidence_report(mechanisms)
 
     def _execute_calculate_quality_score(self, mechanism: Dict, **kwargs) -> ModuleResult:
-    """Execute ReportingEngine._calculate_quality_score()"""
-    config = kwargs.get('config', {})
-    engine = self.ReportingEngine(config)
-    score = engine._calculate_quality_score(mechanism)
+        """Execute ReportingEngine._calculate_quality_score()"""
+        config = kwargs.get('config', {})
+        engine = self.ReportingEngine(config)
+        score = engine._calculate_quality_score(mechanism)
 
     def _execute_generate_causal_model_json(self, graph, mechanisms, output_path: str, **kwargs) -> ModuleResult:
-    """Execute ReportingEngine.generate_causal_model_json()"""
-    config = kwargs.get('config', {})
-    engine = self.ReportingEngine(config)
-    engine.generate_causal_model_json(graph, mechanisms, output_path)
+        """Execute ReportingEngine.generate_causal_model_json()"""
+        config = kwargs.get('config', {})
+        engine = self.ReportingEngine(config)
+        engine.generate_causal_model_json(graph, mechanisms, output_path)
 
     def _execute_process_document(self, pdf_path, policy_code: str, **kwargs) -> ModuleResult:
-    """Execute CDAFFramework.process_document()"""
-    config_path = kwargs.get('config_path', Path("config.yaml"))
-    output_dir = kwargs.get('output_dir', Path("output"))
+        """Execute CDAFFramework.process_document()"""
+        config_path = kwargs.get('config_path', Path("config.yaml"))
+        output_dir = kwargs.get('output_dir', Path("output"))
     
-    framework = self.CDAFFramework(config_path, output_dir)
-    success = framework.process_document(pdf_path, policy_code)
+        framework = self.CDAFFramework(config_path, output_dir)
+        success = framework.process_document(pdf_path, policy_code)
 
     def _execute_load_spacy_with_retry(self, model_name: str = "es_core_news_sm", **kwargs) -> ModuleResult:
-    """Execute CDAFFramework.load_spacy_with_retry()"""
-    framework = self.CDAFFramework(Path("config.yaml"), Path("output"))
-    nlp = framework.load_spacy_with_retry(model_name)
+        """Execute CDAFFramework.load_spacy_with_retry()"""
+        framework = self.CDAFFramework(Path("config.yaml"), Path("output"))
+        nlp = framework.load_spacy_with_retry(model_name)
 
     def _execute_extract_feedback_from_audit(self, audit_result, **kwargs) -> ModuleResult:
-    """Execute CDAFFramework._extract_feedback_from_audit()"""
-    framework = self.CDAFFramework(Path("config.yaml"), Path("output"))
-    feedback = framework._extract_feedback_from_audit(audit_result)
+        """Execute CDAFFramework._extract_feedback_from_audit()"""
+        framework = self.CDAFFramework(Path("config.yaml"), Path("output"))
+        feedback = framework._extract_feedback_from_audit(audit_result)
 
     def _execute_validate_dnp_compliance(self, proyectos: List, policy_code: str, **kwargs) -> ModuleResult:
-    """Execute CDAFFramework._validate_dnp_compliance()"""
-    framework = self.CDAFFramework(Path("config.yaml"), Path("output"))
-    framework._validate_dnp_compliance(proyectos, policy_code)
+        """Execute CDAFFramework._validate_dnp_compliance()"""
+        framework = self.CDAFFramework(Path("config.yaml"), Path("output"))
+        framework._validate_dnp_compliance(proyectos, policy_code)
 
     def _execute_generate_dnp_report(self, dnp_results: List, policy_code: str, **kwargs) -> ModuleResult:
-    """Execute CDAFFramework._generate_dnp_report()"""
-    framework = self.CDAFFramework(Path("config.yaml"), Path("output"))
-    framework._generate_dnp_report(dnp_results, policy_code)
+        """Execute CDAFFramework._generate_dnp_report()"""
+        framework = self.CDAFFramework(Path("config.yaml"), Path("output"))
+        framework._generate_dnp_report(dnp_results, policy_code)
 
 
 # ============================================================================
@@ -5048,7 +5048,7 @@ class DerekBeachAdapter(BaseAdapter):
 class ContradictionDetectionAdapter(BaseAdapter):
     """
     Complete adapter for contradiction_deteccion.py - Policy Contradiction Detection System.
-    
+
     This adapter provides access to ALL classes and methods from the contradiction
     detection framework including Bayesian confidence calculation, temporal logic
     verification, and comprehensive policy contradiction analysis.
@@ -5456,250 +5456,250 @@ class ContradictionDetectionAdapter(BaseAdapter):
             confidence=0.85,
             execution_time=0.0
     def _execute_detect(self, document: str, metadata: dict = None, **kwargs) -> ModuleResult:
-    """Execute PolicyContradictionDetector.detect()"""
-    model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
-    detector = self.PolicyContradictionDetector(model_name)
-    result = detector.detect(document, metadata or {})
+        """Execute PolicyContradictionDetector.detect()"""
+        model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
+        detector = self.PolicyContradictionDetector(model_name)
+        result = detector.detect(document, metadata or {})
 
     def _execute_extract_policy_statements(self, text: str, **kwargs) -> ModuleResult:
-    """Execute PolicyContradictionDetector._extract_policy_statements()"""
-    model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
-    detector = self.PolicyContradictionDetector(model_name)
-    statements = detector._extract_policy_statements(text)
+        """Execute PolicyContradictionDetector._extract_policy_statements()"""
+        model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
+        detector = self.PolicyContradictionDetector(model_name)
+        statements = detector._extract_policy_statements(text)
 
     def _execute_generate_embeddings(self, statements: List[dict], **kwargs) -> ModuleResult:
-    """Execute PolicyContradictionDetector._generate_embeddings()"""
-    model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
-    detector = self.PolicyContradictionDetector(model_name)
-    detector._generate_embeddings(statements)
+        """Execute PolicyContradictionDetector._generate_embeddings()"""
+        model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
+        detector = self.PolicyContradictionDetector(model_name)
+        detector._generate_embeddings(statements)
 
     def _execute_build_knowledge_graph(self, statements: List[dict], **kwargs) -> ModuleResult:
-    """Execute PolicyContradictionDetector._build_knowledge_graph()"""
-    model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
-    detector = self.PolicyContradictionDetector(model_name)
-    detector._build_knowledge_graph(statements)
+        """Execute PolicyContradictionDetector._build_knowledge_graph()"""
+        model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
+        detector = self.PolicyContradictionDetector(model_name)
+        detector._build_knowledge_graph(statements)
 
     def _execute_detect_semantic_contradictions(self, **kwargs) -> ModuleResult:
-    """Execute PolicyContradictionDetector._detect_semantic_contradictions()"""
-    model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
-    detector = self.PolicyContradictionDetector(model_name)
-    contradictions = detector._detect_semantic_contradictions()
+        """Execute PolicyContradictionDetector._detect_semantic_contradictions()"""
+        model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
+        detector = self.PolicyContradictionDetector(model_name)
+        contradictions = detector._detect_semantic_contradictions()
 
     def _execute_detect_numerical_inconsistencies(self, **kwargs) -> ModuleResult:
-    """Execute PolicyContradictionDetector._detect_numerical_inconsistencies()"""
-    model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
-    detector = self.PolicyContradictionDetector(model_name)
-    inconsistencies = detector._detect_numerical_inconsistencies()
+        """Execute PolicyContradictionDetector._detect_numerical_inconsistencies()"""
+        model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
+        detector = self.PolicyContradictionDetector(model_name)
+        inconsistencies = detector._detect_numerical_inconsistencies()
 
     def _execute_detect_temporal_conflicts(self, **kwargs) -> ModuleResult:
-    """Execute PolicyContradictionDetector._detect_temporal_conflicts()"""
-    model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
-    detector = self.PolicyContradictionDetector(model_name)
-    conflicts = detector._detect_temporal_conflicts()
+        """Execute PolicyContradictionDetector._detect_temporal_conflicts()"""
+        model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
+        detector = self.PolicyContradictionDetector(model_name)
+        conflicts = detector._detect_temporal_conflicts()
 
     def _execute_detect_logical_incompatibilities(self, **kwargs) -> ModuleResult:
-    """Execute PolicyContradictionDetector._detect_logical_incompatibilities()"""
-    model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
-    detector = self.PolicyContradictionDetector(model_name)
-    incompatibilities = detector._detect_logical_incompatibilities()
+        """Execute PolicyContradictionDetector._detect_logical_incompatibilities()"""
+        model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
+        detector = self.PolicyContradictionDetector(model_name)
+        incompatibilities = detector._detect_logical_incompatibilities()
 
     def _execute_detect_resource_conflicts(self, **kwargs) -> ModuleResult:
-    """Execute PolicyContradictionDetector._detect_resource_conflicts()"""
-    model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
-    detector = self.PolicyContradictionDetector(model_name)
-    conflicts = detector._detect_resource_conflicts()
+        """Execute PolicyContradictionDetector._detect_resource_conflicts()"""
+        model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
+        detector = self.PolicyContradictionDetector(model_name)
+        conflicts = detector._detect_resource_conflicts()
 
     def _execute_calculate_coherence_metrics(self, **kwargs) -> ModuleResult:
-    """Execute PolicyContradictionDetector._calculate_coherence_metrics()"""
-    model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
-    detector = self.PolicyContradictionDetector(model_name)
-    metrics = detector._calculate_coherence_metrics()
+        """Execute PolicyContradictionDetector._calculate_coherence_metrics()"""
+        model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
+        detector = self.PolicyContradictionDetector(model_name)
+        metrics = detector._calculate_coherence_metrics()
 
     def _execute_calculate_global_semantic_coherence(self, **kwargs) -> ModuleResult:
-    """Execute PolicyContradictionDetector._calculate_global_semantic_coherence()"""
-    model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
-    detector = self.PolicyContradictionDetector(model_name)
-    coherence = detector._calculate_global_semantic_coherence()
+        """Execute PolicyContradictionDetector._calculate_global_semantic_coherence()"""
+        model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
+        detector = self.PolicyContradictionDetector(model_name)
+        coherence = detector._calculate_global_semantic_coherence()
 
     def _execute_calculate_objective_alignment(self, **kwargs) -> ModuleResult:
-    """Execute PolicyContradictionDetector._calculate_objective_alignment()"""
-    model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
-    detector = self.PolicyContradictionDetector(model_name)
-    alignment = detector._calculate_objective_alignment()
+        """Execute PolicyContradictionDetector._calculate_objective_alignment()"""
+        model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
+        detector = self.PolicyContradictionDetector(model_name)
+        alignment = detector._calculate_objective_alignment()
 
     def _execute_calculate_graph_fragmentation(self, **kwargs) -> ModuleResult:
-    """Execute PolicyContradictionDetector._calculate_graph_fragmentation()"""
-    model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
-    detector = self.PolicyContradictionDetector(model_name)
-    fragmentation = detector._calculate_graph_fragmentation()
+        """Execute PolicyContradictionDetector._calculate_graph_fragmentation()"""
+        model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
+        detector = self.PolicyContradictionDetector(model_name)
+        fragmentation = detector._calculate_graph_fragmentation()
 
     def _execute_calculate_contradiction_entropy(self, **kwargs) -> ModuleResult:
-    """Execute PolicyContradictionDetector._calculate_contradiction_entropy()"""
-    model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
-    detector = self.PolicyContradictionDetector(model_name)
-    entropy = detector._calculate_contradiction_entropy()
+        """Execute PolicyContradictionDetector._calculate_contradiction_entropy()"""
+        model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
+        detector = self.PolicyContradictionDetector(model_name)
+        entropy = detector._calculate_contradiction_entropy()
 
     def _execute_calculate_syntactic_complexity(self, **kwargs) -> ModuleResult:
-    """Execute PolicyContradictionDetector._calculate_syntactic_complexity()"""
-    model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
-    detector = self.PolicyContradictionDetector(model_name)
-    complexity = detector._calculate_syntactic_complexity()
+        """Execute PolicyContradictionDetector._calculate_syntactic_complexity()"""
+        model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
+        detector = self.PolicyContradictionDetector(model_name)
+        complexity = detector._calculate_syntactic_complexity()
 
     def _execute_get_dependency_depth(self, node_id: str, **kwargs) -> ModuleResult:
-    """Execute PolicyContradictionDetector._get_dependency_depth()"""
-    model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
-    detector = self.PolicyContradictionDetector(model_name)
-    depth = detector._get_dependency_depth(node_id)
+        """Execute PolicyContradictionDetector._get_dependency_depth()"""
+        model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
+        detector = self.PolicyContradictionDetector(model_name)
+        depth = detector._get_dependency_depth(node_id)
 
     def _execute_calculate_confidence_interval(self, contradictions: List, **kwargs) -> ModuleResult:
-    """Execute PolicyContradictionDetector._calculate_confidence_interval()"""
-    model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
-    detector = self.PolicyContradictionDetector(model_name)
-    interval = detector._calculate_confidence_interval(contradictions)
+        """Execute PolicyContradictionDetector._calculate_confidence_interval()"""
+        model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
+        detector = self.PolicyContradictionDetector(model_name)
+        interval = detector._calculate_confidence_interval(contradictions)
 
     def _execute_generate_resolution_recommendations(self, contradictions: List, **kwargs) -> ModuleResult:
-    """Execute PolicyContradictionDetector._generate_resolution_recommendations()"""
-    model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
-    detector = self.PolicyContradictionDetector(model_name)
-    recommendations = detector._generate_resolution_recommendations(contradictions)
+        """Execute PolicyContradictionDetector._generate_resolution_recommendations()"""
+        model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
+        detector = self.PolicyContradictionDetector(model_name)
+        recommendations = detector._generate_resolution_recommendations(contradictions)
 
     def _execute_identify_affected_sections(self, contradiction: dict, **kwargs) -> ModuleResult:
-    """Execute PolicyContradictionDetector._identify_affected_sections()"""
-    model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
-    detector = self.PolicyContradictionDetector(model_name)
-    sections = detector._identify_affected_sections(contradiction)
+        """Execute PolicyContradictionDetector._identify_affected_sections()"""
+        model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
+        detector = self.PolicyContradictionDetector(model_name)
+        sections = detector._identify_affected_sections(contradiction)
 
     def _execute_suggest_resolutions(self, contradiction: dict, **kwargs) -> ModuleResult:
-    """Execute PolicyContradictionDetector._suggest_resolutions()"""
-    model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
-    detector = self.PolicyContradictionDetector(model_name)
-    resolutions = detector._suggest_resolutions(contradiction)
+        """Execute PolicyContradictionDetector._suggest_resolutions()"""
+        model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
+        detector = self.PolicyContradictionDetector(model_name)
+        resolutions = detector._suggest_resolutions(contradiction)
 
     def _execute_extract_temporal_markers(self, text: str, **kwargs) -> ModuleResult:
-    """Execute PolicyContradictionDetector._extract_temporal_markers()"""
-    model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
-    detector = self.PolicyContradictionDetector(model_name)
-    markers = detector._extract_temporal_markers(text)
+        """Execute PolicyContradictionDetector._extract_temporal_markers()"""
+        model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
+        detector = self.PolicyContradictionDetector(model_name)
+        markers = detector._extract_temporal_markers(text)
 
     def _execute_extract_quantitative_claims(self, text: str, **kwargs) -> ModuleResult:
-    """Execute PolicyContradictionDetector._extract_quantitative_claims()"""
-    model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
-    detector = self.PolicyContradictionDetector(model_name)
-    claims = detector._extract_quantitative_claims(text)
+        """Execute PolicyContradictionDetector._extract_quantitative_claims()"""
+        model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
+        detector = self.PolicyContradictionDetector(model_name)
+        claims = detector._extract_quantitative_claims(text)
 
     def _execute_parse_number(self, text: str, **kwargs) -> ModuleResult:
-    """Execute PolicyContradictionDetector._parse_number()"""
-    model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
-    detector = self.PolicyContradictionDetector(model_name)
-    number = detector._parse_number(text)
+        """Execute PolicyContradictionDetector._parse_number()"""
+        model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
+        detector = self.PolicyContradictionDetector(model_name)
+        number = detector._parse_number(text)
 
     def _execute_extract_resource_mentions(self, text: str, **kwargs) -> ModuleResult:
-    """Execute PolicyContradictionDetector._extract_resource_mentions()"""
-    model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
-    detector = self.PolicyContradictionDetector(model_name)
-    resources = detector._extract_resource_mentions(text)
+        """Execute PolicyContradictionDetector._extract_resource_mentions()"""
+        model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
+        detector = self.PolicyContradictionDetector(model_name)
+        resources = detector._extract_resource_mentions(text)
 
     def _execute_determine_semantic_role(self, text: str, **kwargs) -> ModuleResult:
-    """Execute PolicyContradictionDetector._determine_semantic_role()"""
-    model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
-    detector = self.PolicyContradictionDetector(model_name)
-    role = detector._determine_semantic_role(text)
+        """Execute PolicyContradictionDetector._determine_semantic_role()"""
+        model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
+        detector = self.PolicyContradictionDetector(model_name)
+        role = detector._determine_semantic_role(text)
 
     def _execute_identify_dependencies(self, statement: dict, **kwargs) -> ModuleResult:
-    """Execute PolicyContradictionDetector._identify_dependencies()"""
-    model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
-    detector = self.PolicyContradictionDetector(model_name)
-    dependencies = detector._identify_dependencies(statement)
+        """Execute PolicyContradictionDetector._identify_dependencies()"""
+        model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
+        detector = self.PolicyContradictionDetector(model_name)
+        dependencies = detector._identify_dependencies(statement)
 
     def _execute_get_context_window(self, statement_id: str, window_size: int = 2, **kwargs) -> ModuleResult:
-    """Execute PolicyContradictionDetector._get_context_window()"""
-    model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
-    detector = self.PolicyContradictionDetector(model_name)
-    context = detector._get_context_window(statement_id, window_size)
+        """Execute PolicyContradictionDetector._get_context_window()"""
+        model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
+        detector = self.PolicyContradictionDetector(model_name)
+        context = detector._get_context_window(statement_id, window_size)
 
     def _execute_calculate_similarity(self, emb1, emb2, **kwargs) -> ModuleResult:
-    """Execute PolicyContradictionDetector._calculate_similarity()"""
-    model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
-    detector = self.PolicyContradictionDetector(model_name)
-    similarity = detector._calculate_similarity(emb1, emb2)
+        """Execute PolicyContradictionDetector._calculate_similarity()"""
+        model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
+        detector = self.PolicyContradictionDetector(model_name)
+        similarity = detector._calculate_similarity(emb1, emb2)
 
     def _execute_classify_contradiction(self, type: str, severity: float, **kwargs) -> ModuleResult:
-    """Execute PolicyContradictionDetector._classify_contradiction()"""
-    model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
-    detector = self.PolicyContradictionDetector(model_name)
-    classification = detector._classify_contradiction(type, severity)
+        """Execute PolicyContradictionDetector._classify_contradiction()"""
+        model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
+        detector = self.PolicyContradictionDetector(model_name)
+        classification = detector._classify_contradiction(type, severity)
 
     def _execute_get_domain_weight(self, statement: dict, **kwargs) -> ModuleResult:
-    """Execute PolicyContradictionDetector._get_domain_weight()"""
-    model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
-    detector = self.PolicyContradictionDetector(model_name)
-    weight = detector._get_domain_weight(statement)
+        """Execute PolicyContradictionDetector._get_domain_weight()"""
+        model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
+        detector = self.PolicyContradictionDetector(model_name)
+        weight = detector._get_domain_weight(statement)
 
     def _execute_are_comparable_claims(self, claim1: dict, claim2: dict, **kwargs) -> ModuleResult:
-    """Execute PolicyContradictionDetector._are_comparable_claims()"""
-    model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
-    detector = self.PolicyContradictionDetector(model_name)
-    comparable = detector._are_comparable_claims(claim1, claim2)
+        """Execute PolicyContradictionDetector._are_comparable_claims()"""
+        model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
+        detector = self.PolicyContradictionDetector(model_name)
+        comparable = detector._are_comparable_claims(claim1, claim2)
 
     def _execute_text_similarity(self, text1: str, text2: str, **kwargs) -> ModuleResult:
-    """Execute PolicyContradictionDetector._text_similarity()"""
-    model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
-    detector = self.PolicyContradictionDetector(model_name)
-    similarity = detector._text_similarity(text1, text2)
+        """Execute PolicyContradictionDetector._text_similarity()"""
+        model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
+        detector = self.PolicyContradictionDetector(model_name)
+        similarity = detector._text_similarity(text1, text2)
 
     def _execute_calculate_numerical_divergence(self, val1: float, val2: float, **kwargs) -> ModuleResult:
-    """Execute PolicyContradictionDetector._calculate_numerical_divergence()"""
-    model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
-    detector = self.PolicyContradictionDetector(model_name)
-    divergence = detector._calculate_numerical_divergence(val1, val2)
+        """Execute PolicyContradictionDetector._calculate_numerical_divergence()"""
+        model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
+        detector = self.PolicyContradictionDetector(model_name)
+        divergence = detector._calculate_numerical_divergence(val1, val2)
 
     def _execute_statistical_significance_test(self, val1: float, val2: float, **kwargs) -> ModuleResult:
-    """Execute PolicyContradictionDetector._statistical_significance_test()"""
-    model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
-    detector = self.PolicyContradictionDetector(model_name)
-    test_result = detector._statistical_significance_test(val1, val2)
+        """Execute PolicyContradictionDetector._statistical_significance_test()"""
+        model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
+        detector = self.PolicyContradictionDetector(model_name)
+        test_result = detector._statistical_significance_test(val1, val2)
 
     def _execute_has_logical_conflict(self, stmt1: dict, stmt2: dict, **kwargs) -> ModuleResult:
-    """Execute PolicyContradictionDetector._has_logical_conflict()"""
-    model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
-    detector = self.PolicyContradictionDetector(model_name)
-    has_conflict = detector._has_logical_conflict(stmt1, stmt2)
+        """Execute PolicyContradictionDetector._has_logical_conflict()"""
+        model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
+        detector = self.PolicyContradictionDetector(model_name)
+        has_conflict = detector._has_logical_conflict(stmt1, stmt2)
 
     def _execute_are_conflicting_allocations(self, res1: dict, res2: dict, **kwargs) -> ModuleResult:
-    """Execute PolicyContradictionDetector._are_conflicting_allocations()"""
-    model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
-    detector = self.PolicyContradictionDetector(model_name)
-    conflicting = detector._are_conflicting_allocations(res1, res2)
+        """Execute PolicyContradictionDetector._are_conflicting_allocations()"""
+        model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
+        detector = self.PolicyContradictionDetector(model_name)
+        conflicting = detector._are_conflicting_allocations(res1, res2)
 
     def _execute_serialize_contradiction(self, contradiction: dict, **kwargs) -> ModuleResult:
-    """Execute PolicyContradictionDetector._serialize_contradiction()"""
-    model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
-    detector = self.PolicyContradictionDetector(model_name)
-    serialized = detector._serialize_contradiction(contradiction)
+        """Execute PolicyContradictionDetector._serialize_contradiction()"""
+        model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
+        detector = self.PolicyContradictionDetector(model_name)
+        serialized = detector._serialize_contradiction(contradiction)
 
     def _execute_get_graph_statistics(self, **kwargs) -> ModuleResult:
-    """Execute PolicyContradictionDetector._get_graph_statistics()"""
-    model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
-    detector = self.PolicyContradictionDetector(model_name)
-    stats = detector._get_graph_statistics()
+        """Execute PolicyContradictionDetector._get_graph_statistics()"""
+        model_name = kwargs.get('model_name', 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
+        detector = self.PolicyContradictionDetector(model_name)
+        stats = detector._get_graph_statistics()
 
 
-# ============================================================================
-# ADAPTER 9: ModulosAdapter (51 methods - Theory of Change)
-# ============================================================================
+        # ============================================================================
+        # ADAPTER 9: ModulosAdapter (51 methods - Theory of Change)
+        # ============================================================================
 
-class ModulosAdapter(BaseAdapter):
-    """
-    Comprehensive adapter for teoria_cambio.py - Framework Unificado para la
-    Validación Causal de Políticas Públicas.
+        class ModulosAdapter(BaseAdapter):
+        """
+        Comprehensive adapter for teoria_cambio.py - Framework Unificado para la
+        Validación Causal de Políticas Públicas.
     
-    This adapter provides access to all classes and functions from the theory
-    of change validation framework including:
-    - TeoriaCambio: Axiomatic change theory engine
-    - AdvancedDAGValidator: Stochastic validation with Monte Carlo
-    - IndustrialGradeValidator: Industrial certification orchestrator
-    - Helper functions and utilities
-    """
+        This adapter provides access to all classes and functions from the theory
+        of change validation framework including:
+        - TeoriaCambio: Axiomatic change theory engine
+        - AdvancedDAGValidator: Stochastic validation with Monte Carlo
+        - IndustrialGradeValidator: Industrial certification orchestrator
+        - Helper functions and utilities
+        """
 
     def __init__(self):
         super().__init__("modulos_teoria_cambio")
