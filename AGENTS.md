@@ -1,29 +1,52 @@
-# AGENTS.md - FARFAN 3.0 Policy Analysis System
+# FARFAN 3.0 - Development Guide
 
 ## Commands
 
-**Setup:**
+### Setup
 ```bash
-python -m venv venv && source venv/bin/activate  # Windows: venv\Scripts\activate
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-**Run Tests:** `python test_architecture_compilation.py` or `python test_orchestrator_integration.py`  
-**Run Lint:** `flake8 orchestrator/ *.py` or `black --check .`  
-**Run Main:** `python run_farfan.py --plan path/to/plan.pdf` or `python run_farfan.py --batch plans_directory/`
+### Build
+Not applicable (Python project)
 
-## Tech Stack & Architecture
+### Lint
+```bash
+black *.py orchestrator/*.py
+flake8 *.py orchestrator/*.py
+mypy *.py orchestrator/*.py
+```
 
-- **Language:** Python 3.10+ (tested on 3.11.9)
-- **NLP:** spaCy, transformers, sentence-transformers (Spanish models: es-core-news-lg, BETO)
+### Test
+```bash
+pytest test_*.py
+python test_architecture_compilation.py
+python test_orchestrator_integration.py
+```
+
+### Run
+```bash
+python run_farfan.py --plan path/to/plan.pdf
+python run_farfan.py --health
+```
+
+## Tech Stack
+- **Language:** Python 3.11+
+- **NLP:** spaCy (Spanish models), transformers, sentence-transformers
 - **Data:** pandas, numpy, scikit-learn
-- **Architecture:** Orchestrator pattern with modular adapters for policy analysis
-  - `orchestrator/`: Core orchestration engine with circuit breaker, choreographer, question router
-  - Root modules: 8+ specialized analyzers (causal, contradiction, financial viability, theory of change, etc.)
-  - Multi-level reporting: MICRO/MESO/MACRO analysis of 300-question questionnaire
+- **Testing:** pytest
+- **Linting:** black, flake8, mypy
+
+## Architecture
+- **orchestrator/**: Core orchestration engine with module adapters, choreographer, circuit breaker, question router
+- **Main modules:** Analyzer_one.py, policy_processor.py, causal_proccesor.py, contradiction_deteccion.py, etc.
+- **Entry point:** run_farfan.py
 
 ## Code Style
-
-- **Conventions:** Type hints, dataclasses, docstrings with module-level architecture descriptions
-- **No comments:** Code is self-documenting; docstrings explain "why", not "what"
-- **Testing:** Custom test runners (no pytest framework); validate imports, class structure, and invocation chains
+- Follow PEP 8 (enforced by black and flake8)
+- Type hints required (checked by mypy)
+- Spanish text in comments/docstrings is acceptable (domain-specific)
+- Module files: lowercase_underscore.py
