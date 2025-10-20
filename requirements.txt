@@ -2,15 +2,15 @@
 # Procesamiento y análisis de lenguaje español
 spacy==3.7.2
 spacy-lookups-data==1.0.3
-es-core-news-sm @ https://github.com/explosion/spacy-models/releases/download/es_core_news_sm-3.7.0/es_core_news_sm-3.7.0-py3-none-any.whl
-# Agregar modelo grande de español para mejor rendimiento en análisis complejos
-es-core-news-lg @ https://github.com/explosion/spacy-models/releases/download/es_core_news_lg-3.7.0/es_core_news_lg-3.7.0-py3-none-any.whl
+# Spanish spaCy models (install with: python -m spacy download es_core_news_sm && python -m spacy download es_core_news_lg)
+# es-core-news-sm @ https://github.com/explosion/spacy-models/releases/download/es_core_news_sm-3.7.0/es_core_news_sm-3.7.0-py3-none-any.whl
+# es-core-news-lg @ https://github.com/explosion/spacy-models/releases/download/es_core_news_lg-3.7.0/es_core_news_lg-3.7.0-py3-none-any.whl
 
 # NLP específico para español
 stanza==1.5.0
 nltk==3.8.1
 # Stemmer específico para español
-pystemmer==2.2.0
+# pystemmer==2.2.0  # Commented out - build issue on Python 3.10+
 # Librería para lematización en español
 # pyfreeling==0.2  # Commented out - not available on PyPI
 
@@ -22,8 +22,8 @@ matplotlib==3.7.2
 seaborn==0.12.2
 
 # === Dependencias para procesamiento de texto avanzado ===
-transformers==4.34.0  # NOTA: Compatible con torch 2.0.1 y tensorflow 2.13.0
-torch==2.0.1
+transformers==4.34.0  # NOTA: Compatible con torch 1.13.1 y tensorflow 2.13.0
+torch==1.13.1
 tensorflow==2.13.0  # ADVERTENCIA: Evitar actualizar independientemente de torch para prevenir conflictos
 sentence-transformers==2.2.2
 # Modelos preentrenados específicos para español
@@ -37,7 +37,7 @@ pysentimiento==0.6.6
 
 # === Herramientas de desarrollo ===
 pytest
-pytest-watch==7.4.2
+pytest-watch==4.2.0
 black==23.9.1
 flake8==6.1.0
 isort==5.12.0
