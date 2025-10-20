@@ -1345,8 +1345,8 @@
             let mouseY = null;
             
             canvas.addEventListener('mousemove', (event) => {
-                mouseX = event.x;
-                mouseY = event.y;
+                mouseX = event.clientX;
+                mouseY = event.clientY;
                 
                 if (Math.random() > 0.7) {
                     particles.push({
