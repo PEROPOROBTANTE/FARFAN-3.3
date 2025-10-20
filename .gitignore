@@ -1,14 +1,13 @@
-# Python virtual environment
-venv/
-
-# Python cache
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+
+# C extensions
 *.so
-.Python
 
 # Distribution / packaging
+.Python
 build/
 develop-eggs/
 dist/
@@ -67,6 +66,7 @@ env/
 ENV/
 env.bak/
 venv.bak/
+venv/
 
 # Spacy
 *.spacy
@@ -106,3 +106,18 @@ models/
 # Output files
 output/
 results/
+
+# Canary system artifacts
+tests/canaries/
+tests/canaries/*.json
+!tests/canaries/.gitkeep
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+
+# Large artifacts
+artifact/
+*.pdf
+!tests/fixtures/*.pdf
