@@ -1,13 +1,22 @@
-# Byte-compiled / optimized / DLL files
+# Python virtual environment
+venv/
+env/
+ENV/
+.venv/
+env.bak/
+venv.bak/
+
+# Python cache
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
+.Python
 
 # C extensions
 *.so
 
 # Distribution / packaging
-.Python
 build/
 develop-eggs/
 dist/
@@ -25,6 +34,7 @@ share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
 PYTHONPATH
 
 # PyInstaller
@@ -35,19 +45,18 @@ PYTHONPATH
 pip-log.txt
 pip-delete-this-directory.txt
 
-# Unit test / coverage reports
+# Testing
+.pytest_cache/
+.coverage
 htmlcov/
 .tox/
 .nox/
-.coverage
-.coverage.*
 .cache
 nosetests.xml
 coverage.xml
 *.cover
 *.py,cover
 .hypothesis/
-.pytest_cache/
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -107,6 +116,9 @@ models/
 output/
 results/
 
+# Sphinx documentation
+docs/_build/
+
 # Canary system artifacts
 tests/canaries/
 tests/canaries/*.json
@@ -121,3 +133,9 @@ tmp/
 artifact/
 *.pdf
 !tests/fixtures/*.pdf
+
+# CI/CD artifacts
+validation_results.json
+performance_history.json
+baselines/**/*.json
+baselines/**/output.json

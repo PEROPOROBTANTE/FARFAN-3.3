@@ -4,7 +4,7 @@
 
 ### Setup
 ```bash
-python -m venv venv
+python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 python -m spacy download es_core_news_sm
@@ -17,6 +17,7 @@ No build step required (Python project)
 ```bash
 flake8 . --max-line-length=120 --exclude=venv,__pycache__,.git
 black --check . --exclude=venv
+isort --check-only .
 ```
 
 ### Test
@@ -42,10 +43,10 @@ python tests/canary_runner.py
 ```
 
 ## Tech Stack
-- **Language**: Python 3.10+
-- **NLP**: spaCy (Spanish), transformers, sentence-transformers, BETO (Spanish BERT)
-- **ML/Analytics**: PyTorch, TensorFlow, scikit-learn, numpy, pandas, NetworkX (causal graphs)
-- **Architecture**: Orchestrator pattern with 8+ specialized modules (dereck_beach, policy_processor, teoria_cambio, etc.)
+- **Language**: Python 3.11+
+- **NLP**: spaCy (Spanish models), transformers, NLTK, sentence-transformers, BETO (Spanish BERT)
+- **ML/Analytics**: PyTorch 2.0.1, TensorFlow 2.13.0, scikit-learn, numpy, pandas, NetworkX (causal graphs)
+- **Architecture**: Orchestrator pattern with 8+ specialized modules (dereck_beach, policy_processor, teoria_cambio, etc.) coordinated by `orchestrator/core_orchestrator.py`
 
 ## Repo Structure
 - `orchestrator/` - Core orchestration engine with 9 module adapters
@@ -59,5 +60,7 @@ python tests/canary_runner.py
 - **Imports**: Group by stdlib, third-party, local; no unused imports
 - **Docstrings**: Use for public methods, include types and examples
 - **Naming**: snake_case for functions/variables, PascalCase for classes (Spanish variable names for domain logic, English for infrastructure)
-- **Type hints**: Required; use dataclasses for config
-- **Comments**: Minimal; code should be self-documenting
+- **Type hints**: Required (Python 3.11+ features); use dataclasses for config and DTOs
+- **Comments**: Minimal; code should be self-documenting (No docstrings/comments unless complex)
+- **Logging**: Use stdlib `logging`
+- **Focus**: Spanish text analysis focus (Spanish NLP models)
