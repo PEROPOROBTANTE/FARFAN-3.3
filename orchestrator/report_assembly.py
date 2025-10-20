@@ -165,6 +165,128 @@ class ReportAssembler:
     # MICRO LEVEL - Question-by-Question Analysis
     # ========================================================================
 
+    def generate_micro_answer_from_unified(
+            self,
+            unified_data: Any,  # UnifiedAnalysisData from ModuleController
+            question_spec,
+            plan_text: str
+    ) -> MicroLevelAnswer:
+        """
+        Generate MICRO-level answer from unified analysis data structure
+        
+        Args:
+            unified_data: UnifiedAnalysisData containing module traces and results
+            question_spec: Question specification with scoring modality
+            plan_text: Original plan document text
+            
+        Returns:
+            MicroLevelAnswer with complete analysis
+        """
+        logger.info(f"Generating MICRO answer for {question_spec.canonical_id} from unified data")
+
+        start_time = datetime.now()
+
+        # Convert UnifiedAnalysisData to legacy format for compatibility
+        execution_results = self._convert_unified_to_legacy(unified_data)
+
+        # Step 1: Apply scoring modality to calculate score
+        score, elements_found, pattern_matches = self._apply_scoring_modality(
+            question_spec,
+            execution_results,
+            plan_text
+        )
+
+        # Step 2: Map quantitative score to qualitative level
+        qualitative = self._score_to_qualitative_question(score)
+
+        # Step 3: Extract evidence excerpts from plan
+        evidence_excerpts = self._extract_evidence_excerpts(
+            question_spec,
+            execution_results,
+            elements_found,
+            plan_text
+        )
+
+        # Step 4: Calculate overall confidence
+        confidence = self._calculate_confidence(
+            execution_results,
+            elements_found,
+            pattern_matches
+        )
+
+        # Step 5: Generate doctoral-level explanation
+        explanation = self._generate_explanation(
+            question_spec,
+            score,
+            qualitative,
+            elements_found,
+            execution_results,
+            evidence_excerpts
+        )
+
+        # Step 6: Collect module execution details from traces
+        modules_executed = [trace.module_name for trace in unified_data.module_traces]
+        module_results = {
+            f"{trace.module_name}.{trace.method_name}": {
+                "status": trace.status,
+                "confidence": trace.confidence,
+                "execution_time": trace.execution_time,
+                "data_summary": self._summarize_module_data({"data": trace.result_data})
+            }
+            for trace in unified_data.module_traces
+        }
+
+        execution_time = unified_data.total_execution_time
+
+        return MicroLevelAnswer(
+            question_id=question_spec.canonical_id,
+            qualitative_note=qualitative,
+            quantitative_score=score,
+            evidence=evidence_excerpts,
+            explanation=explanation,
+            confidence=confidence,
+            scoring_modality=question_spec.scoring_modality,
+            elements_found=elements_found,
+            search_pattern_matches=pattern_matches,
+            modules_executed=modules_executed,
+            module_results=module_results,
+            execution_time=execution_time,
+            metadata={
+                "timestamp": unified_data.timestamp,
+                "policy_area": question_spec.policy_area,
+                "dimension": question_spec.dimension,
+                "question_number": question_spec.question_number,
+                "execution_metadata": unified_data.execution_metadata
+            }
+        )
+
+    def _convert_unified_to_legacy(self, unified_data: Any) -> Dict[str, Any]:
+        """
+        Convert UnifiedAnalysisData to legacy execution_results format
+        
+        Args:
+            unified_data: UnifiedAnalysisData from ModuleController
+            
+        Returns:
+            Dictionary compatible with legacy report assembly methods
+        """
+        legacy_results = {}
+        
+        for trace in unified_data.module_traces:
+            key = f"{trace.module_name}.{trace.method_name}"
+            legacy_results[key] = {
+                "module_name": trace.module_name,
+                "status": trace.status,
+                "data": trace.result_data,
+                "confidence": trace.confidence,
+                "evidence": trace.evidence,
+                "execution_time": trace.execution_time,
+                "error": trace.error,
+                "metadata": trace.metadata
+            }
+        
+        return legacy_results
+
     def generate_micro_answer(
             self,
             question_spec,  # QuestionSpec from questionnaire_parser
@@ -172,7 +294,10 @@ class ReportAssembler:
             plan_text: str
     ) -> MicroLevelAnswer:
         """
-        Generate MICRO-level answer for a single question
+        Generate MICRO-level answer for a single question (legacy interface)
+        
+        DEPRECATED: Use generate_micro_answer_from_unified instead
+        This method is kept for backward compatibility
         
         Args:
             question_spec: Question specification with scoring modality
@@ -182,7 +307,7 @@ class ReportAssembler:
         Returns:
             MicroLevelAnswer with complete analysis
         """
-        logger.info(f"Generating MICRO answer for {question_spec.canonical_id}")
+        logger.info(f"Generating MICRO answer for {question_spec.canonical_id} (legacy interface)")
 
         start_time = datetime.now()
 
