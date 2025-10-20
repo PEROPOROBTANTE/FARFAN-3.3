@@ -1,47 +1,29 @@
-# FARFAN 3.0 - Agent Guide
+# AGENTS.md - FARFAN 3.0 Policy Analysis System
 
-## Initial Setup
+## Commands
+
+**Setup:**
 ```bash
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate (or venv\Scripts\activate on Windows)
-pip install --upgrade pip
+python -m venv venv && source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-## Commands
-- **Build**: N/A (Python project, no build step/compilation needed)
-- **Lint**: `flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics`
-- **Format**: `black . && isort .`
-- **Tests**: `pytest test_architecture_compilation.py test_orchestrator_integration.py -v`
-- **Run**: `python run_farfan.py --plan path/to/plan.pdf` or `python run_farfan.py --batch plans/ --workers 8`
-- **Dev**: `python run_farfan.py --help` (see usage options below)
+**Run Tests:** `python test_architecture_compilation.py` or `python test_orchestrator_integration.py`  
+**Run Lint:** `flake8 orchestrator/ *.py` or `black --check .`  
+**Run Main:** `python run_farfan.py --plan path/to/plan.pdf` or `python run_farfan.py --batch plans_directory/`
 
-## Running FARFAN
-```bash
-# Single plan analysis
-python run_farfan.py --plan path/to/plan.pdf
+## Tech Stack & Architecture
 
-# Batch analysis
-python run_farfan.py --batch plans_directory/ --workers 8
-
-# System health check
-python run_farfan.py --health
-```
-
-## Tech Stack
-- **Language**: Python 3.10+ (tested on 3.11)
-- **NLP**: spaCy (es_core_news_sm/lg, Spanish models), transformers, BERT models for Spanish text, sentence-transformers, NLTK, Stanza
-- **ML/Science**: PyTorch, TensorFlow, sentence-transformers, scikit-learn, NumPy, Pandas
-- **Architecture**: Orchestrator pattern with circuit breaker, choreographer, 9 analysis modules, and multi-level reporting
-
-## Structure
-- `orchestrator/`: Core orchestration engine (routing, execution, fault tolerance, reporting)
-- Root modules: 8-9 specialized analyzers (causal, contradiction, financial, policy processing, semantic chunking)
-- `run_farfan.py`: Main CLI entry point for single/batch plan analysis
+- **Language:** Python 3.10+ (tested on 3.11.9)
+- **NLP:** spaCy, transformers, sentence-transformers (Spanish models: es-core-news-lg, BETO)
+- **Data:** pandas, numpy, scikit-learn
+- **Architecture:** Orchestrator pattern with modular adapters for policy analysis
+  - `orchestrator/`: Core orchestration engine with circuit breaker, choreographer, question router
+  - Root modules: 8+ specialized analyzers (causal, contradiction, financial viability, theory of change, etc.)
+  - Multi-level reporting: MICRO/MESO/MACRO analysis of 300-question questionnaire
 
 ## Code Style
-- Follow PEP 8, use type hints, docstrings for all public methods
-- Spanish comments/docstrings throughout (domain is Spanish policy analysis)
-- Format with black (line length 100), sort imports with isort
-- Modules use dataclasses, avoid mutable defaults, prefer composition over inheritance
-- Functional decomposition with adapter pattern for module integration
+
+- **Conventions:** Type hints, dataclasses, docstrings with module-level architecture descriptions
+- **No comments:** Code is self-documenting; docstrings explain "why", not "what"
+- **Testing:** Custom test runners (no pytest framework); validate imports, class structure, and invocation chains

@@ -9,6 +9,7 @@ Architecture:
 - Choreographer: Module sequencing and dependency management
 - Circuit Breaker: Fault tolerance and graceful degradation
 - Report Assembly: MICRO/MESO/MACRO multi-level reporting
+- Mapping Loader: Execution integrity validation layer
 
 Author: FARFAN Team
 Version: 3.0.0
@@ -22,11 +23,25 @@ from .question_router import QuestionRouter
 from .choreographer import ExecutionChoreographer
 from .circuit_breaker import CircuitBreaker
 from .report_assembly import ReportAssembler
+from .mapping_loader import (
+    YAMLMappingLoader,
+    MappingStartupValidator,
+    MappingValidationError,
+    MappingConflict,
+    ConflictType,
+    ContractRegistry
+)
 
 __all__ = [
     "FARFANOrchestrator",
     "QuestionRouter",
     "ExecutionChoreographer",
     "CircuitBreaker",
-    "ReportAssembler"
+    "ReportAssembler",
+    "YAMLMappingLoader",
+    "MappingStartupValidator",
+    "MappingValidationError",
+    "MappingConflict",
+    "ConflictType",
+    "ContractRegistry",
 ]

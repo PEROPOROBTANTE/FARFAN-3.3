@@ -51,6 +51,8 @@ pipdeptree==2.13.0  # Para visualizar dependencias y detectar conflictos
 tqdm==4.66.1
 requests==2.31.0
 python-dotenv==1.0.0
+pyyaml==6.0.1
+networkx==3.1
 
 # === Documentación ===
 sphinx==7.2.6
