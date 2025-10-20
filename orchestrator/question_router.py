@@ -17,18 +17,39 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 
+# Import immutable data models
+try:
+    from orchestrator.data_models import RouteInfo as ImmutableRouteInfo
+    USE_IMMUTABLE_MODELS = True
+except ImportError:
+    USE_IMMUTABLE_MODELS = False
+
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class RouteInfo:
-    """Route information for a question"""
+    """Route information for a question (legacy - use immutable models)"""
     question_id: str
     module_name: str
     class_name: str
     method_name: str
     dimension: str
     confidence: float = 0.8
+    
+    def to_immutable(self) -> 'ImmutableRouteInfo':
+        """Convert to immutable RouteInfo"""
+        if not USE_IMMUTABLE_MODELS:
+            raise ImportError("Immutable models not available")
+        
+        return ImmutableRouteInfo(
+            question_id=self.question_id,
+            module_name=self.module_name,
+            class_name=self.class_name,
+            method_name=self.method_name,
+            dimension=self.dimension,
+            confidence=self.confidence
+        )
 
 
 class QuestionRoutingError(Exception):

@@ -43,6 +43,10 @@ flake8==6.1.0
 isort==5.12.0
 mypy==1.5.1
 
+# === Data validation and models ===
+pydantic==2.5.0
+hypothesis==6.92.1
+
 # === Gestión de dependencias ===
 pip-tools==7.3.0  # Para gestionar y sincronizar requirements.txt
 pipdeptree==2.13.0  # Para visualizar dependencias y detectar conflictos

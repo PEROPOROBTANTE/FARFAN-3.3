@@ -31,19 +31,34 @@ import re
 from datetime import datetime
 import numpy as np
 
+# Import immutable data models
+try:
+    from orchestrator.data_models import (
+        AnalysisResult as ImmutableAnalysisResult,
+        Evidence as ImmutableEvidence,
+        DimensionAnalysis as ImmutableDimensionAnalysis,
+        PolicyAreaAnalysis as ImmutablePolicyAreaAnalysis,
+        QualitativeLevelEnum
+    )
+    USE_IMMUTABLE_MODELS = True
+except ImportError:
+    USE_IMMUTABLE_MODELS = False
+
 logger = logging.getLogger(__name__)
 
 
 # ============================================================================
-# DATA STRUCTURES FOR MULTI-LEVEL REPORTING
+# DATA STRUCTURES FOR MULTI-LEVEL REPORTING (Legacy - use immutable models)
 # ============================================================================
 
 @dataclass
 class MicroLevelAnswer:
     """
-    MICRO level: Individual question answer with full traceability
+    MICRO level: Individual question answer with full traceability (legacy)
     
     Maps to single question (e.g., P1-D1-Q1) with complete evidence chain
+    
+    NOTE: Use ImmutableAnalysisResult from data_models for new code
     """
     question_id: str  # P#-D#-Q# format (e.g., "P1-D1-Q1")
     qualitative_note: str  # EXCELENTE/BUENO/ACEPTABLE/INSUFICIENTE
@@ -64,14 +79,45 @@ class MicroLevelAnswer:
     
     # Additional metadata
     metadata: Dict[str, Any] = field(default_factory=dict)
+    
+    def to_immutable(self) -> 'ImmutableAnalysisResult':
+        """Convert to immutable AnalysisResult"""
+        if not USE_IMMUTABLE_MODELS:
+            raise ImportError("Immutable models not available")
+        
+        # Convert evidence strings to Evidence objects
+        evidence_objs = tuple(
+            ImmutableEvidence(
+                text=e,
+                confidence=self.confidence,
+                metadata={}
+            )
+            for e in self.evidence
+        )
+        
+        return ImmutableAnalysisResult(
+            question_id=self.question_id,
+            qualitative_level=QualitativeLevelEnum(self.qualitative_note),
+            quantitative_score=self.quantitative_score,
+            evidence=evidence_objs,
+            explanation=self.explanation,
+            confidence=self.confidence,
+            scoring_modality=self.scoring_modality,
+            elements_found=self.elements_found,
+            modules_executed=tuple(self.modules_executed),
+            execution_time=self.execution_time,
+            metadata=self.metadata
+        )
 
 
 @dataclass
 class MesoLevelCluster:
     """
-    MESO level: Cluster aggregation across policy areas
+    MESO level: Cluster aggregation across policy areas (legacy)
     
     Aggregates related questions into thematic clusters for mid-level analysis
+    
+    NOTE: Use ImmutableDimensionAnalysis from data_models for new code
     """
     cluster_name: str  # CLUSTER_1, CLUSTER_2, etc.
     cluster_description: str  # Human-readable description
@@ -92,7 +138,7 @@ class MesoLevelCluster:
 @dataclass
 class MacroLevelConvergence:
     """
-    MACRO level: Overall convergence with Decálogo framework
+    MACRO level: Overall convergence with Decálogo framework (legacy)
     
     Provides executive-level assessment of entire plan
     """

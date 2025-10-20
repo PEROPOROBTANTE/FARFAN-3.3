@@ -48,6 +48,17 @@ from enum import Enum
 from datetime import datetime
 from collections import defaultdict
 
+# Import immutable data models
+try:
+    from orchestrator.data_models import (
+        ExecutionResult as ImmutableExecutionResult,
+        ExecutionStatusEnum,
+        ModuleResult
+    )
+    USE_IMMUTABLE_MODELS = True
+except ImportError:
+    USE_IMMUTABLE_MODELS = False
+
 logger = logging.getLogger(__name__)
 
 
@@ -65,7 +76,7 @@ class ExecutionStatus(Enum):
 @dataclass
 class ExecutionResult:
     """
-    Result from a single question execution
+    Result from a single question execution (legacy - use immutable models)
     
     Wraps ModuleResult objects with additional orchestration metadata
     """
@@ -95,6 +106,24 @@ class ExecutionResult:
             "evidence_count": self.evidence_count,
             "metadata": self.metadata
         }
+    
+    def to_immutable(self) -> 'ImmutableExecutionResult':
+        """Convert to immutable ExecutionResult"""
+        if not USE_IMMUTABLE_MODELS:
+            raise ImportError("Immutable models not available")
+        
+        return ImmutableExecutionResult(
+            module_name=self.module_name,
+            adapter_class=self.adapter_class,
+            method_name=self.method_name,
+            status=ExecutionStatusEnum(self.status.value),
+            output=self.output or {},
+            error=self.error,
+            execution_time=self.execution_time,
+            evidence_extracted=self.evidence_extracted,
+            confidence=self.confidence,
+            metadata=self.metadata
+        )
 
 
 @dataclass
