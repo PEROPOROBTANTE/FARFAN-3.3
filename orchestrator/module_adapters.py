@@ -337,8 +337,8 @@ class PolicyProcessorAdapter(BaseAdapter):
 
     def _execute_calculate_shannon_entropy(self, distribution: List, **kwargs) -> ModuleResult:
         """Execute BayesianEvidenceScorer._calculate_shannon_entropy()"""
-        scorer = self.BayesianEvidenceScorer()
-        entropy = scorer._calculate_shannon_entropy(distribution)
+        # Corrected static method violation: BayesianEvidenceScorer._calculate_shannon_entropy is @staticmethod (policy_processor.py:314)
+        entropy = self.BayesianEvidenceScorer._calculate_shannon_entropy(distribution)
 
         return ModuleResult(
             module_name=self.module_name,
@@ -2134,6 +2134,7 @@ class AnalyzerOneAdapter(BaseAdapter):
 
     def _execute_load_pdf(self, file_path: str, **kwargs) -> ModuleResult:
         """Execute DocumentProcessor.load_pdf()"""
+        # Corrected static method violation: DocumentProcessor.load_pdf is @staticmethod (Analyzer_one.py:983-984)
         text = self.DocumentProcessor.load_pdf(file_path)
 
         return ModuleResult(
@@ -2149,6 +2150,7 @@ class AnalyzerOneAdapter(BaseAdapter):
 
     def _execute_load_docx(self, file_path: str, **kwargs) -> ModuleResult:
         """Execute DocumentProcessor.load_docx()"""
+        # Corrected static method violation: DocumentProcessor.load_docx is @staticmethod (Analyzer_one.py:1001-1002)
         text = self.DocumentProcessor.load_docx(file_path)
 
         return ModuleResult(
@@ -2164,6 +2166,7 @@ class AnalyzerOneAdapter(BaseAdapter):
 
     def _execute_segment_text(self, text: str, method: str = "sentence", **kwargs) -> ModuleResult:
         """Execute DocumentProcessor.segment_text()"""
+        # Corrected static method violation: DocumentProcessor.segment_text is @staticmethod (Analyzer_one.py:1018-1019)
         segments = self.DocumentProcessor.segment_text(text, method)
 
         return ModuleResult(
@@ -4484,13 +4487,37 @@ class DerekBeachAdapter(BaseAdapter):
     # ========================================================================
     def _execute_classify_test(self, necessity: float, sufficiency: float, **kwargs) -> ModuleResult:
         """Execute BeachEvidentialTest.classify_test()"""
+        # Verified correct: BeachEvidentialTest.classify_test is @staticmethod - correctly called on class
         test_type = self.BeachEvidentialTest.classify_test(necessity, sufficiency)
+        
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="BeachEvidentialTest",
+            method_name="classify_test",
+            status="success",
+            data={"test_type": test_type, "necessity": necessity, "sufficiency": sufficiency},
+            evidence=[{"type": "test_classification", "test_type": test_type}],
+            confidence=0.95,
+            execution_time=0.0
+        )
 
     def _execute_apply_test_logic(self, test_type: str, evidence_found: bool, 
                                    prior: float, bayes_factor: float, **kwargs) -> ModuleResult:
         """Execute BeachEvidentialTest.apply_test_logic()"""
+        # Verified correct: BeachEvidentialTest.apply_test_logic is @staticmethod - correctly called on class
         posterior, interpretation = self.BeachEvidentialTest.apply_test_logic(
             test_type, evidence_found, prior, bayes_factor
+        )
+        
+        return ModuleResult(
+            module_name=self.module_name,
+            class_name="BeachEvidentialTest",
+            method_name="apply_test_logic",
+            status="success",
+            data={"posterior": posterior, "interpretation": interpretation, "test_type": test_type},
+            evidence=[{"type": "test_logic", "posterior": posterior}],
+            confidence=posterior,
+            execution_time=0.0
         )
 
     def _execute_load_config(self, config_path: str = None, **kwargs) -> ModuleResult:
@@ -6128,6 +6155,7 @@ class ModulosAdapter(BaseAdapter):
 
     def _execute_is_acyclic(self, nodes, **kwargs) -> ModuleResult:
         """Execute AdvancedDAGValidator._is_acyclic()"""
+        # Corrected static method call: AdvancedDAGValidator._is_acyclic is @staticmethod (teoria_cambio.py:419-420)
         is_acyclic = self.AdvancedDAGValidator._is_acyclic(nodes)
 
         evidence = [{
@@ -6192,6 +6220,7 @@ class ModulosAdapter(BaseAdapter):
 
     def _execute_calculate_confidence_interval(self, successes: int, trials: int, confidence: float = 0.95, **kwargs) -> ModuleResult:
         """Execute AdvancedDAGValidator._calculate_confidence_interval()"""
+        # Corrected static method call: AdvancedDAGValidator._calculate_confidence_interval is @staticmethod (teoria_cambio.py:552-553)
         ci = self.AdvancedDAGValidator._calculate_confidence_interval(successes, trials, confidence)
 
         evidence = [{
@@ -6215,6 +6244,7 @@ class ModulosAdapter(BaseAdapter):
 
     def _execute_calculate_statistical_power(self, s: int, n: int, alpha: float = 0.05, **kwargs) -> ModuleResult:
         """Execute AdvancedDAGValidator._calculate_statistical_power()"""
+        # Corrected static method call: AdvancedDAGValidator._calculate_statistical_power is @staticmethod (teoria_cambio.py:566-567)
         power = self.AdvancedDAGValidator._calculate_statistical_power(s, n, alpha)
 
         evidence = [{
@@ -6238,6 +6268,7 @@ class ModulosAdapter(BaseAdapter):
 
     def _execute_calculate_bayesian_posterior(self, likelihood: float, prior: float = 0.5, **kwargs) -> ModuleResult:
         """Execute AdvancedDAGValidator._calculate_bayesian_posterior()"""
+        # Corrected static method call: AdvancedDAGValidator._calculate_bayesian_posterior is @staticmethod (teoria_cambio.py:577-578)
         posterior = self.AdvancedDAGValidator._calculate_bayesian_posterior(likelihood, prior)
 
         evidence = [{
