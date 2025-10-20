@@ -1,0 +1,51 @@
+{
+  "metadata": {
+    "version": "1.0.0",
+    "description": "Responsibility mapping for question routing to module handlers",
+    "total_mappings": 6
+  },
+  "mappings": {
+    "D1": {
+      "module": "policy_processor",
+      "class": "IndustrialPolicyProcessor",
+      "method": "process",
+      "confidence": 0.85,
+      "description": "Dimension 1: Insumos (Diagnóstico y Líneas Base)"
+    },
+    "D2": {
+      "module": "causal_proccesor",
+      "class": "PolicyDocumentAnalyzer",
+      "method": "analyze_document",
+      "confidence": 0.80,
+      "description": "Dimension 2: Procesos (Diseño de Intervención)"
+    },
+    "D3": {
+      "module": "analyzer_one",
+      "class": "MunicipalAnalyzer",
+      "method": "analyze",
+      "confidence": 0.82,
+      "description": "Dimension 3: Productos y Outputs"
+    },
+    "D4": {
+      "module": "teoria_cambio",
+      "class": "ModulosTeoriaCambio",
+      "method": "analizar_teoria_cambio",
+      "confidence": 0.88,
+      "description": "Dimension 4: Resultados y Outcomes"
+    },
+    "D5": {
+      "module": "dereck_beach",
+      "class": "DerekBeachAnalyzer",
+      "method": "analyze_causal_chain",
+      "confidence": 0.85,
+      "description": "Dimension 5: Impactos de Largo Plazo"
+    },
+    "D6": {
+      "module": "teoria_cambio",
+      "class": "ModulosTeoriaCambio",
+      "method": "validar_coherencia_causal",
+      "confidence": 0.90,
+      "description": "Dimension 6: Teoría de Cambio"
+    }
+  }
+}
