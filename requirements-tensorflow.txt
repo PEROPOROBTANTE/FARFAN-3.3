@@ -1,0 +1,26 @@
+# === TensorFlow-only Deep Learning Dependencies ===
+# Use this file for TensorFlow-only installations to avoid conflicts with PyTorch
+#
+# Installation:
+#   pip install -r requirements.txt -r requirements-tensorflow.txt
+#
+# NOTA: Compatible con transformers==4.34.0 y sentence-transformers==2.2.2
+
+# TensorFlow 2.13.0 - Versión estable con buen soporte
+tensorflow==2.13.0
+
+# Dependencias coordinadas de TensorFlow
+tensorflow-estimator==2.13.0
+keras==2.13.1  # Debe coincidir con la versión de TensorFlow
+
+# Dependencias adicionales para evitar conflictos
+numpy>=1.24.3,<1.25.0  # Compatible con tensorflow 2.13.0
+protobuf>=3.20.2,<4.0.0  # Evita conflictos con transformers y tensorflow
+h5py>=3.8.0,<3.10.0  # Requerido por keras para guardar modelos
+
+# GPU Support (optional - uncomment if using GPU)
+# Para GPU con CUDA 11.8:
+# tensorflow-gpu==2.13.0
+
+# ADVERTENCIA: TensorFlow 2.13 requiere Python 3.8-3.11
+# Para Python 3.12+, considere actualizar a TensorFlow 2.15+

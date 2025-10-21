@@ -22,10 +22,27 @@ matplotlib==3.7.2
 seaborn==0.12.2
 
 # === Dependencias para procesamiento de texto avanzado ===
-transformers==4.34.0  # NOTA: Compatible con torch 1.13.1 y tensorflow 2.13.0
-torch==1.13.1
-tensorflow==2.13.0  # ADVERTENCIA: Evitar actualizar independientemente de torch para prevenir conflictos
+# ADVERTENCIA: PyTorch y TensorFlow pueden causar conflictos de dependencias binarias
+# cuando se usan simultáneamente. Considere usar solo una librería según su caso de uso.
+#
+# Para instalación con solo PyTorch: pip install -r requirements.txt -r requirements-torch.txt
+# Para instalación con solo TensorFlow: pip install -r requirements.txt -r requirements-tensorflow.txt
+#
+# Si necesita ambas librerías, las versiones deben ser cuidadosamente coordinadas
+# para evitar conflictos en dependencias transitivas (keras, protobuf, numpy, etc.)
+
+# Transformers - Compatible con torch 2.0.1+ y tensorflow 2.13.0
+transformers==4.34.0
+
+# Sentence transformers - Requiere torch o tensorflow como backend
+# Por defecto usa PyTorch si está disponible
 sentence-transformers==2.2.2
+
+# NOTA: Las versiones específicas de torch y tensorflow se encuentran en:
+# - requirements-torch.txt (para uso solo con PyTorch)
+# - requirements-tensorflow.txt (para uso solo con TensorFlow)
+# - requirements-both.txt (para uso simultáneo - NO RECOMENDADO)
+#
 # Modelos preentrenados específicos para español
 # beto-uncased @ https://huggingface.co/dccuchile/bert-base-spanish-wwm-uncased  # Commented out - invalid format
 
@@ -44,7 +61,10 @@ isort==5.12.0
 mypy==1.5.1
 
 # === Data validation and models ===
+# ADVERTENCIA: pydantic 2.x puede causar incompatibilidades con algunas librerías
+# que esperan pydantic 1.x. Si experimenta problemas, considere usar pydantic<2.0
 pydantic==2.5.0
+pydantic-core==2.14.5  # Pin core dependency to avoid conflicts
 hypothesis==6.92.1
 
 # === Gestión de dependencias ===
