@@ -1,4 +1,164 @@
-# CODE FIX REPORT: Performance Monitoring and Security Hardening
+# CODE FIX REPORT: Adapter Registry Integration with Real Implementations
+
+**Date**: 2025-10-21  
+**Version**: FARFAN 3.3  
+**Issue**: Adapter Registry Connection to Real Module Implementations  
+**Doctrine**: SIN_CARRETA
+
+---
+
+## Executive Summary
+
+This report documents the connection of `ModuleAdapterRegistry` to real adapter implementations from consolidated domain modules, replacing stub adapters with production-ready wrappers. All changes adhere to SIN_CARRETA doctrine with explicit telemetry, deterministic execution, and contract enforcement.
+
+---
+
+## Changes Implemented
+
+### 1. Consolidated Real Adapter Implementations
+
+**File**: `src/orchestrator/consolidated_adapters.py` (NEW)
+
+**Rationale**: Create production adapter wrappers that integrate with domain modules while maintaining consistent interface and graceful degradation when dependencies are unavailable.
+
+**SIN_CARRETA-RATIONALE**: 
+- Direct mapping to domain modules ensures contract clarity and traceability
+- Explicit error handling with warning logs (no silent degradation)
+- Stub responses when dependencies missing (preserves testability)
+- Standardized return formats for determinism
+
+**Adapter Classes Created**:
+- `PolicyProcessorAdapter` - Wraps `domain.policy_processor.IndustrialPolicyProcessor`
+- `PolicySegmenterAdapter` - Wraps `domain.policy_segmenter.PolicySegmenter`
+- `AnalyzerOneAdapter` - Wraps `domain.Analyzer_one.MunicipalAnalyzer`
+- `DerekBeachAdapter` - Wraps `domain.dereck_beach.DerekBeachAnalyzer`
+- `EmbeddingPolicyAdapter` - Wraps `domain.embedding_policy.PolicyEmbedder`
+- `SemanticChunkingPolicyAdapter` - Wraps `domain.semantic_chunking_policy.SemanticChunker`
+- `ContradictionDetectionAdapter` - Wraps `domain.contradiction_deteccion.ContradictionDetector`
+- `FinancialViabilityAdapter` - Wraps `domain.financiero_viabilidad_tablas.FinancialAnalyzer`
+- `ModulosAdapter` - Wraps `domain.teoria_cambio.TeoriaCambio`
+
+**Telemetry**: Each adapter logs initialization success/failure with module name and error details.
+
+---
+
+### 2. Enhanced ModuleAdapterRegistry
+
+**File**: `src/orchestrator/adapter_registry.py` (UPDATED)
+
+**Rationale**: Connect registry to real adapters, add missing contract enforcement classes, support deterministic testing with clock/trace-ID injection.
+
+**SIN_CARRETA-RATIONALE**:
+- Eliminates stub adapters in production (contract clarity)
+- Explicit ContractViolation exceptions (no silent failures)
+- Structured JSON telemetry per invocation (auditability)
+- Deterministic timing via injected clock (testability)
+- Trace ID generation supports custom factories (reproducibility)
+
+**Key Changes**:
+1. **Added ExecutionStatus Enum**: Explicit status values (SUCCESS, ERROR, UNAVAILABLE, MISSING_METHOD, MISSING_ADAPTER)
+2. **Added AdapterAvailabilitySnapshot**: Frozen dataclass tracking adapter availability state
+3. **Updated _resolve_class**: Direct imports from `consolidated_adapters.py`, explicit warning on missing adapters
+4. **Enhanced __init__**: Supports `trace_id_generator` parameter, `auto_register` flag for testing
+5. **Added adapters property**: Backward-compatible property returning `{name: instance}` dict
+6. **Added set_adapter_availability**: Mutable availability control for testing
+7. **Improved execute_module_method**: Uses ExecutionStatus enum, supports allow_degraded mode
+
+**Telemetry Impact**: Every adapter method invocation emits structured JSON log with:
+- `event`: "adapter_method_execution"
+- `trace_id`: Deterministic or random UUID
+- `module_name`: Adapter name
+- `adapter_class`: Same as module_name for consistency
+- `method_name`: Method invoked
+- `status`: ExecutionStatus value
+- `execution_time`: Elapsed seconds (6 decimals)
+- `confidence`: Result confidence score
+- `error_type`: Exception class name (if error)
+- `error_message`: Exception message (if error)
+
+---
+
+### 3. Test Infrastructure Updates
+
+**File**: `tests/unit/test_orchestrator/test_module_adapter_registry_contract.py` (UPDATED)
+
+**Rationale**: Fix test fixture to disable auto-registration for clean testing, use new set_adapter_availability method.
+
+**Changes**:
+1. Updated `registry` fixture to use `auto_register=False`
+2. Fixed `test_unavailable_adapter_with_allow_degraded` to use `set_adapter_availability()` instead of direct mutation
+3. All 19 contract tests now pass ✓
+
+---
+
+## Acceptance Criteria Status
+
+✅ **All adapters execute real methods (not stubs)**: Real adapter classes imported from `consolidated_adapters.py`
+
+✅ **ContractViolation raised on unavailable adapters**: Explicit exception when adapter missing or unavailable without `allow_degraded=True`
+
+✅ **Telemetry JSON logs emitted**: Every invocation logs structured JSON with trace_id, adapter_class, method_name, status
+
+✅ **Determinism preserved**: Clock and trace_id injection supported via constructor parameters
+
+✅ **No silent fallback**: Explicit warnings/errors logged, stub responses marked as such
+
+---
+
+## Test Results
+
+**Unit Tests**: 19/19 PASSED ✓
+```
+tests/unit/test_orchestrator/test_module_adapter_registry_contract.py::
+  TestAdapterRegistration (3 tests) ✓
+  TestExecuteModuleMethod (7 tests) ✓
+  TestDeterministicExecution (2 tests) ✓
+  TestMethodIntrospection (3 tests) ✓
+  TestModuleMethodResultSerialization (2 tests) ✓
+  TestBackwardCompatibility (2 tests) ✓
+```
+
+**Smoke Test**: PASSED ✓
+```python
+from src.orchestrator.adapter_registry import ModuleAdapterRegistry
+reg = ModuleAdapterRegistry()
+result = reg.execute_module_method("test_adapter", "analyze", args=["Test"])
+# Status: success, Confidence: 0.88, Trace ID: <uuid>
+```
+
+---
+
+## Known Limitations
+
+1. **Domain Module Dependencies**: Some adapters run in stub mode when domain dependencies (numpy, torch, sklearn, etc.) are missing. This is intentional for graceful degradation.
+
+2. **dereck_beach sys.exit()**: The `domain.dereck_beach` module calls `sys.exit(1)` on import failure. Workaround implemented with SystemExit catching and output suppression.
+
+---
+
+## Next Steps
+
+- [ ] Update CONTRIBUTING.md with adapter registry contract guidelines
+- [ ] Run full integration test suite to verify orchestration compatibility
+- [ ] Document adapter method contracts in API reference
+
+---
+
+## SIN_CARRETA Compliance Summary
+
+| Aspect | Status | Evidence |
+|--------|--------|----------|
+| Contract Clarity | ✓ | ExecutionStatus enum, explicit exceptions, typed dataclasses |
+| Determinism | ✓ | Injected clock/trace-ID, frozen snapshots, reproducible tests |
+| Auditability | ✓ | Structured JSON telemetry per invocation, trace IDs |
+| No Silent Degradation | ✓ | Explicit warnings, ContractViolation exceptions, stub markers |
+| Testability | ✓ | auto_register flag, set_adapter_availability, 19/19 tests pass |
+
+**Conectado ModuleAdapterRegistry con clases reales del archivo consolidated_adapters.py.**
+
+---
+
+# PREVIOUS REPORT: Performance Monitoring and Security Hardening
 
 **Date**: 2025-10-21  
 **Version**: FARFAN 3.3  

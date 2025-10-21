@@ -145,6 +145,137 @@ python -m pytest tests/validation/test_determinism.py -v
 
 FARFAN uses immutable data contracts to ensure type safety and prevent accidental mutations.
 
+### ModuleAdapterRegistry Contract
+
+The `ModuleAdapterRegistry` provides centralized adapter management with deterministic execution and explicit contract enforcement:
+
+#### Registry Initialization
+
+```python
+from src.orchestrator.adapter_registry import ModuleAdapterRegistry
+
+# Production use - auto-registers all adapters
+registry = ModuleAdapterRegistry()
+
+# Testing use - start with empty registry
+registry = ModuleAdapterRegistry(auto_register=False)
+
+# Deterministic testing - inject clock and trace ID generator
+def deterministic_clock():
+    counter = [0.0]
+    def clock():
+        counter[0] += 0.001
+        return counter[0]
+    return clock
+
+def deterministic_trace_id():
+    counter = [0]
+    def generator():
+        counter[0] += 1
+        return f"trace-{counter[0]:04d}"
+    return generator
+
+registry = ModuleAdapterRegistry(
+    clock=deterministic_clock(),
+    trace_id_generator=deterministic_trace_id(),
+    auto_register=False
+)
+```
+
+#### Registering Custom Adapters
+
+```python
+class CustomAdapter:
+    def process(self, text: str) -> dict:
+        return {
+            "result": f"Processed: {text}",
+            "confidence": 0.95,
+            "evidence": [{"text": text, "score": 0.9}]
+        }
+
+registry.register_adapter(
+    module_name="custom_module",
+    adapter_instance=CustomAdapter(),
+    adapter_class_name="CustomAdapter",
+    description="Custom processing adapter"
+)
+```
+
+#### Executing Adapter Methods
+
+```python
+# Execute method with contract enforcement
+result = registry.execute_module_method(
+    module_name="policy_processor",
+    method_name="analyze",
+    args=["Policy text to analyze"],
+    kwargs={"detail_level": "high"}
+)
+
+# Result structure (ModuleMethodResult)
+assert result.status in ["success", "error", "unavailable", "missing_method"]
+assert result.module_name == "policy_processor"
+assert result.adapter_class == "policy_processor"
+assert result.method_name == "analyze"
+assert result.trace_id  # Unique identifier for tracing
+assert result.execution_time > 0.0
+assert 0.0 <= result.confidence <= 1.0
+
+# Access result data
+if result.status == "success":
+    data = result.data
+    evidence = result.evidence
+    confidence = result.confidence
+else:
+    error_type = result.error_type
+    error_message = result.error_message
+```
+
+#### Contract Violations
+
+The registry raises `ContractViolation` exceptions for explicit failures:
+
+```python
+from src.orchestrator.adapter_registry import ContractViolation
+
+try:
+    # Attempt to execute unavailable adapter
+    result = registry.execute_module_method(
+        module_name="nonexistent_adapter",
+        method_name="process"
+    )
+except ContractViolation as e:
+    # Handle explicit contract violation
+    logger.error(f"Contract violated: {e}")
+
+# Use allow_degraded=True to bypass availability check
+result = registry.execute_module_method(
+    module_name="potentially_unavailable",
+    method_name="process",
+    allow_degraded=True  # Returns result even if adapter unavailable
+)
+```
+
+#### Telemetry and Auditability
+
+Every adapter method execution emits structured JSON telemetry:
+
+```python
+# Logged automatically by registry
+{
+    "event": "adapter_method_execution",
+    "trace_id": "550e8400-e29b-41d4-a716-446655440000",
+    "module_name": "policy_processor",
+    "adapter_class": "policy_processor",
+    "method_name": "analyze",
+    "status": "success",
+    "execution_time": 0.042315,
+    "confidence": 0.88,
+    "error_type": null,
+    "error_message": null
+}
+```
+
 ### Contract Rules
 
 1. **All Adapter Methods MUST Use Pydantic Models**
