@@ -1,0 +1,95 @@
+{
+  "success": false,
+  "total_gates": 6,
+  "passed_gates": 3,
+  "failed_gates": 3,
+  "results": [
+    {
+      "gate_name": "contract_validation",
+      "status": "ERROR",
+      "passed": false,
+      "errors": [
+        "CONTRACT_VALIDATION_ERROR: [Errno 2] No such file or directory: 'orchestrator/module_adapters.py'"
+      ],
+      "warnings": [],
+      "metrics": {
+        "remediation_suggestions": []
+      },
+      "execution_time": 0.04729914665222168,
+      "timestamp": "2025-10-21T09:43:25.922245"
+    },
+    {
+      "gate_name": "canary_regression",
+      "status": "PASSED",
+      "passed": true,
+      "errors": [],
+      "warnings": [],
+      "metrics": {
+        "tests_run": 0,
+        "passed": 0,
+        "failed": 0,
+        "hash_mismatches": 0
+      },
+      "execution_time": 0.00019073486328125,
+      "timestamp": "2025-10-21T09:43:25.922543"
+    },
+    {
+      "gate_name": "binding_validation",
+      "status": "ERROR",
+      "passed": false,
+      "errors": [
+        "BINDING_VALIDATION_ERROR: [Errno 2] No such file or directory: 'orchestrator/execution_mapping.yaml'"
+      ],
+      "warnings": [],
+      "metrics": {
+        "remediation_suggestions": []
+      },
+      "execution_time": 2.5987625122070312e-05,
+      "timestamp": "2025-10-21T09:43:25.922620"
+    },
+    {
+      "gate_name": "determinism_verification",
+      "status": "ERROR",
+      "passed": false,
+      "errors": [
+        "DETERMINISM_VALIDATION_ERROR: No module named 'numpy'"
+      ],
+      "warnings": [],
+      "metrics": {
+        "remediation_suggestions": []
+      },
+      "execution_time": 0.00016307830810546875,
+      "timestamp": "2025-10-21T09:43:25.922903"
+    },
+    {
+      "gate_name": "performance_regression",
+      "status": "PASSED",
+      "passed": true,
+      "errors": [],
+      "warnings": [],
+      "metrics": {
+        "adapters_tested": 3,
+        "regressions_found": 0,
+        "avg_p99_latency": 2.0
+      },
+      "execution_time": 9.822845458984375e-05,
+      "timestamp": "2025-10-21T09:43:25.923088"
+    },
+    {
+      "gate_name": "schema_drift_detection",
+      "status": "PASSED",
+      "passed": true,
+      "errors": [],
+      "warnings": [],
+      "metrics": {
+        "current_hash": "",
+        "baseline_hash": "",
+        "drift_detected": false
+      },
+      "execution_time": 0.00014972686767578125,
+      "timestamp": "2025-10-21T09:43:25.923300"
+    }
+  ],
+  "execution_time": 0.04840731620788574,
+  "timestamp": "2025-10-21T09:43:25.923313"
+}
