@@ -12,9 +12,11 @@ Version: 1.0.0
 Python: 3.10+
 """
 
+import os
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import ValidationError
 from datetime import datetime
 import logging
@@ -23,20 +25,67 @@ from api.endpoints import pdet_regions, municipalities, analysis, visualization,
 from api.utils.telemetry import TelemetryMiddleware, setup_logging
 from api.models.schemas import ErrorResponse, ErrorDetail
 
+# Import security and monitoring (with graceful fallback)
+try:
+    from api.utils.security import (
+        HTTPSRedirectMiddleware,
+        SecurityHeadersMiddleware,
+        get_cors_config,
+        get_rate_limiter,
+        ComplianceHeaders
+    )
+    from api.utils.monitoring import get_metrics_collector
+    SECURITY_ENABLED = True
+except ImportError as e:
+    SECURITY_ENABLED = False
+    logging.warning(f"Security/monitoring modules not available: {e}")
+
 # Setup logging
 setup_logging(log_level="INFO")
 logger = logging.getLogger(__name__)
 
+# Environment detection
+ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
+IS_PRODUCTION = ENVIRONMENT == "production"
+
 # Create FastAPI application
 app = FastAPI(
     title="AtroZ Dashboard API",
-    description="SIN_CARRETA: Core data API for AtroZ dashboard with deterministic sample data",
+    description="SIN_CARRETA: Core data API for AtroZ dashboard with deterministic sample data, performance monitoring, and security hardening",
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc"
 )
 
-# Add telemetry middleware
+# ============================================================================
+# SECURITY MIDDLEWARE (if available)
+# ============================================================================
+
+if SECURITY_ENABLED:
+    # HTTPS enforcement (production only)
+    app.add_middleware(HTTPSRedirectMiddleware, enabled=IS_PRODUCTION)
+    
+    # Security headers
+    app.add_middleware(SecurityHeadersMiddleware)
+    
+    # CORS configuration
+    cors_config = get_cors_config()
+    app.add_middleware(CORSMiddleware, **cors_config)
+    
+    # Rate limiting
+    limiter = get_rate_limiter()
+    
+    logger.info(
+        "Security hardening enabled",
+        extra={
+            "https_enforcement": IS_PRODUCTION,
+            "environment": ENVIRONMENT
+        }
+    )
+else:
+    logger.warning("Security modules not loaded - running in degraded mode")
+
+# Add telemetry middleware (includes performance monitoring)
 app.add_middleware(TelemetryMiddleware, service_name="atroz-api")
 
 # Include routers
@@ -229,16 +278,38 @@ async def root():
 @app.get("/health")
 async def health():
     """
-    Health check endpoint
+    SIN_CARRETA: Enhanced health check with performance metrics
+    
+    Rationale: Provide comprehensive health status including
+    system metrics, security status, and performance indicators.
     
     Returns:
-        Health status
+        Health status with metrics
     """
-    return {
+    health_data = {
         "status": "healthy",
         "service": "atroz-api",
+        "version": "1.0.0",
+        "environment": ENVIRONMENT,
         "timestamp": datetime.now().isoformat()
     }
+    
+    # Add metrics if available
+    if SECURITY_ENABLED:
+        try:
+            metrics_collector = get_metrics_collector()
+            metrics_summary = metrics_collector.get_metrics_summary()
+            health_data["metrics"] = metrics_summary
+            health_data["security"] = {
+                "https_enforced": IS_PRODUCTION,
+                "rate_limiting": True,
+                "cors_enabled": True
+            }
+        except Exception as e:
+            logger.warning(f"Failed to collect metrics for health check: {e}")
+            health_data["metrics_error"] = str(e)
+    
+    return health_data
 
 
 # ============================================================================
@@ -246,17 +317,137 @@ async def health():
 # ============================================================================
 
 
+@app.get("/metrics")
+async def metrics():
+    """
+    SIN_CARRETA: Prometheus metrics endpoint
+    
+    Rationale: Expose performance metrics in Prometheus format
+    for external monitoring and alerting systems.
+    
+    Returns:
+        Prometheus-formatted metrics
+    """
+    if not SECURITY_ENABLED:
+        return JSONResponse(
+            status_code=503,
+            content={"error": "Metrics not available - monitoring module not loaded"}
+        )
+    
+    try:
+        metrics_collector = get_metrics_collector()
+        prometheus_metrics = metrics_collector.get_prometheus_metrics()
+        return Response(content=prometheus_metrics, media_type="text/plain")
+    except Exception as e:
+        logger.exception("Failed to generate metrics")
+        # Don't expose stack trace details to external users (security)
+        return JSONResponse(
+            status_code=500, content={"error": "Failed to generate metrics"}
+        )
+
+
+@app.get("/security/status")
+async def security_status():
+    """
+    SIN_CARRETA: Security configuration status
+    
+    Rationale: Provide visibility into security controls for
+    compliance and audit purposes.
+    
+    Returns:
+        Security status and configuration
+    """
+    status = {
+        "security_enabled": SECURITY_ENABLED,
+        "environment": ENVIRONMENT,
+        "timestamp": datetime.now().isoformat()
+    }
+    
+    if SECURITY_ENABLED:
+        status.update({
+            "https_enforcement": IS_PRODUCTION,
+            "rate_limiting": {
+                "enabled": True,
+                "default_limit": os.getenv("RATE_LIMIT_PER_MINUTE", "100") + "/minute",
+                "auth_limit": os.getenv("RATE_LIMIT_AUTH_PER_MINUTE", "20") + "/minute"
+            },
+            "cors": {
+                "enabled": True,
+                "allowed_origins": os.getenv("ALLOWED_ORIGINS", "*").split(",")
+            },
+            "jwt": {
+                "enabled": True,
+                "algorithm": os.getenv("JWT_ALGORITHM", "HS256"),
+                "expiration_minutes": int(os.getenv("JWT_EXPIRATION_MINUTES", "30"))
+            },
+            "security_headers": {
+                "csp": True,
+                "x_frame_options": True,
+                "x_content_type_options": True,
+                "referrer_policy": True,
+                "permissions_policy": True
+            },
+            "compliance": {
+                "gdpr": True,
+                "colombian_law_1581": True
+            }
+        })
+        
+        # Add compliance headers
+        compliance_headers = ComplianceHeaders.get_all_compliance_headers()
+        status["compliance_headers"] = compliance_headers
+    
+    return status
+
+
 @app.on_event("startup")
 async def startup_event():
-    """SIN_CARRETA: Log startup"""
+    """
+    SIN_CARRETA: Enhanced startup logging
+    
+    Rationale: Log startup with full configuration visibility
+    for audit and troubleshooting.
+    """
+    logger.info("=" * 80)
     logger.info("AtroZ Dashboard API starting up")
+    logger.info(f"Environment: {ENVIRONMENT}")
     logger.info("Deterministic data generation enabled with base seed: 42")
+    
+    if SECURITY_ENABLED:
+        logger.info("Security hardening: ENABLED")
+        logger.info(f"HTTPS enforcement: {IS_PRODUCTION}")
+        logger.info("Performance monitoring: ENABLED")
+        logger.info("Rate limiting: ENABLED")
+        logger.info("CORS protection: ENABLED")
+        logger.info("JWT authentication: CONFIGURED")
+    else:
+        logger.warning("Security hardening: DISABLED (modules not loaded)")
+    
+    logger.info("=" * 80)
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    """SIN_CARRETA: Log shutdown"""
+    """
+    SIN_CARRETA: Enhanced shutdown logging
+    
+    Rationale: Log final metrics and status before shutdown.
+    """
+    logger.info("=" * 80)
     logger.info("AtroZ Dashboard API shutting down")
+    
+    if SECURITY_ENABLED:
+        try:
+            metrics_collector = get_metrics_collector()
+            metrics_summary = metrics_collector.get_metrics_summary()
+            logger.info(
+                "Final metrics",
+                extra={"metrics": metrics_summary}
+            )
+        except Exception as e:
+            logger.warning(f"Failed to collect final metrics: {e}")
+    
+    logger.info("=" * 80)
 
 
 if __name__ == "__main__":

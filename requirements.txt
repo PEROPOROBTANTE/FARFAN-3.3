@@ -61,3 +61,17 @@ networkx==3.1
 # === Documentación ===
 sphinx==7.2.6
 sphinx-rtd-theme==1.3.0
+
+# === API and Security Dependencies ===
+# FastAPI and ASGI server
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+# Security and authentication
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.6
+# CORS and security middleware
+slowapi==0.1.9
+# Monitoring and metrics
+prometheus-client==0.19.0
+psutil==5.9.6
