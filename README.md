@@ -143,17 +143,141 @@ Modules execute in dependency waves for optimal parallelization:
 
 ## Configuration
 
+### Configuration Files
+
 Configuration files in `config/`:
-- `execution_mapping.yaml`: Question routing rules
-- `module_config.yaml`: Module-specific settings
-- `pipeline_config.yaml`: Pipeline execution parameters
+- `execution_mapping.yaml`: Question routing rules and adapter method mappings
+- `module_config.yaml`: Module-specific settings (if exists)
+- `pipeline_config.yaml`: Pipeline execution parameters (if exists)
+- `responsibility_map.json`: Adapter responsibility assignments
+
+### Environment Variables
+
+Configure FARFAN using environment variables (see `.env.example` for all options):
+
+```bash
+# Core Configuration
+FARFAN_ENV=development                    # Environment: development|staging|production
+FARFAN_LOG_LEVEL=INFO                    # Logging level: DEBUG|INFO|WARNING|ERROR
+FARFAN_DATA_DIR=/path/to/data           # Data directory for input/output
+FARFAN_CONFIG_DIR=/path/to/config       # Configuration directory
+
+# Pipeline Settings
+FARFAN_WORKERS=4                         # Number of parallel workers
+FARFAN_TIMEOUT_SECONDS=3600             # Pipeline timeout
+FARFAN_RETRY_ENABLED=true               # Enable retry on failures
+FARFAN_MAX_RETRIES=3                    # Maximum retry attempts
+
+# Determinism
+FARFAN_RANDOM_SEED=42                   # Fixed seed for reproducibility
+FARFAN_DETERMINISM_ENABLED=true         # Enforce determinism checks
+
+# Circuit Breaker
+FARFAN_CIRCUIT_BREAKER_ENABLED=true     # Enable circuit breaker
+FARFAN_CIRCUIT_BREAKER_THRESHOLD=5      # Failure threshold
+FARFAN_CIRCUIT_BREAKER_TIMEOUT=60       # Recovery timeout (seconds)
+
+# Telemetry
+FARFAN_TELEMETRY_ENABLED=true           # Enable telemetry collection
+FARFAN_TELEMETRY_ENDPOINT=http://localhost:9090  # Telemetry endpoint
+FARFAN_TELEMETRY_BATCH_SIZE=100         # Events per batch
+
+# Dashboard
+FARFAN_DASHBOARD_ENABLED=true           # Enable web dashboard
+FARFAN_DASHBOARD_HOST=0.0.0.0          # Dashboard host
+FARFAN_DASHBOARD_PORT=5000             # Dashboard port
+FARFAN_DASHBOARD_CONFIG=/path/to/dashboard_config.json
+
+# NLP Models
+FARFAN_SPACY_MODEL=es_core_news_lg      # spaCy model for Spanish
+FARFAN_EMBEDDING_MODEL=sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+FARFAN_MODEL_CACHE_DIR=/path/to/models  # Model cache directory
+
+# Database (if applicable)
+FARFAN_DB_HOST=localhost                # Database host
+FARFAN_DB_PORT=5432                     # Database port
+FARFAN_DB_NAME=farfan                   # Database name
+FARFAN_DB_USER=farfan_user              # Database user
+FARFAN_DB_PASSWORD=secure_password       # Database password
+
+# Security
+FARFAN_SECRET_KEY=your-secret-key-here  # Application secret key
+FARFAN_ENCRYPTION_KEY=encryption-key    # Data encryption key
+FARFAN_AUTH_ENABLED=false               # Enable authentication
+```
+
+### Dashboard Configuration
+
+The monitoring dashboard (`atroz_dashboard.html`) provides real-time visualization of:
+- Pipeline execution status
+- Adapter performance metrics (P50/P95/P99 latency)
+- Circuit breaker states
+- Determinism verification results
+- Error rates and patterns
+- Audit trail events
+
+#### Dashboard Configuration File
+
+Create `config/dashboard_config.json`:
+
+```json
+{
+  "dashboard": {
+    "title": "FARFAN 3.0 Monitoring",
+    "refresh_interval_ms": 5000,
+    "theme": "dark",
+    "language": "es"
+  },
+  "metrics": {
+    "enabled_charts": [
+      "pipeline_status",
+      "adapter_performance",
+      "circuit_breaker_status",
+      "error_rates",
+      "determinism_results"
+    ],
+    "retention_hours": 24,
+    "aggregation_interval_seconds": 60
+  },
+  "alerts": {
+    "enabled": true,
+    "thresholds": {
+      "error_rate_percentage": 5.0,
+      "p99_latency_ms": 10000,
+      "circuit_breaker_open_count": 3
+    }
+  },
+  "export": {
+    "enabled": true,
+    "formats": ["json", "csv", "pdf"],
+    "max_export_size_mb": 100
+  }
+}
+```
+
+#### Starting the Dashboard
+
+```bash
+# Start with default configuration
+python -m orchestrator.dashboard_generator
+
+# Start with custom configuration
+FARFAN_DASHBOARD_CONFIG=config/dashboard_config.json python -m orchestrator.dashboard_generator
+
+# Access dashboard
+open http://localhost:5000
+```
 
 ## Documentation
 
-- [Architecture Guide](docs/architecture/)
-- [API Documentation](docs/api/)
-- [Development Guide](docs/guides/AGENTS.md)
-- [Project Structure](docs/guides/PROJECT_STRUCTURE.md)
+- [Contributing Guide](CONTRIBUTING.md) - Development guidelines, determinism rules, contract enforcement
+- [Code Fix Report](CODE_FIX_REPORT.md) - Per-file change logs and SIN_CARRETA compliance
+- [Architecture Guide](docs/architecture/) - System architecture and design decisions
+- [API Documentation](docs/api/) - API reference and usage examples
+- [Development Guide](docs/guides/AGENTS.md) - Agent-based development workflows
+- [Project Structure](docs/guides/PROJECT_STRUCTURE.md) - Repository organization
+- [Telemetry Schema](docs/TELEMETRY_SCHEMA.md) - Event formats and telemetry standards
+- [Compliance Standards](docs/COMPLIANCE.md) - Legal, security, and accessibility requirements
 
 ## Tech Stack
 
