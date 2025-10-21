@@ -408,3 +408,96 @@ For issues or questions:
 2. Review validation logs in `validation_results.json`
 3. Consult FARFAN documentation
 4. Contact integration team
+
+## Cognitive Complexity Analysis
+
+### Purpose
+
+The cognitive complexity checker enforces the SIN_CARRETA doctrine by ensuring code remains understandable, auditable, and maintainable.
+
+### Usage
+
+```bash
+# Check entire codebase
+python cicd/cognitive_complexity.py --path src/
+
+# Check specific file
+python cicd/cognitive_complexity.py --file src/orchestrator/choreographer.py
+
+# Custom threshold
+python cicd/cognitive_complexity.py --path src/ --threshold 10
+
+# Generate JSON report
+python cicd/cognitive_complexity.py --report complexity_report.json
+```
+
+### Complexity Thresholds
+
+| Range | Status | Action |
+|-------|--------|--------|
+| 0-5 | ✅ Excellent | None |
+| 6-10 | ⚠️ Acceptable | Monitor |
+| 11-15 | ⚠️ Complex | Plan refactoring |
+| 16+ | ❌ Too Complex | Must refactor |
+
+### What It Measures
+
+Cognitive complexity increases with:
+- **Control flow structures**: if, while, for, try/except (+1 each + nesting penalty)
+- **Nesting depth**: Each level adds to complexity
+- **Boolean operators**: Multiple conditions in one expression
+- **Recursion**: Recursive calls add complexity
+
+### Why It Matters (SIN_CARRETA Rationale)
+
+High cognitive complexity hinders:
+
+1. **Audit Trail Clarity**: Complex code is harder to trace through execution
+2. **Determinism Verification**: More paths = harder to verify all are deterministic
+3. **Security Review**: Complex code hides vulnerabilities
+4. **Maintenance Cost**: Exponential relationship (2x complexity ≈ 4x cost)
+5. **Test Coverage**: More paths require more comprehensive testing
+
+### Refactoring Strategies
+
+**Extract Helper Functions**:
+```python
+# Before (complexity: 12)
+def process(data):
+    if data and data.valid:
+        if data.ready:
+            for item in data.items:
+                if item.active:
+                    result = transform(item)
+                    # ...
+
+# After (complexity: 4 + 3 + 2 = 9 distributed)
+def process(data):
+    if not should_process(data):
+        return None
+    return process_items(data.items)
+```
+
+**Use Guard Clauses**:
+```python
+# Before (complexity: 8)
+def process(data):
+    if data:
+        if data.valid:
+            if data.ready:
+                return compute(data)
+    return None
+
+# After (complexity: 4)
+def process(data):
+    if not data:
+        return None
+    if not data.valid:
+        return None
+    if not data.ready:
+        return None
+    return compute(data)
+```
+
+See [SIN_CARRETA Doctrine](../docs/SIN_CARRETA_DOCTRINE.md) for complete guidelines.
+

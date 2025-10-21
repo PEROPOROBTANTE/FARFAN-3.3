@@ -52,7 +52,7 @@ class RemediationSuggestion:
 
 class ContractValidator:
     
-    def __init__(self, adapters_path: Path = Path("orchestrator/module_adapters.py")):
+    def __init__(self, adapters_path: Path = Path("src/orchestrator/module_adapters.py")):
         self.adapters_path = adapters_path
         self.expected_method_count = 413
         self.expected_adapters = 9
@@ -266,7 +266,7 @@ class CanaryRegressionValidator:
 
 class BindingValidator:
     
-    def __init__(self, mapping_path: Path = Path("orchestrator/execution_mapping.yaml")):
+    def __init__(self, mapping_path: Path = Path("config/execution_mapping.yaml")):
         self.mapping_path = mapping_path
     
     def validate(self) -> ValidationResult:
@@ -382,14 +382,20 @@ class DeterminismValidator:
         
         try:
             import random
-            import numpy as np
+            try:
+                import numpy as np
+                has_numpy = True
+            except ImportError:
+                has_numpy = False
+                warnings.append("numpy not available, skipping numpy seed verification")
             
             seed = 42
             results = []
             
             for run in range(self.runs):
                 random.seed(seed)
-                np.random.seed(seed)
+                if has_numpy:
+                    np.random.seed(seed)
                 
                 result = self._run_pipeline()
                 results.append(result)

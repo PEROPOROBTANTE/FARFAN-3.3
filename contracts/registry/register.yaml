@@ -1,0 +1,35 @@
+version: 1.0.0
+method: register
+adapter: AdapterRegistry
+description: Register a module adapter
+deterministic: true
+sin_carreta_compliant: true
+input:
+  type: object
+  properties:
+    name:
+      type: string
+      description: name parameter
+    module_instance:
+      type: string
+      description: module_instance parameter
+    description:
+      type: string
+      description: description parameter
+  required:
+  - name
+  - module_instance
+  - description
+output:
+  type: object
+  description: Result of register
+side_effects: []
+exceptions:
+- type: ContractViolation
+  condition: Invalid input parameters
+performance:
+  expected_latency_ms: 100
+  complexity: O(n)
+audit_trail:
+  telemetry_enabled: true
+  log_level: INFO

@@ -1,0 +1,23 @@
+version: 1.0.0
+method: process
+adapter: MockAdapter
+description: No description provided.
+deterministic: true
+sin_carreta_compliant: true
+input:
+  type: object
+  properties: {}
+  required: []
+output:
+  type: object
+  description: Result of process
+side_effects: []
+exceptions:
+- type: ContractViolation
+  condition: Invalid input parameters
+performance:
+  expected_latency_ms: 100
+  complexity: O(n)
+audit_trail:
+  telemetry_enabled: true
+  log_level: INFO

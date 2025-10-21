@@ -1,0 +1,127 @@
+{
+  "success": false,
+  "total_gates": 6,
+  "passed_gates": 4,
+  "failed_gates": 2,
+  "results": [
+    {
+      "gate_name": "contract_validation",
+      "status": "FAILED",
+      "passed": false,
+      "errors": [
+        "METHOD_COUNT_MISMATCH: Expected 413 methods, found 13",
+        "SCHEMA_VALIDATION_FAILED: 13 contracts have invalid JSON Schema"
+      ],
+      "warnings": [
+        "MISSING_CONTRACTS: 400 methods lack contract.yaml files"
+      ],
+      "metrics": {
+        "total_contracts": 13,
+        "valid_schemas": 0,
+        "invalid_schemas": 13,
+        "total_methods": 13,
+        "missing_contracts": 400,
+        "remediation_suggestions": [
+          {
+            "error_code": "METHOD_COUNT_MISMATCH",
+            "error_type": "contract_missing",
+            "suggested_fix": "Generate missing contract.yaml files",
+            "command": "python cicd/generate_contracts.py --missing-only",
+            "diff_snippet": null,
+            "priority": "medium"
+          }
+        ]
+      },
+      "execution_time": 0.0868077278137207,
+      "timestamp": "2025-10-21T10:00:29.604900"
+    },
+    {
+      "gate_name": "canary_regression",
+      "status": "PASSED",
+      "passed": true,
+      "errors": [],
+      "warnings": [],
+      "metrics": {
+        "tests_run": 0,
+        "passed": 0,
+        "failed": 0,
+        "hash_mismatches": 0
+      },
+      "execution_time": 0.00013399124145507812,
+      "timestamp": "2025-10-21T10:00:29.605157"
+    },
+    {
+      "gate_name": "binding_validation",
+      "status": "FAILED",
+      "passed": false,
+      "errors": [
+        "MAPPING_CONFLICT: 66 bindings have missing source: [{'question': 'Q3_Resource_Mapping', 'step': 1, 'source': 'extracted_tables'}, {'question': 'Q3_Resource_Mapping', 'step': 2, 'source': 'extracted_tables'}, {'question': 'Q4_Institutional_Capacity', 'step': 1, 'source': 'entity_name'}]"
+      ],
+      "warnings": [],
+      "metrics": {
+        "total_bindings": 88,
+        "missing_sources": 66,
+        "type_mismatches": 0,
+        "circular_deps": 0,
+        "remediation_suggestions": [
+          {
+            "error_code": "MAPPING_CONFLICT",
+            "error_type": "binding_error",
+            "suggested_fix": "Auto-correct binding type mismatches",
+            "command": "python cicd/fix_bindings.py --auto-correct",
+            "diff_snippet": null,
+            "priority": "high"
+          }
+        ]
+      },
+      "execution_time": 0.0974268913269043,
+      "timestamp": "2025-10-21T10:00:29.702630"
+    },
+    {
+      "gate_name": "determinism_verification",
+      "status": "PASSED",
+      "passed": true,
+      "errors": [],
+      "warnings": [
+        "numpy not available, skipping numpy seed verification"
+      ],
+      "metrics": {
+        "runs_completed": 3,
+        "differences_found": 0,
+        "identical_runs": 3
+      },
+      "execution_time": 0.00014901161193847656,
+      "timestamp": "2025-10-21T10:00:29.702934"
+    },
+    {
+      "gate_name": "performance_regression",
+      "status": "PASSED",
+      "passed": true,
+      "errors": [],
+      "warnings": [],
+      "metrics": {
+        "adapters_tested": 3,
+        "regressions_found": 0,
+        "avg_p99_latency": 2.0
+      },
+      "execution_time": 6.937980651855469e-05,
+      "timestamp": "2025-10-21T10:00:29.703062"
+    },
+    {
+      "gate_name": "schema_drift_detection",
+      "status": "PASSED",
+      "passed": true,
+      "errors": [],
+      "warnings": [],
+      "metrics": {
+        "current_hash": "",
+        "baseline_hash": "",
+        "drift_detected": false
+      },
+      "execution_time": 6.985664367675781e-05,
+      "timestamp": "2025-10-21T10:00:29.703174"
+    }
+  ],
+  "execution_time": 0.1851201057434082,
+  "timestamp": "2025-10-21T10:00:29.703183"
+}
