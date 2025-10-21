@@ -183,7 +183,7 @@ class FARFANOrchestrator:
                     
                     micro_answer = self.report_assembler.generate_micro_answer(
                         question_spec=question,
-                        execution_results=self._convert_execution_results(execution_results),
+                        execution_results=execution_results,
                         plan_text=plan_text
                     )
                     
@@ -310,38 +310,7 @@ class FARFANOrchestrator:
         else:
             raise ValueError(f"Unsupported file format: {suffix}")
 
-    def _convert_execution_results(
-            self,
-            execution_results: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """
-        Convert ExecutionResult objects from choreographer to dict format for ReportAssembler
-        
-        Normalizes the output of choreographer.execute_question_chain() into a format
-        compatible with report_assembler.generate_micro_answer()
-        
-        Args:
-            execution_results: Dictionary of ExecutionResult objects keyed by adapter.method
-            
-        Returns:
-            Dictionary with normalized structure for report assembly
-        """
-        converted: Dict[str, Any] = {}
-        
-        for key, result in execution_results.items():
-            if hasattr(result, 'to_dict'):
-                converted[key] = result.to_dict()
-            else:
-                converted[key] = {
-                    "module_name": getattr(result, 'module_name', key),
-                    "status": getattr(result, 'status', 'unknown'),
-                    "data": getattr(result, 'output', {}),
-                    "confidence": getattr(result, 'confidence', 0.0),
-                    "evidence": getattr(result, 'evidence_extracted', {}),
-                    "execution_time": getattr(result, 'execution_time', 0.0)
-                }
-        
-        return converted
+
 
     def _generate_meso_clusters(
             self,
