@@ -309,9 +309,9 @@ async def metrics():
         return Response(content=prometheus_metrics, media_type="text/plain")
     except Exception as e:
         logger.exception("Failed to generate metrics")
+        # Don't expose stack trace details to external users (security)
         return JSONResponse(
-            status_code=500,
-            content={"error": "Failed to generate metrics", "detail": str(e)}
+            status_code=500, content={"error": "Failed to generate metrics"}
         )
 
 
