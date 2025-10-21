@@ -21,6 +21,7 @@ from fastapi import HTTPException
 from starlette.requests import Request
 from starlette.responses import Response
 
+from urllib.parse import urlparse
 from api.utils.security import (
     JWTAuth,
     get_cors_config,
@@ -202,12 +203,12 @@ class TestCORSConfiguration:
         # Strict comparison: ensure exact match in list, not substring
         assert isinstance(origins, list)
         assert "https://example.com" in origins
-        # Verify it's an exact entry by checking all origins with example.com
+        # Verify hostname is exactly matched, not using substring checks
+        allowed_hosts = ["example.com", "api.example.com"]
         for origin in origins:
-            if "example.com" in origin:
-                # Only allow exact matches we expect
-                assert origin in ["https://example.com", "https://api.example.com"]
-
+            parsed = urlparse(origin)
+            # Compare strictly with allowed hosts
+            assert parsed.hostname in allowed_hosts
 
 class TestComplianceHeaders:
     """Test compliance headers"""
