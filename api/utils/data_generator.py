@@ -683,7 +683,9 @@ class DeterministicDataGenerator:
             "Inversión Pública"
         ]
         
-        start_date = datetime.now() - timedelta(days=rng.rng.next_int(365, 1825))
+        # Use fixed base date for determinism
+        base_date = datetime(2024, 1, 1, 0, 0, 0)
+        start_date = base_date - timedelta(days=rng.rng.next_int(365, 1825))
         
         for i in range(event_count):
             event_date = start_date + timedelta(days=i * rng.rng.next_int(30, 90))
@@ -701,8 +703,8 @@ class DeterministicDataGenerator:
         return TimelineRegionsResponse(
             region_id=region_id,
             events=events,
-            start_date=events[0].timestamp if events else datetime.now().isoformat(),
-            end_date=events[-1].timestamp if events else datetime.now().isoformat()
+            start_date=events[0].timestamp if events else base_date.isoformat(),
+            end_date=events[-1].timestamp if events else base_date.isoformat()
         )
     
     def generate_timeline_municipality(self, municipality_id: str) -> TimelineMunicipalitiesResponse:
@@ -728,7 +730,9 @@ class DeterministicDataGenerator:
             "Mejora de Infraestructura"
         ]
         
-        start_date = datetime.now() - timedelta(days=rng.rng.next_int(365, 1460))
+        # Use fixed base date for determinism
+        base_date = datetime(2024, 1, 1, 0, 0, 0)
+        start_date = base_date - timedelta(days=rng.rng.next_int(365, 1460))
         
         for i in range(event_count):
             event_date = start_date + timedelta(days=i * rng.rng.next_int(20, 60))
@@ -745,8 +749,8 @@ class DeterministicDataGenerator:
         return TimelineMunicipalitiesResponse(
             municipality_id=municipality_id,
             events=events,
-            start_date=events[0].timestamp if events else datetime.now().isoformat(),
-            end_date=events[-1].timestamp if events else datetime.now().isoformat()
+            start_date=events[0].timestamp if events else base_date.isoformat(),
+            end_date=events[-1].timestamp if events else base_date.isoformat()
         )
     
     def generate_comparison_regions(self) -> ComparisonRegionsResponse:
@@ -884,10 +888,13 @@ class DeterministicDataGenerator:
         start_idx = (page - 1) * per_page
         end_idx = min(start_idx + per_page, total)
         
+        # Use fixed base date for determinism
+        base_date = datetime(2024, 1, 1, 0, 0, 0)
+        
         for i in range(start_idx, end_idx):
             item_rng = create_seeded_generator(self._get_seed_for_entity(f"evidence_{i:06d}"))
             
-            timestamp = datetime.now() - timedelta(days=item_rng.rng.next_int(0, 365))
+            timestamp = base_date - timedelta(days=item_rng.rng.next_int(0, 365))
             
             items.append(EvidenceStreamItem(
                 evidence_id=f"EV_{i:06d}",
@@ -922,10 +929,13 @@ class DeterministicDataGenerator:
         
         authors = ["García, J.", "Martínez, A.", "López, M.", "Rodríguez, C.", "Pérez, L."]
         
+        # Use fixed base date for determinism
+        base_date = datetime(2024, 1, 1, 0, 0, 0)
+        
         for i in range(ref_count):
             ref_rng = create_seeded_generator(self._get_seed_for_entity(f"{region_id}_doc_{i}"))
             
-            date = datetime.now() - timedelta(days=ref_rng.rng.next_int(0, 1825))
+            date = base_date - timedelta(days=ref_rng.rng.next_int(0, 1825))
             
             references.append(DocumentReference(
                 document_id=f"DOC_{ref_rng.rng.next_int(100000, 999999):06d}",
