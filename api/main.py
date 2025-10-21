@@ -21,7 +21,7 @@ from pydantic import ValidationError
 from datetime import datetime
 import logging
 
-from api.endpoints import pdet_regions, municipalities, analysis
+from api.endpoints import pdet_regions, municipalities, analysis, visualization, temporal, evidence, export
 from api.utils.telemetry import TelemetryMiddleware, setup_logging
 from api.models.schemas import ErrorResponse, ErrorDetail
 
@@ -92,6 +92,10 @@ app.add_middleware(TelemetryMiddleware, service_name="atroz-api")
 app.include_router(pdet_regions.router)
 app.include_router(municipalities.router)
 app.include_router(analysis.router)
+app.include_router(visualization.router)
+app.include_router(temporal.router)
+app.include_router(evidence.router)
+app.include_router(export.router)
 
 
 # ============================================================================
@@ -234,7 +238,34 @@ async def root():
             "municipality_detail": "/api/v1/municipalities/{id}",
             "municipality_analysis": "/api/v1/municipalities/{id}/analysis",
             "cluster_analysis": "/api/v1/analysis/clusters/{regionId}",
-            "question_analysis": "/api/v1/analysis/questions/{municipalityId}"
+            "question_analysis": "/api/v1/analysis/questions/{municipalityId}",
+            "visualization": {
+                "constellation": "/api/v1/visualization/constellation",
+                "phylogram": "/api/v1/visualization/phylogram/{regionId}",
+                "mesh": "/api/v1/visualization/mesh/{regionId}",
+                "helix": "/api/v1/visualization/helix/{municipalityId}",
+                "radar": "/api/v1/visualization/radar/{municipalityId}"
+            },
+            "temporal": {
+                "timeline_regions": "/api/v1/timeline/regions/{regionId}",
+                "timeline_municipalities": "/api/v1/timeline/municipalities/{municipalityId}",
+                "comparison_regions": "/api/v1/comparison/regions",
+                "comparison_matrix": "/api/v1/comparison/matrix",
+                "historical": "/api/v1/historical/{entityType}/{id}/years/{start}/{end}"
+            },
+            "evidence": {
+                "stream": "/api/v1/evidence/stream",
+                "references": "/api/v1/documents/references/{regionId}",
+                "sources": "/api/v1/documents/sources/{questionId}",
+                "citations": "/api/v1/citations/{indicatorId}"
+            },
+            "export": {
+                "dashboard": "/api/v1/export/dashboard",
+                "region": "/api/v1/export/region/{id}",
+                "comparison": "/api/v1/export/comparison",
+                "report_generate": "/api/v1/reports/generate/{type}",
+                "report_custom": "/api/v1/reports/custom"
+            }
         },
         "documentation": {
             "swagger": "/docs",

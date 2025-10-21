@@ -1,12 +1,6 @@
 # coding=utf-8
 """
 Tests for Security Hardening
-=============================
-
-SIN_CARRETA: Validate security controls including HTTPS enforcement,
-JWT authentication, CORS, rate limiting, and compliance headers.
-
-Author: FARFAN 3.3 Team
 Version: 1.0.0
 Python: 3.10+
 """
