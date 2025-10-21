@@ -8,6 +8,13 @@ python3 -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install --upgrade pip
 pip install -r requirements.txt
+# Choose ONE of the following:
+# For PyTorch (RECOMMENDED):
+pip install -r requirements-torch.txt
+# OR for TensorFlow:
+# pip install -r requirements-tensorflow.txt
+# OR for both (NOT RECOMMENDED - see DEPENDENCY_CONFLICTS.md):
+# pip install -r requirements-both.txt
 python -m spacy download es_core_news_sm es_core_news_lg
 ```
 
@@ -32,9 +39,9 @@ pytest -m "not slow"  # Skip slow tests
 N/A - Pipeline runs via `python run_farfan.py --plan <path>`
 
 ## Tech Stack
-- **Language**: Python 3.10+
+- **Language**: Python 3.10-3.11 (3.12 has limited support for deep learning libraries)
 - **NLP**: spaCy (Spanish models), transformers, sentence-transformers, NLTK, stanza
-- **ML**: scikit-learn, PyTorch 1.13.1, TensorFlow 2.13.0
+- **ML**: scikit-learn, PyTorch 2.0.1 OR TensorFlow 2.13.0 (see DEPENDENCY_CONFLICTS.md)
 - **Testing**: pytest with markers (unit, integration, e2e, slow)
 - **Linting**: black, flake8, isort, mypy
 

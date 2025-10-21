@@ -1,0 +1,24 @@
+# === PyTorch-only Deep Learning Dependencies ===
+# Use this file for PyTorch-only installations to avoid conflicts with TensorFlow
+# 
+# Installation:
+#   pip install -r requirements.txt -r requirements-torch.txt
+#
+# NOTA: Compatible con transformers==4.34.0 y sentence-transformers==2.2.2
+
+# PyTorch 2.0.1 - Recomendado para mejor compatibilidad y rendimiento
+# Compatible con Python 3.10+ y CUDA 11.8
+torch==2.0.1
+torchvision==0.15.2
+torchaudio==2.0.2
+
+# Dependencias adicionales de PyTorch
+# Estas versiones están coordinadas con PyTorch 2.0.1
+numpy>=1.24.3,<1.25.0  # Compatible con torch 2.0.1
+protobuf>=3.20.2,<4.0.0  # Evita conflictos con transformers
+
+# CUDA Support (optional - uncomment if using GPU)
+# Para CUDA 11.8:
+# torch==2.0.1+cu118 --index-url https://download.pytorch.org/whl/cu118
+# torchvision==0.15.2+cu118 --index-url https://download.pytorch.org/whl/cu118
+# torchaudio==2.0.2+cu118 --index-url https://download.pytorch.org/whl/cu118

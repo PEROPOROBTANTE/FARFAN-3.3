@@ -1,0 +1,49 @@
+# === PyTorch + TensorFlow Combined Dependencies ===
+# 
+# ⚠️  ADVERTENCIA: NO RECOMENDADO ⚠️
+#
+# Usar PyTorch y TensorFlow simultáneamente puede causar:
+# 1. Conflictos de dependencias binarias (protobuf, numpy, grpcio)
+# 2. Conflictos de versiones en dependencias transitivas
+# 3. Alto consumo de memoria y espacio en disco
+# 4. Problemas de compatibilidad entre versiones
+#
+# SOLO use este archivo si:
+# - Absolutamente necesita ambas librerías en el mismo entorno
+# - Ha verificado que no hay conflictos en su sistema específico
+# - Comprende los riesgos y está dispuesto a resolver conflictos manualmente
+#
+# RECOMENDACIÓN: Use entornos virtuales separados para PyTorch y TensorFlow
+#
+# Installation (at your own risk):
+#   pip install -r requirements.txt -r requirements-both.txt
+#
+# Versiones cuidadosamente coordinadas para minimizar conflictos
+
+# PyTorch 2.0.1
+torch==2.0.1
+torchvision==0.15.2
+torchaudio==2.0.2
+
+# TensorFlow 2.13.0
+tensorflow==2.13.0
+tensorflow-estimator==2.13.0
+keras==2.13.1
+
+# Dependencias compartidas - versiones coordinadas
+# Estas versiones deben ser compatibles con AMBAS librerías
+numpy==1.24.3  # Compatible con torch 2.0.1 y tensorflow 2.13.0
+protobuf==3.20.3  # Versión específica que funciona con ambas
+typing-extensions>=4.5.0  # Requerido por ambas
+six>=1.16.0  # Requerido por tensorflow
+
+# Dependencias adicionales para evitar conflictos
+h5py==3.8.0  # Para keras
+grpcio>=1.48.0,<1.49.0  # Compatible con tensorflow 2.13.0
+
+# NOTAS IMPORTANTES:
+# 1. Ejecute `pip check` después de la instalación para verificar conflictos
+# 2. Ejecute `pipdeptree` para visualizar el árbol de dependencias
+# 3. Si encuentra errores, considere usar entornos separados
+# 4. Algunas dependencias transitivas pueden requerir versiones específicas
+# 5. Los conflictos pueden aparecer durante la ejecución, no solo la instalación
