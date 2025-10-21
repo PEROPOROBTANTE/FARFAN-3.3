@@ -1,0 +1,81 @@
+## Implementation Checklist (SIN_CARRETA Governance)
+
+### Frontend Extraction & Fidelity
+- [ ] Extract inline <style> to frontend/atroz/atroz_dashboard.css (selectors & keyframes identical)
+- [ ] Extract inline <script> logic into ES modules (no loss of function names / behaviors)
+- [ ] Preserve DOM hierarchy, class names, data attributes; diff shows only relocation, no removals
+- [ ] Maintain animation timing (staggered node appearance sequence validated against seed)
+- [ ] Visual regression baseline snapshot created (seed = ATROZ_SEED_DEFAULT)
+
+### Determinism Wrappers
+- [ ] Implement seeded RNG (frontend/atroz/seededRandom.js) (mulberry32 or splitmix32) with seed injection path
+- [ ] Replace all Math.random() calls (particles, neural connections, helix scores, cluster values, question matrix, reconnection backoff)
+- [ ] Implement deterministicClock.js (wrap Date.now, performance.now, requestAnimationFrame)
+- [ ] Add inline SIN_CARRETA-RATIONALE comments for each wrapper
+
+### Backend API Stubs & Schemas
+- [ ] Create backend/api/atrozRoutes.js with all specified endpoints
+- [ ] Implement lightweight schema validators in backend/api/schemas/
+- [ ] Deterministic sample data generation per seed param/header
+- [ ] Explicit 4xx contract failures for bad input (no silent fallback)
+- [ ] Structured telemetry emit per request
+
+### Telemetry & Auditability
+- [ ] Telemetry event format documented (docs/TELEMETRY_SCHEMA.md or CONTRIBUTING.md section)
+- [ ] Frontend state mutations emit telemetry (component: atroz.state)
+- [ ] Realtime events produce telemetry on reconnect attempts & decisions
+- [ ] CODE_FIX_REPORT.md lists mapping of telemetry coverage
+
+### State & Contracts
+- [ ] stateManager.js enforces shape validation + assertions
+- [ ] Invalid updates produce explicit errors & telemetry
+- [ ] Focus mode & selection logic wrapped with contract checks
+
+### Realtime Service
+- [ ] Deterministic reconnection schedule (seed-driven) implemented
+- [ ] Toggle via ATROZ_ENABLE_REALTIME_UPDATES respected
+- [ ] Tests simulate sequence & assert determinism
+
+### Performance Monitoring
+- [ ] performanceMonitor.js supports injected deterministic frame sequence for tests
+- [ ] Contract assertions on metric thresholds (e.g., LOW_FPS issue logged with telemetry)
+
+### Asset Management
+- [ ] assetManager.js replicates preload order of fonts/CSS/JS
+- [ ] No aesthetic simplification or removal of blur/backdrop effects
+
+### Testing (Jest)
+- [ ] frontend determinism test (particles, helix scores, node order, color mapping) stable under seed 12345
+- [ ] state contracts test rejects invalid updates & logs telemetry
+- [ ] backend endpoint schema + determinism test (same seed => identical responses)
+- [ ] telemetry stdout interception test (>=3 endpoints + state mutation + realtime reconnect)
+- [ ] realtime determinism test validates reconnection sequence array
+
+### CI Enforcement (.github/workflows/sin_carreta_enforce.yml)
+- [ ] scripts/ci/sin_carreta_check.js detects removed assertions
+- [ ] Checks seededRandom.js references in modules formerly using Math.random
+- [ ] Verifies SIN_CARRETA-RATIONALE presence in commit messages
+- [ ] Blocks merge if determinism tests absent for time/random modules
+- [ ] Requires sin-carreta/approver label when complexity increases
+
+### Documentation
+- [ ] CONTRIBUTING.md updated with Determinism & SIN_CARRETA section (seed usage, contract rules)
+- [ ] CODE_FIX_REPORT.md created listing each file, clauses satisfied, test links
+- [ ] Environment sample .env.example added
+- [ ] Telemetry schema documented
+
+### Security & Robustness
+- [ ] CORS configured via DASHBOARD_DOMAINS env
+- [ ] Light rate limiting on /api/v1/pdet routes
+- [ ] No conversion of failure semantics into warnings (Hard Refusal Clause enforced)
+
+### Visual Fidelity Validation
+- [ ] Manual review: pixel parity (no missing nodes/animations, identical layering/z-index)
+- [ ] Automated DOM snapshot diff ignoring script/style relocation only
+
+### Final Review Gates
+- [ ] All boxes checked or justified in CODE_FIX_REPORT.md
+- [ ] sin-carreta/approver label applied
+- [ ] No outstanding Hard Refusal violations
+
+Progress updates will reference this checklist; items unchecked at merge request time must include rationale in CODE_FIX_REPORT.md and commit message with SIN_CARRETA-RATIONALE.
