@@ -14,17 +14,17 @@ Components:
 """
 
 from src.orchestrator.question_router import QuestionRouter
-from src.orchestrator.choreographer import Choreographer
+from src.orchestrator.choreographer import ExecutionChoreographer
 from src.orchestrator.circuit_breaker import CircuitBreaker
-from src.orchestrator.report_assembly import ReportAssembly
-from src.orchestrator.mapping_loader import MappingLoader
+from src.orchestrator.report_assembly import ReportAssembler
+from src.orchestrator.mapping_loader import YAMLMappingLoader
 from src.orchestrator.module_adapters import AdapterRegistry
 
 __all__ = [
     "QuestionRouter",
-    "Choreographer",
+    "ExecutionChoreographer",
     "CircuitBreaker",
-    "ReportAssembly",
-    "MappingLoader",
+    "ReportAssembler",
+    "YAMLMappingLoader",
     "AdapterRegistry",
 ]
