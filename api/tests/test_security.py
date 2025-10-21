@@ -199,7 +199,8 @@ class TestCORSConfiguration:
         config = security_module.get_cors_config()
         origins = config["allow_origins"]
 
-        assert "https://example.com" in origins or isinstance(origins, list)
+        assert isinstance(origins, list)
+        assert "https://example.com" in origins
 
 
 class TestComplianceHeaders:
