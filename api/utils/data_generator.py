@@ -11,7 +11,7 @@ Version: 1.0.0
 Python: 3.10+
 """
 
-from typing import List, Dict
+from typing import List, Dict, Optional
 from datetime import datetime, timedelta
 from api.utils.seeded_rng import create_seeded_generator
 from api.models.schemas import (
@@ -19,7 +19,25 @@ from api.models.schemas import (
     MunicipalitySummary, MunicipalityDetail, MunicipalityMetadata,
     QuestionAnalysis, DimensionAnalysis, Evidence,
     Cluster, ClusterMember,
-    QualitativeLevelEnum, DimensionEnum, PolicyAreaEnum
+    QualitativeLevelEnum, DimensionEnum, PolicyAreaEnum,
+    # Visualization schemas
+    ConstellationNode, ConstellationEdge, ConstellationVisualizationResponse,
+    PhylogramNode, PhylogramVisualizationResponse,
+    MeshNode, MeshVisualizationResponse,
+    HelixPoint, HelixVisualizationResponse,
+    RadarAxis, RadarVisualizationResponse,
+    # Temporal schemas
+    TimelineEntry, TimelineRegionsResponse, TimelineMunicipalitiesResponse,
+    ComparisonItem, ComparisonRegionsResponse,
+    ComparisonMatrixCell, ComparisonMatrixResponse,
+    HistoricalDataPoint, HistoricalDataResponse,
+    # Evidence schemas
+    EvidenceStreamItem, EvidenceStreamResponse,
+    DocumentReference, DocumentReferencesResponse,
+    DocumentSource, DocumentSourcesResponse,
+    Citation, CitationsResponse,
+    # Export schemas
+    ExportFormat, ExportResponse, ReportType, ReportResponse
 )
 
 
@@ -459,6 +477,713 @@ class DeterministicDataGenerator:
             ))
         
         return clusters
+    
+    # ========================================================================
+    # VISUALIZATION GENERATION METHODS
+    # ========================================================================
+    
+    def generate_constellation(self) -> ConstellationVisualizationResponse:
+        """
+        SIN_CARRETA: Generate constellation visualization
+        
+        Returns:
+            ConstellationVisualizationResponse with nodes and edges
+        """
+        rng = create_seeded_generator(self._get_seed_for_entity("constellation"))
+        
+        # Generate nodes for all regions
+        nodes = []
+        regions = self.generate_regions(10)
+        
+        for region in regions:
+            seed = self._get_seed_for_entity(f"constellation_{region.id}")
+            node_rng = create_seeded_generator(seed)
+            
+            nodes.append(ConstellationNode(
+                region_id=region.id,
+                region_name=region.name,
+                x=node_rng.generate_score(10.0, 90.0),
+                y=node_rng.generate_score(10.0, 90.0),
+                score=region.overall_score,
+                size=node_rng.generate_score(2.0, 8.0)
+            ))
+        
+        # Generate edges (connections between similar regions)
+        edges = []
+        for i in range(len(nodes)):
+            for j in range(i + 1, len(nodes)):
+                # Only connect some pairs based on deterministic threshold
+                edge_seed = self._get_seed_for_entity(f"edge_{nodes[i].region_id}_{nodes[j].region_id}")
+                edge_rng = create_seeded_generator(edge_seed)
+                
+                if edge_rng.rng.next_float() < 0.3:  # 30% connection probability
+                    edges.append(ConstellationEdge(
+                        source=nodes[i].region_id,
+                        target=nodes[j].region_id,
+                        strength=edge_rng.generate_score(0.3, 0.9)
+                    ))
+        
+        return ConstellationVisualizationResponse(
+            nodes=nodes,
+            edges=edges
+        )
+    
+    def generate_phylogram(self, region_id: str) -> PhylogramVisualizationResponse:
+        """
+        SIN_CARRETA: Generate phylogram (tree) visualization for region
+        
+        Args:
+            region_id: Region ID
+            
+        Returns:
+            PhylogramVisualizationResponse with tree nodes
+        """
+        rng = create_seeded_generator(self._get_seed_for_entity(f"phylogram_{region_id}"))
+        
+        nodes = []
+        
+        # Root node (region)
+        region_detail = self.generate_region_detail(region_id)
+        nodes.append(PhylogramNode(
+            id=region_id,
+            name=region_detail.name,
+            parent_id=None,
+            depth=0,
+            score=region_detail.overall_score
+        ))
+        
+        # Children nodes (municipalities)
+        municipalities = self.generate_municipalities(region_id, 10)
+        for mun in municipalities:
+            nodes.append(PhylogramNode(
+                id=mun.id,
+                name=mun.name,
+                parent_id=region_id,
+                depth=1,
+                score=mun.overall_score
+            ))
+        
+        return PhylogramVisualizationResponse(
+            region_id=region_id,
+            nodes=nodes
+        )
+    
+    def generate_mesh(self, region_id: str) -> MeshVisualizationResponse:
+        """
+        SIN_CARRETA: Generate 3D mesh visualization for region
+        
+        Args:
+            region_id: Region ID
+            
+        Returns:
+            MeshVisualizationResponse with 3D nodes
+        """
+        rng = create_seeded_generator(self._get_seed_for_entity(f"mesh_{region_id}"))
+        
+        nodes = []
+        municipalities = self.generate_municipalities(region_id, 10)
+        
+        for mun in municipalities:
+            mun_detail = self.generate_municipality_detail(mun.id)
+            mun_rng = create_seeded_generator(self._get_seed_for_entity(f"mesh_{mun.id}"))
+            
+            nodes.append(MeshNode(
+                municipality_id=mun.id,
+                municipality_name=mun.name,
+                x=mun_rng.generate_score(10.0, 90.0),
+                y=mun_rng.generate_score(10.0, 90.0),
+                z=mun_rng.generate_score(10.0, 90.0),
+                dimension_scores=mun_detail.dimension_scores
+            ))
+        
+        return MeshVisualizationResponse(
+            region_id=region_id,
+            nodes=nodes
+        )
+    
+    def generate_helix(self, municipality_id: str) -> HelixVisualizationResponse:
+        """
+        SIN_CARRETA: Generate helix visualization for municipality
+        
+        Args:
+            municipality_id: Municipality ID
+            
+        Returns:
+            HelixVisualizationResponse with helix points
+        """
+        mun_detail = self.generate_municipality_detail(municipality_id)
+        
+        points = []
+        angle_step = 360.0 / 6  # 6 dimensions evenly distributed
+        
+        for i, (dimension, score) in enumerate(mun_detail.dimension_scores.items()):
+            points.append(HelixPoint(
+                dimension=dimension,
+                dimension_name=self.dimension_names[dimension],
+                angle=i * angle_step,
+                height=score
+            ))
+        
+        return HelixVisualizationResponse(
+            municipality_id=municipality_id,
+            municipality_name=mun_detail.name,
+            points=points
+        )
+    
+    def generate_radar(self, municipality_id: str) -> RadarVisualizationResponse:
+        """
+        SIN_CARRETA: Generate radar chart for municipality
+        
+        Args:
+            municipality_id: Municipality ID
+            
+        Returns:
+            RadarVisualizationResponse with radar axes
+        """
+        mun_detail = self.generate_municipality_detail(municipality_id)
+        
+        axes = []
+        for policy, score in mun_detail.policy_area_scores.items():
+            axes.append(RadarAxis(
+                policy_area=policy,
+                policy_name=self.policy_names[policy],
+                score=score
+            ))
+        
+        return RadarVisualizationResponse(
+            municipality_id=municipality_id,
+            municipality_name=mun_detail.name,
+            axes=axes
+        )
+    
+    # ========================================================================
+    # TEMPORAL GENERATION METHODS
+    # ========================================================================
+    
+    def generate_timeline_region(self, region_id: str) -> TimelineRegionsResponse:
+        """
+        SIN_CARRETA: Generate timeline for region
+        
+        Args:
+            region_id: Region ID
+            
+        Returns:
+            TimelineRegionsResponse with timeline events
+        """
+        rng = create_seeded_generator(self._get_seed_for_entity(f"timeline_{region_id}"))
+        
+        events = []
+        event_count = rng.rng.next_int(5, 15)
+        
+        event_types = [
+            "Implementación de Programa",
+            "Evaluación de Impacto",
+            "Actualización de Política",
+            "Hito de Desarrollo",
+            "Inversión Pública"
+        ]
+        
+        start_date = datetime.now() - timedelta(days=rng.rng.next_int(365, 1825))
+        
+        for i in range(event_count):
+            event_date = start_date + timedelta(days=i * rng.rng.next_int(30, 90))
+            
+            events.append(TimelineEntry(
+                timestamp=event_date.isoformat(),
+                event_type=rng.choice(event_types),
+                description=f"Evento significativo en el desarrollo de {region_id} relacionado con implementación PDET.",
+                score=rng.generate_score(40.0, 95.0) if rng.rng.next_float() > 0.3 else None
+            ))
+        
+        # Sort by timestamp
+        events.sort(key=lambda e: e.timestamp)
+        
+        return TimelineRegionsResponse(
+            region_id=region_id,
+            events=events,
+            start_date=events[0].timestamp if events else datetime.now().isoformat(),
+            end_date=events[-1].timestamp if events else datetime.now().isoformat()
+        )
+    
+    def generate_timeline_municipality(self, municipality_id: str) -> TimelineMunicipalitiesResponse:
+        """
+        SIN_CARRETA: Generate timeline for municipality
+        
+        Args:
+            municipality_id: Municipality ID
+            
+        Returns:
+            TimelineMunicipalitiesResponse with timeline events
+        """
+        rng = create_seeded_generator(self._get_seed_for_entity(f"timeline_{municipality_id}"))
+        
+        events = []
+        event_count = rng.rng.next_int(8, 20)
+        
+        event_types = [
+            "Proyecto Comunitario",
+            "Actualización PDM",
+            "Inversión Local",
+            "Programa Social",
+            "Mejora de Infraestructura"
+        ]
+        
+        start_date = datetime.now() - timedelta(days=rng.rng.next_int(365, 1460))
+        
+        for i in range(event_count):
+            event_date = start_date + timedelta(days=i * rng.rng.next_int(20, 60))
+            
+            events.append(TimelineEntry(
+                timestamp=event_date.isoformat(),
+                event_type=rng.choice(event_types),
+                description=f"Actividad importante en {municipality_id} dentro del marco PDET.",
+                score=rng.generate_score(35.0, 90.0) if rng.rng.next_float() > 0.4 else None
+            ))
+        
+        events.sort(key=lambda e: e.timestamp)
+        
+        return TimelineMunicipalitiesResponse(
+            municipality_id=municipality_id,
+            events=events,
+            start_date=events[0].timestamp if events else datetime.now().isoformat(),
+            end_date=events[-1].timestamp if events else datetime.now().isoformat()
+        )
+    
+    def generate_comparison_regions(self) -> ComparisonRegionsResponse:
+        """
+        SIN_CARRETA: Generate comparison of all regions
+        
+        Returns:
+            ComparisonRegionsResponse with comparison items
+        """
+        regions = self.generate_regions(10)
+        items = []
+        
+        for region_summary in regions:
+            region_detail = self.generate_region_detail(region_summary.id)
+            items.append(ComparisonItem(
+                entity_id=region_detail.id,
+                entity_name=region_detail.name,
+                dimension_scores=region_detail.dimension_scores,
+                overall_score=region_detail.overall_score
+            ))
+        
+        return ComparisonRegionsResponse(items=items)
+    
+    def generate_comparison_matrix(
+        self,
+        entity_ids: List[str],
+        dimensions: Optional[List[DimensionEnum]] = None
+    ) -> ComparisonMatrixResponse:
+        """
+        SIN_CARRETA: Generate comparison matrix
+        
+        Args:
+            entity_ids: List of entity IDs to compare
+            dimensions: Optional specific dimensions to compare
+            
+        Returns:
+            ComparisonMatrixResponse with similarity matrix
+        """
+        rng = create_seeded_generator(self._get_seed_for_entity(f"matrix_{'_'.join(entity_ids)}"))
+        
+        matrix = []
+        
+        for i, entity_i in enumerate(entity_ids):
+            for j, entity_j in enumerate(entity_ids):
+                if i == j:
+                    similarity = 1.0
+                else:
+                    # Generate deterministic similarity based on entity pair
+                    pair_seed = self._get_seed_for_entity(f"similarity_{entity_i}_{entity_j}")
+                    pair_rng = create_seeded_generator(pair_seed)
+                    similarity = pair_rng.generate_score(0.2, 0.9)
+                
+                matrix.append(ComparisonMatrixCell(
+                    row_entity=entity_i,
+                    col_entity=entity_j,
+                    similarity=similarity
+                ))
+        
+        return ComparisonMatrixResponse(
+            entity_ids=entity_ids,
+            matrix=matrix
+        )
+    
+    def generate_historical_data(
+        self,
+        entity_type: str,
+        entity_id: str,
+        start_year: int,
+        end_year: int
+    ) -> HistoricalDataResponse:
+        """
+        SIN_CARRETA: Generate historical data for entity
+        
+        Args:
+            entity_type: Type of entity (region or municipality)
+            entity_id: Entity ID
+            start_year: Start year
+            end_year: End year
+            
+        Returns:
+            HistoricalDataResponse with historical data points
+        """
+        rng = create_seeded_generator(self._get_seed_for_entity(f"historical_{entity_id}"))
+        
+        data_points = []
+        
+        for year in range(start_year, end_year + 1):
+            year_rng = create_seeded_generator(self._get_seed_for_entity(f"{entity_id}_{year}"))
+            
+            # Generate dimension scores with some trend
+            dimension_scores = {}
+            for dim in DimensionEnum:
+                # Add slight upward trend over years
+                base_score = year_rng.generate_score(30.0, 85.0)
+                trend_adjustment = (year - start_year) * 1.5
+                score = min(100.0, base_score + trend_adjustment)
+                dimension_scores[dim] = round(score, 2)
+            
+            overall_score = sum(dimension_scores.values()) / len(dimension_scores)
+            
+            data_points.append(HistoricalDataPoint(
+                year=year,
+                dimension_scores=dimension_scores,
+                overall_score=round(overall_score, 2)
+            ))
+        
+        return HistoricalDataResponse(
+            entity_type=entity_type,
+            entity_id=entity_id,
+            data_points=data_points,
+            start_year=start_year,
+            end_year=end_year
+        )
+    
+    # ========================================================================
+    # EVIDENCE GENERATION METHODS
+    # ========================================================================
+    
+    def generate_evidence_stream(self, page: int, per_page: int) -> EvidenceStreamResponse:
+        """
+        SIN_CARRETA: Generate evidence stream
+        
+        Args:
+            page: Page number
+            per_page: Items per page
+            
+        Returns:
+            EvidenceStreamResponse with evidence items
+        """
+        rng = create_seeded_generator(self._get_seed_for_entity(f"evidence_stream_p{page}"))
+        
+        total = 500  # Total evidence items available
+        items = []
+        
+        start_idx = (page - 1) * per_page
+        end_idx = min(start_idx + per_page, total)
+        
+        for i in range(start_idx, end_idx):
+            item_rng = create_seeded_generator(self._get_seed_for_entity(f"evidence_{i:06d}"))
+            
+            timestamp = datetime.now() - timedelta(days=item_rng.rng.next_int(0, 365))
+            
+            items.append(EvidenceStreamItem(
+                evidence_id=f"EV_{i:06d}",
+                text=f"Evidencia documental relacionada con implementación PDET que demuestra avances en indicadores clave de desarrollo territorial.",
+                source=f"Documento_{item_rng.rng.next_int(1, 100):03d}.pdf",
+                confidence=item_rng.generate_score(0.6, 0.95),
+                timestamp=timestamp.isoformat(),
+                entity_id=f"REGION_{item_rng.rng.next_int(1, 10):03d}"
+            ))
+        
+        return EvidenceStreamResponse(
+            items=items,
+            total=total,
+            page=page,
+            per_page=per_page
+        )
+    
+    def generate_document_references(self, region_id: str) -> DocumentReferencesResponse:
+        """
+        SIN_CARRETA: Generate document references for region
+        
+        Args:
+            region_id: Region ID
+            
+        Returns:
+            DocumentReferencesResponse with document references
+        """
+        rng = create_seeded_generator(self._get_seed_for_entity(f"docs_{region_id}"))
+        
+        references = []
+        ref_count = rng.rng.next_int(10, 25)
+        
+        authors = ["García, J.", "Martínez, A.", "López, M.", "Rodríguez, C.", "Pérez, L."]
+        
+        for i in range(ref_count):
+            ref_rng = create_seeded_generator(self._get_seed_for_entity(f"{region_id}_doc_{i}"))
+            
+            date = datetime.now() - timedelta(days=ref_rng.rng.next_int(0, 1825))
+            
+            references.append(DocumentReference(
+                document_id=f"DOC_{ref_rng.rng.next_int(100000, 999999):06d}",
+                title=f"Análisis de Implementación PDET en {region_id}",
+                author=ref_rng.choice(authors),
+                date=date.isoformat(),
+                url=f"https://pdet.gov.co/docs/{region_id.lower()}/doc_{i}.pdf"
+            ))
+        
+        return DocumentReferencesResponse(
+            region_id=region_id,
+            references=references,
+            total=len(references)
+        )
+    
+    def generate_document_sources(self, question_id: str) -> DocumentSourcesResponse:
+        """
+        SIN_CARRETA: Generate document sources for question
+        
+        Args:
+            question_id: Question ID
+            
+        Returns:
+            DocumentSourcesResponse with document sources
+        """
+        rng = create_seeded_generator(self._get_seed_for_entity(f"sources_{question_id}"))
+        
+        sources = []
+        source_count = rng.rng.next_int(3, 8)
+        
+        for i in range(source_count):
+            src_rng = create_seeded_generator(self._get_seed_for_entity(f"{question_id}_src_{i}"))
+            
+            sources.append(DocumentSource(
+                source_id=f"SRC_{src_rng.rng.next_int(100000, 999999):06d}",
+                document_title=f"Plan de Desarrollo Municipal - Sección {i+1}",
+                excerpt=f"Extracto relevante del documento que aborda aspectos específicos de la pregunta {question_id}.",
+                page_number=src_rng.rng.next_int(10, 200),
+                relevance=src_rng.generate_score(0.6, 0.95)
+            ))
+        
+        return DocumentSourcesResponse(
+            question_id=question_id,
+            sources=sources,
+            total=len(sources)
+        )
+    
+    def generate_citations(self, indicator_id: str) -> CitationsResponse:
+        """
+        SIN_CARRETA: Generate citations for indicator
+        
+        Args:
+            indicator_id: Indicator ID
+            
+        Returns:
+            CitationsResponse with citations
+        """
+        rng = create_seeded_generator(self._get_seed_for_entity(f"citations_{indicator_id}"))
+        
+        citations = []
+        cit_count = rng.rng.next_int(5, 12)
+        
+        authors = ["García", "Martínez", "López", "Rodríguez", "Pérez"]
+        
+        for i in range(cit_count):
+            cit_rng = create_seeded_generator(self._get_seed_for_entity(f"{indicator_id}_cit_{i}"))
+            
+            year = cit_rng.rng.next_int(2015, 2023)
+            author = cit_rng.choice(authors)
+            
+            citations.append(Citation(
+                citation_id=f"CIT_{cit_rng.rng.next_int(100000, 999999):06d}",
+                text=f"Estudio sobre indicadores de desarrollo territorial en regiones PDET.",
+                source=f"Revista de Desarrollo Territorial, Vol. {cit_rng.rng.next_int(1, 20)}",
+                year=year,
+                citation_format=f"{author}, J. ({year}). Análisis de indicadores PDET. Revista de Desarrollo Territorial."
+            ))
+        
+        return CitationsResponse(
+            indicator_id=indicator_id,
+            citations=citations,
+            total=len(citations)
+        )
+    
+    # ========================================================================
+    # EXPORT GENERATION METHODS
+    # ========================================================================
+    
+    def generate_export_dashboard(
+        self,
+        format: ExportFormat,
+        include_visualizations: bool,
+        include_raw_data: bool
+    ) -> ExportResponse:
+        """
+        SIN_CARRETA: Generate dashboard export
+        
+        Args:
+            format: Export format
+            include_visualizations: Include visualizations
+            include_raw_data: Include raw data
+            
+        Returns:
+            ExportResponse with export information
+        """
+        rng = create_seeded_generator(self._get_seed_for_entity("export_dashboard"))
+        
+        export_id = f"EXP_{rng.rng.next_int(10000000, 99999999):08d}"
+        expires_at = datetime.now() + timedelta(hours=24)
+        
+        # Estimate file size based on options
+        base_size = 5 * 1024 * 1024  # 5MB base
+        if include_visualizations:
+            base_size += 10 * 1024 * 1024
+        if include_raw_data:
+            base_size += 20 * 1024 * 1024
+        
+        return ExportResponse(
+            export_id=export_id,
+            format=format,
+            download_url=f"https://api.pdet.gov.co/downloads/{export_id}.{format.value}",
+            expires_at=expires_at.isoformat(),
+            size_bytes=base_size
+        )
+    
+    def generate_export_region(
+        self,
+        region_id: str,
+        format: ExportFormat,
+        include_municipalities: bool,
+        include_analysis: bool
+    ) -> ExportResponse:
+        """
+        SIN_CARRETA: Generate region export
+        
+        Args:
+            region_id: Region ID
+            format: Export format
+            include_municipalities: Include municipalities
+            include_analysis: Include analysis
+            
+        Returns:
+            ExportResponse with export information
+        """
+        rng = create_seeded_generator(self._get_seed_for_entity(f"export_{region_id}"))
+        
+        export_id = f"EXP_{rng.rng.next_int(10000000, 99999999):08d}"
+        expires_at = datetime.now() + timedelta(hours=24)
+        
+        base_size = 2 * 1024 * 1024
+        if include_municipalities:
+            base_size += 5 * 1024 * 1024
+        if include_analysis:
+            base_size += 8 * 1024 * 1024
+        
+        return ExportResponse(
+            export_id=export_id,
+            format=format,
+            download_url=f"https://api.pdet.gov.co/downloads/{export_id}.{format.value}",
+            expires_at=expires_at.isoformat(),
+            size_bytes=base_size
+        )
+    
+    def generate_export_comparison(
+        self,
+        entity_ids: List[str],
+        format: ExportFormat,
+        dimensions: Optional[List[DimensionEnum]]
+    ) -> ExportResponse:
+        """
+        SIN_CARRETA: Generate comparison export
+        
+        Args:
+            entity_ids: List of entity IDs
+            format: Export format
+            dimensions: Optional specific dimensions
+            
+        Returns:
+            ExportResponse with export information
+        """
+        rng = create_seeded_generator(self._get_seed_for_entity(f"export_comp_{'_'.join(entity_ids)}"))
+        
+        export_id = f"EXP_{rng.rng.next_int(10000000, 99999999):08d}"
+        expires_at = datetime.now() + timedelta(hours=24)
+        
+        base_size = len(entity_ids) * 1024 * 1024
+        
+        return ExportResponse(
+            export_id=export_id,
+            format=format,
+            download_url=f"https://api.pdet.gov.co/downloads/{export_id}.{format.value}",
+            expires_at=expires_at.isoformat(),
+            size_bytes=base_size
+        )
+    
+    def generate_standard_report(self, report_type: ReportType) -> ReportResponse:
+        """
+        SIN_CARRETA: Generate standard report
+        
+        Args:
+            report_type: Type of report
+            
+        Returns:
+            ReportResponse with report information
+        """
+        rng = create_seeded_generator(self._get_seed_for_entity(f"report_{report_type.value}"))
+        
+        report_id = f"RPT_{rng.rng.next_int(10000000, 99999999):08d}"
+        expires_at = datetime.now() + timedelta(hours=48)
+        
+        size_map = {
+            ReportType.EXECUTIVE_SUMMARY: 3 * 1024 * 1024,
+            ReportType.DETAILED_ANALYSIS: 15 * 1024 * 1024,
+            ReportType.COMPARISON: 8 * 1024 * 1024,
+            ReportType.TRENDS: 10 * 1024 * 1024
+        }
+        
+        return ReportResponse(
+            report_id=report_id,
+            report_type=report_type.value,
+            download_url=f"https://api.pdet.gov.co/reports/{report_id}.pdf",
+            expires_at=expires_at.isoformat(),
+            size_bytes=size_map.get(report_type, 5 * 1024 * 1024)
+        )
+    
+    def generate_custom_report(
+        self,
+        title: str,
+        entity_ids: List[str],
+        sections: List[str],
+        format: ExportFormat
+    ) -> ReportResponse:
+        """
+        SIN_CARRETA: Generate custom report
+        
+        Args:
+            title: Report title
+            entity_ids: Entity IDs to include
+            sections: Report sections
+            format: Report format
+            
+        Returns:
+            ReportResponse with report information
+        """
+        rng = create_seeded_generator(self._get_seed_for_entity(f"custom_{title}"))
+        
+        report_id = f"RPT_{rng.rng.next_int(10000000, 99999999):08d}"
+        expires_at = datetime.now() + timedelta(hours=48)
+        
+        base_size = (len(entity_ids) * len(sections) * 2) * 1024 * 1024
+        
+        return ReportResponse(
+            report_id=report_id,
+            report_type="custom",
+            download_url=f"https://api.pdet.gov.co/reports/{report_id}.{format.value}",
+            expires_at=expires_at.isoformat(),
+            size_bytes=base_size
+        )
 
 
 # Singleton instance
