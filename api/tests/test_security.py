@@ -198,7 +198,6 @@ class TestCORSConfiguration:
         assert isinstance(origins, list)
         # Verify exact origin URLs are present (no substring matching)
         expected_origins = ["https://example.com", "https://api.example.com"]
-        assert "https://example.com" in expected_origins  # Check against expected list
         # Validate each origin matches exactly (using set comparison)
         assert set(origins) == set(expected_origins)
 
