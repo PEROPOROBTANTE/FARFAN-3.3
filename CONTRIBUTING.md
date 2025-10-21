@@ -219,6 +219,136 @@ python -m pytest tests/test_immutable_data_contracts.py -v
 python validate_contracts.py --strict
 ```
 
+## Determinism & Contracts (SIN_CARRETA) - ModuleAdapterRegistry
+
+**IMPORTANT**: When working with adapter orchestration, ALWAYS use the canonical `ModuleAdapterRegistry` implementation to maintain determinism and explicit contracts.
+
+### ModuleAdapterRegistry Invocation Contract
+
+All adapter method invocations MUST go through `ModuleAdapterRegistry.execute_module_method()`, NOT direct adapter instance access.
+
+**Required Pattern:**
+```python
+from src.orchestrator.adapter_registry import ModuleAdapterRegistry
+
+# CORRECT: Use registry's execute_module_method
+registry = ModuleAdapterRegistry()
+result = registry.execute_module_method(
+    module_name="teoria_cambio",
+    method_name="calculate_bayesian_confidence",
+    args=[plan_text, evidence],
+    kwargs={"confidence_threshold": 0.8}
+)
+
+# result is a ModuleMethodResult with:
+# - status (success|error|unavailable|missing_method|missing_adapter)
+# - trace_id (UUID4 for correlation)
+# - execution_time (deterministic via injected clock in tests)
+# - evidence (structured list from adapter)
+# - error_type, error_message (on failure)
+
+# INCORRECT: Direct adapter access bypasses contract
+adapter = registry.adapters["teoria_cambio"]  # ❌ DON'T DO THIS
+result = adapter.calculate_bayesian_confidence(...)  # ❌ NO CONTRACT
+```
+
+### Contract Enforcement Rules
+
+1. **ContractViolation Exceptions**
+   - Attempting to execute an unavailable adapter raises `ContractViolation`
+   - Attempting to execute a non-existent adapter raises `ContractViolation`
+   - Missing methods return `ModuleMethodResult` with `missing_method` status (no exception)
+   
+   ```python
+   from src.orchestrator.adapter_registry import ContractViolation
+   
+   try:
+       result = registry.execute_module_method(
+           module_name="unavailable_adapter",
+           method_name="some_method"
+       )
+   except ContractViolation as e:
+       logger.error(f"Contract violated: {e}")
+       # Handle error - do NOT silently continue
+   ```
+
+2. **Deterministic Testing Requirements**
+   - ALWAYS inject clock and trace_id_generator in tests
+   - NEVER rely on system time or UUID generation in tests
+   
+   ```python
+   def test_adapter_execution():
+       # Deterministic clock
+       counter = [0.0]
+       def clock():
+           counter[0] += 0.001
+           return counter[0]
+       
+       # Deterministic trace IDs
+       trace_counter = [0]
+       def trace_gen():
+           trace_counter[0] += 1
+           return f"trace-{trace_counter[0]:04d}"
+       
+       registry = ModuleAdapterRegistry(
+           clock=clock,
+           trace_id_generator=trace_gen
+       )
+       
+       # Results are now reproducible
+       result = registry.execute_module_method(...)
+       assert result.trace_id == "trace-0001"  # Deterministic!
+   ```
+
+3. **Structured Logging**
+   - Every `execute_module_method` call emits structured JSON log
+   - Logs include trace_id for correlation across distributed systems
+   - Parse logs programmatically for audit trails
+   
+   ```json
+   {
+     "module_name": "teoria_cambio",
+     "adapter_class": "ModulosAdapter",
+     "method_name": "calculate_bayesian_confidence",
+     "status": "success",
+     "execution_time": 0.123,
+     "confidence": 1.0,
+     "trace_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+   }
+   ```
+
+4. **Method Validation Before Execution**
+   - Use `registry.list_adapter_methods(module_name)` for pre-flight checks
+   - Validates method existence without executing
+   
+   ```python
+   methods = registry.list_adapter_methods("teoria_cambio")
+   if "calculate_bayesian_confidence" in methods:
+       result = registry.execute_module_method(...)
+   ```
+
+### Migration from Legacy Registry
+
+If you encounter code using the old `AdapterRegistry`:
+
+```python
+# OLD (deprecated)
+from src.orchestrator.module_adapters import AdapterRegistry
+registry = AdapterRegistry()
+adapter = registry.get("adapter_name")
+result = adapter.method()
+
+# NEW (correct)
+from src.orchestrator.adapter_registry import ModuleAdapterRegistry
+registry = ModuleAdapterRegistry()
+result = registry.execute_module_method(
+    module_name="adapter_name",
+    method_name="method"
+)
+```
+
+See `CODE_FIX_REPORT.md` for complete migration guide.
+
 ## Audit Trail Requirements
 
 Every code change affecting system behavior MUST have a complete audit trail.
