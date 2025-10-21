@@ -88,7 +88,9 @@ def deterministic_trace_id():
 def registry(deterministic_clock, deterministic_trace_id):
     """Fixture providing registry with deterministic clock and trace IDs"""
     return ModuleAdapterRegistry(
-        clock=deterministic_clock, trace_id_generator=deterministic_trace_id
+        clock=deterministic_clock,
+        trace_id_generator=deterministic_trace_id,
+        auto_register=False  # Don't auto-register for clean testing
     )
 
 
@@ -233,7 +235,7 @@ class TestExecuteModuleMethod:
             adapter_instance=adapter,
             adapter_class_name="StubAdapterSuccess",
         )
-        registry._availability["degraded_adapter"].available = False
+        registry.set_adapter_availability("degraded_adapter", False)
 
         # Should still execute with allow_degraded=True
         result = registry.execute_module_method(
