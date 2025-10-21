@@ -1,0 +1,31 @@
+version: 1.0.0
+method: set_availability
+adapter: AdapterRegistry
+description: Set adapter availability status
+deterministic: true
+sin_carreta_compliant: true
+input:
+  type: object
+  properties:
+    name:
+      type: string
+      description: name parameter
+    available:
+      type: string
+      description: available parameter
+  required:
+  - name
+  - available
+output:
+  type: object
+  description: Result of set_availability
+side_effects: []
+exceptions:
+- type: ContractViolation
+  condition: Invalid input parameters
+performance:
+  expected_latency_ms: 100
+  complexity: O(n)
+audit_trail:
+  telemetry_enabled: true
+  log_level: INFO

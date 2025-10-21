@@ -1,22 +1,38 @@
 {
   "success": false,
   "total_gates": 6,
-  "passed_gates": 3,
-  "failed_gates": 3,
+  "passed_gates": 4,
+  "failed_gates": 2,
   "results": [
     {
       "gate_name": "contract_validation",
-      "status": "ERROR",
+      "status": "FAILED",
       "passed": false,
       "errors": [
-        "CONTRACT_VALIDATION_ERROR: [Errno 2] No such file or directory: 'orchestrator/module_adapters.py'"
+        "METHOD_COUNT_MISMATCH: Expected 413 methods, found 13"
       ],
-      "warnings": [],
+      "warnings": [
+        "MISSING_CONTRACTS: 413 methods lack contract.yaml files"
+      ],
       "metrics": {
-        "remediation_suggestions": []
+        "total_contracts": 0,
+        "valid_schemas": 0,
+        "invalid_schemas": 0,
+        "total_methods": 13,
+        "missing_contracts": 413,
+        "remediation_suggestions": [
+          {
+            "error_code": "METHOD_COUNT_MISMATCH",
+            "error_type": "contract_missing",
+            "suggested_fix": "Generate missing contract.yaml files",
+            "command": "python cicd/generate_contracts.py --missing-only",
+            "diff_snippet": null,
+            "priority": "medium"
+          }
+        ]
       },
-      "execution_time": 0.04729914665222168,
-      "timestamp": "2025-10-21T09:43:25.922245"
+      "execution_time": 0.04904890060424805,
+      "timestamp": "2025-10-21T09:49:29.294653"
     },
     {
       "gate_name": "canary_regression",
@@ -30,36 +46,51 @@
         "failed": 0,
         "hash_mismatches": 0
       },
-      "execution_time": 0.00019073486328125,
-      "timestamp": "2025-10-21T09:43:25.922543"
+      "execution_time": 0.000171661376953125,
+      "timestamp": "2025-10-21T09:49:29.294928"
     },
     {
       "gate_name": "binding_validation",
-      "status": "ERROR",
+      "status": "FAILED",
       "passed": false,
       "errors": [
-        "BINDING_VALIDATION_ERROR: [Errno 2] No such file or directory: 'orchestrator/execution_mapping.yaml'"
+        "MAPPING_CONFLICT: 66 bindings have missing source: [{'question': 'Q3_Resource_Mapping', 'step': 1, 'source': 'extracted_tables'}, {'question': 'Q3_Resource_Mapping', 'step': 2, 'source': 'extracted_tables'}, {'question': 'Q4_Institutional_Capacity', 'step': 1, 'source': 'entity_name'}]"
       ],
       "warnings": [],
       "metrics": {
-        "remediation_suggestions": []
+        "total_bindings": 88,
+        "missing_sources": 66,
+        "type_mismatches": 0,
+        "circular_deps": 0,
+        "remediation_suggestions": [
+          {
+            "error_code": "MAPPING_CONFLICT",
+            "error_type": "binding_error",
+            "suggested_fix": "Auto-correct binding type mismatches",
+            "command": "python cicd/fix_bindings.py --auto-correct",
+            "diff_snippet": null,
+            "priority": "high"
+          }
+        ]
       },
-      "execution_time": 2.5987625122070312e-05,
-      "timestamp": "2025-10-21T09:43:25.922620"
+      "execution_time": 0.09947085380554199,
+      "timestamp": "2025-10-21T09:49:29.394448"
     },
     {
       "gate_name": "determinism_verification",
-      "status": "ERROR",
-      "passed": false,
-      "errors": [
-        "DETERMINISM_VALIDATION_ERROR: No module named 'numpy'"
+      "status": "PASSED",
+      "passed": true,
+      "errors": [],
+      "warnings": [
+        "numpy not available, skipping numpy seed verification"
       ],
-      "warnings": [],
       "metrics": {
-        "remediation_suggestions": []
+        "runs_completed": 3,
+        "differences_found": 0,
+        "identical_runs": 3
       },
-      "execution_time": 0.00016307830810546875,
-      "timestamp": "2025-10-21T09:43:25.922903"
+      "execution_time": 0.0001461505889892578,
+      "timestamp": "2025-10-21T09:49:29.394741"
     },
     {
       "gate_name": "performance_regression",
@@ -72,8 +103,8 @@
         "regressions_found": 0,
         "avg_p99_latency": 2.0
       },
-      "execution_time": 9.822845458984375e-05,
-      "timestamp": "2025-10-21T09:43:25.923088"
+      "execution_time": 7.200241088867188e-05,
+      "timestamp": "2025-10-21T09:49:29.394873"
     },
     {
       "gate_name": "schema_drift_detection",
@@ -86,10 +117,10 @@
         "baseline_hash": "",
         "drift_detected": false
       },
-      "execution_time": 0.00014972686767578125,
-      "timestamp": "2025-10-21T09:43:25.923300"
+      "execution_time": 6.318092346191406e-05,
+      "timestamp": "2025-10-21T09:49:29.394978"
     }
   ],
-  "execution_time": 0.04840731620788574,
-  "timestamp": "2025-10-21T09:43:25.923313"
+  "execution_time": 0.1494143009185791,
+  "timestamp": "2025-10-21T09:49:29.394987"
 }
