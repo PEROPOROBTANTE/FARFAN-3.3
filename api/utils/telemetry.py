@@ -14,6 +14,7 @@ Python: 3.10+
 import time
 import logging
 import json
+import psutil
 from typing import Callable, Dict, Any, Optional
 from datetime import datetime
 from fastapi import Request, Response
@@ -22,6 +23,14 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 
 logger = logging.getLogger(__name__)
+
+# Import metrics collector (will be initialized on first use)
+try:
+    from api.utils.monitoring import get_metrics_collector
+    MONITORING_ENABLED = True
+except ImportError:
+    MONITORING_ENABLED = False
+    logger.warning("Monitoring module not available, metrics collection disabled")
 
 
 class TelemetryMiddleware(BaseHTTPMiddleware):
@@ -43,6 +52,9 @@ class TelemetryMiddleware(BaseHTTPMiddleware):
         """
         Process request and emit telemetry
         
+        SIN_CARRETA: Enhanced with performance monitoring integration.
+        Records metrics for latency, memory, errors, and active requests.
+        
         Args:
             request: Incoming HTTP request
             call_next: Next middleware/handler
@@ -53,6 +65,14 @@ class TelemetryMiddleware(BaseHTTPMiddleware):
         # Start timing
         start_time = time.time()
         request_id = self._generate_request_id()
+        
+        # Track active requests (if monitoring enabled)
+        if MONITORING_ENABLED:
+            metrics_collector = get_metrics_collector()
+            metrics_collector.increment_active_requests()
+        
+        # Capture memory at start
+        memory_start_mb = psutil.virtual_memory().used / (1024 * 1024)
         
         # Capture request context
         request_context = self._capture_request_context(request, request_id)
@@ -77,14 +97,30 @@ class TelemetryMiddleware(BaseHTTPMiddleware):
                     "timestamp": datetime.now().isoformat()
                 }
             )
+        finally:
+            # Decrement active requests
+            if MONITORING_ENABLED:
+                metrics_collector.decrement_active_requests()
         
-        # Calculate timing
+        # Calculate timing and memory
         duration_ms = (time.time() - start_time) * 1000
+        memory_end_mb = psutil.virtual_memory().used / (1024 * 1024)
+        memory_delta_mb = memory_end_mb - memory_start_mb
         
         # Capture response context
         response_context = self._capture_response_context(
             response, status_code, duration_ms, error
         )
+        
+        # Record metrics (if monitoring enabled)
+        if MONITORING_ENABLED:
+            metrics_collector.record_request(
+                method=request.method,
+                endpoint=str(request.url.path),
+                status_code=status_code,
+                duration_ms=duration_ms,
+                memory_mb=abs(memory_delta_mb)  # Use absolute value
+            )
         
         # Emit structured telemetry
         self._emit_telemetry(request_context, response_context)
