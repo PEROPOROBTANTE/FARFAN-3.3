@@ -13,9 +13,9 @@
       "description": "Dimension 1: Insumos (Diagnóstico y Líneas Base)"
     },
     "D2": {
-      "module": "causal_proccesor",
-      "class": "PolicyDocumentAnalyzer",
-      "method": "analyze_document",
+      "module": "causal_processor",
+      "class": "CausalProcessorAdapter",
+      "method": "analyze",
       "confidence": 0.80,
       "description": "Dimension 2: Procesos (Diseño de Intervención)"
     },
