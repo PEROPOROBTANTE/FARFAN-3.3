@@ -105,7 +105,8 @@ class ModuleAdapterRegistry:
     def __init__(self,
         clock: Callable[[], float] = time.monotonic,
         id_factory: Callable[[], str] = None,
-        trace_id_generator: Callable[[], str] = None
+        trace_id_generator: Callable[[], str] = None,
+        auto_register: bool = True
     ):
         self._clock = clock
         # Support both id_factory and trace_id_generator for backward compatibility
@@ -116,9 +117,10 @@ class ModuleAdapterRegistry:
         else:
             self._id_factory = lambda: str(uuid.uuid4())
         
-        self.adapters: Dict[str, RegisteredAdapter] = {}
+        self._adapters: Dict[str, RegisteredAdapter] = {}
         self._availability: Dict[str, AdapterAvailabilitySnapshot] = {}
-        self._register_all_adapters()
+        if auto_register:
+            self._register_all_adapters()
 
     def _resolve_class(self, class_name: str):
         """
@@ -194,7 +196,7 @@ class ModuleAdapterRegistry:
             try:
                 adapter_cls = self._resolve_class(class_name)
                 instance = adapter_cls()
-                self.adapters[name] = RegisteredAdapter(
+                self._adapters[name] = RegisteredAdapter(
                     name=name,
                     instance=instance,
                     adapter_class_name=class_name,
@@ -207,7 +209,7 @@ class ModuleAdapterRegistry:
                 )
                 logger.info(f"[registry] registered adapter={name} class={class_name}")
             except Exception as e:
-                self.adapters[name] = RegisteredAdapter(
+                self._adapters[name] = RegisteredAdapter(
                     name=name,
                     instance=None,
                     adapter_class_name=class_name,
@@ -230,9 +232,9 @@ class ModuleAdapterRegistry:
         
         SIN_CARRETA: Explicit contract violation on missing adapter.
         """
-        if module_name not in self.adapters:
+        if module_name not in self._adapters:
             raise ContractViolation(f"Adapter '{module_name}' not registered")
-        reg = self.adapters[module_name]
+        reg = self._adapters[module_name]
         if not reg.instance:
             raise ContractViolation(f"Adapter '{module_name}' has no instance")
         inst = reg.instance
@@ -241,8 +243,22 @@ class ModuleAdapterRegistry:
             if not m.startswith("_") and callable(getattr(inst, m, None))
         ]
 
+    @property
+    def adapters(self) -> Dict[str, Any]:
+        """
+        Backward compatibility property.
+        Returns dict of module_name -> adapter instance (not RegisteredAdapter).
+        
+        SIN_CARRETA: Maintains backward compatibility while enforcing new contract.
+        """
+        return {
+            name: reg.instance
+            for name, reg in self._adapters.items()
+            if reg.instance is not None
+        }
+
     def get_available_modules(self) -> List[str]:
-        return [n for n, r in self.adapters.items() if r.available and r.instance]
+        return [n for n, r in self._adapters.items() if r.available and r.instance]
 
     def get_status_snapshot(self) -> Dict[str, Any]:
         """Get availability snapshot for all adapters"""
@@ -251,7 +267,7 @@ class ModuleAdapterRegistry:
                 "available": reg.available,
                 "registration_error": reg.registration_error
             }
-            for name, reg in self.adapters.items()
+            for name, reg in self._adapters.items()
         }
     
     def get_status(self) -> Dict[str, AdapterAvailabilitySnapshot]:
@@ -281,7 +297,7 @@ class ModuleAdapterRegistry:
         
         SIN_CARRETA: Explicit registration for testing and custom adapters.
         """
-        self.adapters[module_name] = RegisteredAdapter(
+        self._adapters[module_name] = RegisteredAdapter(
             name=module_name,
             instance=adapter_instance,
             adapter_class_name=adapter_class_name,
@@ -303,9 +319,37 @@ class ModuleAdapterRegistry:
         """
         return {
             name: reg.instance
-            for name, reg in self.adapters.items()
+            for name, reg in self._adapters.items()
             if reg.instance is not None
         }
+    
+    def set_adapter_availability(self, module_name: str, available: bool):
+        """
+        Set adapter availability (mutable for testing).
+        
+        SIN_CARRETA: Allows tests to simulate unavailable adapters.
+        """
+        if module_name in self._availability:
+            # Create new snapshot with updated availability
+            old = self._availability[module_name]
+            self._availability[module_name] = AdapterAvailabilitySnapshot(
+                adapter_name=old.adapter_name,
+                available=available,
+                error_type=old.error_type,
+                error_message=old.error_message,
+                description=old.description
+            )
+            # Also update the adapter itself
+            if module_name in self._adapters:
+                reg = self._adapters[module_name]
+                self._adapters[module_name] = RegisteredAdapter(
+                    name=reg.name,
+                    instance=reg.instance,
+                    adapter_class_name=reg.adapter_class_name,
+                    available=available,
+                    registration_error=reg.registration_error,
+                    description=reg.description
+                )
 
     def execute_module_method(
         self,
@@ -320,30 +364,33 @@ class ModuleAdapterRegistry:
         kwargs = kwargs or {}
         trace_id = self._id_factory()
 
-        if module_name not in self.adapters:
+        if module_name not in self._adapters:
             raise ContractViolation(f"Adapter '{module_name}' not registered")
 
-        reg = self.adapters[module_name]
+        reg = self._adapters[module_name]
 
         if not reg.available or reg.instance is None:
             if not allow_degraded:
                 raise ContractViolation(
                     f"Adapter '{module_name}' unavailable (error={reg.registration_error})"
                 )
-            return self._finalize(
-                start, module_name, "UnavailableAdapter", method_name,
-                status=ExecutionStatus.UNAVAILABLE.value,
-                error_type="AdapterUnavailable",
-                error_message=reg.registration_error or "Unavailable",
-                confidence=0.0,
-                trace_id=trace_id
-            )
+            # With allow_degraded, if instance exists, try to execute anyway
+            if reg.instance is None:
+                return self._finalize(
+                    start, module_name, "UnavailableAdapter", method_name,
+                    status=ExecutionStatus.UNAVAILABLE.value,
+                    error_type="AdapterUnavailable",
+                    error_message=reg.registration_error or "Unavailable",
+                    confidence=0.0,
+                    trace_id=trace_id
+                )
+            # Continue to execution with the instance
 
         inst = reg.instance
 
         if not hasattr(inst, method_name):
             return self._finalize(
-                start, module_name, reg.adapter_class_name, method_name,
+                start, module_name, module_name, method_name,  # adapter_class is module_name for consistency
                 status=ExecutionStatus.MISSING_METHOD.value,
                 error_type="AttributeError",
                 error_message=f"Method '{method_name}' not found",
@@ -357,7 +404,7 @@ class ModuleAdapterRegistry:
             confidence = data.get("confidence", 1.0)
             evidence = data.get("evidence", [])
             return self._finalize(
-                start, module_name, reg.adapter_class_name, method_name,
+                start, module_name, module_name, method_name,  # adapter_class is module_name for consistency
                 status=ExecutionStatus.SUCCESS.value,
                 data=data,
                 evidence=evidence if isinstance(evidence, list) else [],
@@ -366,7 +413,7 @@ class ModuleAdapterRegistry:
             )
         except Exception as e:
             return self._finalize(
-                start, module_name, reg.adapter_class_name, method_name,
+                start, module_name, module_name, method_name,  # adapter_class is module_name for consistency
                 status=ExecutionStatus.ERROR.value,
                 error_type=type(e).__name__,
                 error_message=str(e),
