@@ -9,17 +9,18 @@
       "status": "FAILED",
       "passed": false,
       "errors": [
-        "METHOD_COUNT_MISMATCH: Expected 413 methods, found 13"
+        "METHOD_COUNT_MISMATCH: Expected 413 methods, found 13",
+        "SCHEMA_VALIDATION_FAILED: 13 contracts have invalid JSON Schema"
       ],
       "warnings": [
-        "MISSING_CONTRACTS: 413 methods lack contract.yaml files"
+        "MISSING_CONTRACTS: 400 methods lack contract.yaml files"
       ],
       "metrics": {
-        "total_contracts": 0,
+        "total_contracts": 13,
         "valid_schemas": 0,
-        "invalid_schemas": 0,
+        "invalid_schemas": 13,
         "total_methods": 13,
-        "missing_contracts": 413,
+        "missing_contracts": 400,
         "remediation_suggestions": [
           {
             "error_code": "METHOD_COUNT_MISMATCH",
@@ -31,8 +32,8 @@
           }
         ]
       },
-      "execution_time": 0.04904890060424805,
-      "timestamp": "2025-10-21T09:49:29.294653"
+      "execution_time": 0.08727478981018066,
+      "timestamp": "2025-10-21T09:56:46.100169"
     },
     {
       "gate_name": "canary_regression",
@@ -46,8 +47,8 @@
         "failed": 0,
         "hash_mismatches": 0
       },
-      "execution_time": 0.000171661376953125,
-      "timestamp": "2025-10-21T09:49:29.294928"
+      "execution_time": 0.0001456737518310547,
+      "timestamp": "2025-10-21T09:56:46.100455"
     },
     {
       "gate_name": "binding_validation",
@@ -73,8 +74,8 @@
           }
         ]
       },
-      "execution_time": 0.09947085380554199,
-      "timestamp": "2025-10-21T09:49:29.394448"
+      "execution_time": 0.09707283973693848,
+      "timestamp": "2025-10-21T09:56:46.197573"
     },
     {
       "gate_name": "determinism_verification",
@@ -89,8 +90,8 @@
         "differences_found": 0,
         "identical_runs": 3
       },
-      "execution_time": 0.0001461505889892578,
-      "timestamp": "2025-10-21T09:49:29.394741"
+      "execution_time": 0.00017833709716796875,
+      "timestamp": "2025-10-21T09:56:46.197897"
     },
     {
       "gate_name": "performance_regression",
@@ -103,8 +104,8 @@
         "regressions_found": 0,
         "avg_p99_latency": 2.0
       },
-      "execution_time": 7.200241088867188e-05,
-      "timestamp": "2025-10-21T09:49:29.394873"
+      "execution_time": 7.62939453125e-05,
+      "timestamp": "2025-10-21T09:56:46.198019"
     },
     {
       "gate_name": "schema_drift_detection",
@@ -117,10 +118,10 @@
         "baseline_hash": "",
         "drift_detected": false
       },
-      "execution_time": 6.318092346191406e-05,
-      "timestamp": "2025-10-21T09:49:29.394978"
+      "execution_time": 6.222724914550781e-05,
+      "timestamp": "2025-10-21T09:56:46.198132"
     }
   ],
-  "execution_time": 0.1494143009185791,
-  "timestamp": "2025-10-21T09:49:29.394987"
+  "execution_time": 0.18527865409851074,
+  "timestamp": "2025-10-21T09:56:46.198142"
 }
