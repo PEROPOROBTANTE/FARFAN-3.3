@@ -199,8 +199,14 @@ class TestCORSConfiguration:
         config = security_module.get_cors_config()
         origins = config["allow_origins"]
 
+        # Strict comparison: ensure exact match in list, not substring
         assert isinstance(origins, list)
         assert "https://example.com" in origins
+        # Verify it's an exact entry by checking all origins with example.com
+        for origin in origins:
+            if "example.com" in origin:
+                # Only allow exact matches we expect
+                assert origin in ["https://example.com", "https://api.example.com"]
 
 
 class TestComplianceHeaders:
