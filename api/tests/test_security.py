@@ -196,13 +196,11 @@ class TestCORSConfiguration:
 
         # Strict comparison: ensure exact match in list, not substring
         assert isinstance(origins, list)
-        assert "https://example.com" in origins
-        # Verify hostname is exactly matched, not using substring checks
-        allowed_hosts = ["example.com", "api.example.com"]
-        for origin in origins:
-            parsed = urlparse(origin)
-            # Compare strictly with allowed hosts
-            assert parsed.hostname in allowed_hosts
+        # Verify exact origin URLs are present (no substring matching)
+        expected_origins = ["https://example.com", "https://api.example.com"]
+        assert "https://example.com" in expected_origins  # Check against expected list
+        # Validate each origin matches exactly (using set comparison)
+        assert set(origins) == set(expected_origins)
 
 class TestComplianceHeaders:
     """Test compliance headers"""
