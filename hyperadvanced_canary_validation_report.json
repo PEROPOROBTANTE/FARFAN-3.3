@@ -1,0 +1,28 @@
+{
+  "timestamp": "2025-10-20T18:53:07.029180",
+  "total_tests_run": 43,
+  "tests_passed": 42,
+  "tests_failed": 1,
+  "import_issues": [],
+  "signature_issues": [],
+  "responsibility_map_issues": [
+    {
+      "dimension": "D2",
+      "question_id": null,
+      "mapped_module": "causal_processor",
+      "mapped_class": "CausalProcessorAdapter",
+      "mapped_method": "analyze",
+      "issue_type": "missing_method",
+      "details": "Method analyze not found in CausalProcessorAdapter. Available: analyze_counterfactual, compute_causal_effects, counterfactual_analysis, estimate_effects, extract_causal_dimensions, extract_dimensions, get_causal_dimensions, get_config, get_pdm_sections, infer_causal_structure"
+    }
+  ],
+  "cuestionario_handler_issues": [],
+  "summary": {
+    "total_import_issues": 0,
+    "total_signature_issues": 0,
+    "total_responsibility_map_issues": 1,
+    "total_cuestionario_handler_issues": 0,
+    "overall_health": "FAIL",
+    "success_rate": "97.67%"
+  }
+}
