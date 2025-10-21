@@ -45,6 +45,23 @@ User and developer guides.
 - [Acceptance Criteria](ACCEPTANCE_CRITERIA.md)
 - [CI/CD System](CICD_SYSTEM.md)
 
+## Compliance and Standards
+
+- [Contributing Guidelines](../CONTRIBUTING.md) - Development standards, determinism rules, contract enforcement, and audit requirements
+- [Code Fix Report](../CODE_FIX_REPORT.md) - Per-file change logs with SIN_CARRETA compliance tracking
+- [Telemetry Schema](TELEMETRY_SCHEMA.md) - Event formats and telemetry standards for monitoring and auditing
+- [Compliance Standards](COMPLIANCE.md) - Legal, security, accessibility, and regulatory compliance requirements
+
+## Configuration
+
+- [Environment Variables](../.env.example) - Complete list of configuration options
+- [Dashboard Configuration](../README.md#dashboard-configuration) - Dashboard setup and configuration
+
 ## Contributing
 
-See the [Development Guide](guides/AGENTS.md) for contribution guidelines.
+See the [Contributing Guidelines](../CONTRIBUTING.md) for comprehensive contribution guidelines including:
+- Development setup and workflows
+- Determinism requirements and verification
+- Contract enforcement rules (SIN_CARRETA)
+- Audit trail and traceability requirements
+- Testing standards and CI/CD validation gates
