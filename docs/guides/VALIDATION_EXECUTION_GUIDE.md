@@ -21,9 +21,17 @@ All dependencies specified in `requirements.txt` with version constraints:
 
 **Machine Learning & Transformers:**
 - `transformers==4.34.0` - Transformer models (compatible with torch 2.0.1 and tensorflow 2.13.0)
-- `torch==2.0.1` - PyTorch for deep learning
-- `tensorflow==2.13.0` - TensorFlow (avoid updating independently from torch)
-- `sentence-transformers==2.2.2` - Sentence embeddings
+- **Deep Learning Backend** (choose ONE):
+  - PyTorch (RECOMMENDED): Install via `pip install -r requirements-torch.txt`
+    - `torch==2.0.1` - PyTorch for deep learning
+    - `torchvision==0.15.2` - Computer vision utilities
+    - `torchaudio==2.0.2` - Audio processing
+  - TensorFlow: Install via `pip install -r requirements-tensorflow.txt`
+    - `tensorflow==2.13.0` - TensorFlow for deep learning
+    - `tensorflow-estimator==2.13.0` - TensorFlow Estimator API
+    - `keras==2.13.1` - High-level neural networks API
+  - See `DEPENDENCY_CONFLICTS.md` for detailed information
+- `sentence-transformers==2.2.2` - Sentence embeddings (uses PyTorch or TensorFlow as backend)
 - `beto-uncased @ https://huggingface.co/dccuchile/bert-base-spanish-wwm-uncased` - Spanish BERT model
 
 **Data Processing:**
@@ -69,7 +77,22 @@ All dependencies specified in `requirements.txt` with version constraints:
 
 ### Step 1: Install Dependencies
 ```bash
+# Install core dependencies
 pip install -r requirements.txt
+
+# Choose ONE of the following for deep learning backend:
+
+# Option 1: PyTorch (RECOMMENDED)
+pip install -r requirements-torch.txt
+
+# Option 2: TensorFlow
+# pip install -r requirements-tensorflow.txt
+
+# Option 3: Both (NOT RECOMMENDED - see DEPENDENCY_CONFLICTS.md)
+# pip install -r requirements-both.txt
+
+# Validate installation
+python validate_dependencies.py --strategy torch
 ```
 
 ### Step 2: Download Spanish NLP Models
@@ -85,8 +108,12 @@ If NVIDIA GPU is available and CUDA is installed:
 
 **Verify CUDA availability:**
 ```bash
+# For PyTorch
 python -c "import torch; print(f'CUDA Available: {torch.cuda.is_available()}')"
 python -c "import torch; print(f'CUDA Version: {torch.version.cuda}')"
+
+# For TensorFlow
+python -c "import tensorflow as tf; print(f'GPUs Available: {len(tf.config.list_physical_devices(\"GPU\"))}')"
 ```
 
 **Configure environment variables (if needed):**
@@ -97,7 +124,8 @@ export CUDA_LAUNCH_BLOCKING=1  # For debugging
 
 **Install GPU-accelerated PyTorch (if not already installed):**
 ```bash
-pip install torch==2.0.1 --index-url https://download.pytorch.org/whl/cu118
+# For CUDA 11.8
+pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
 ```
 
 **Verify GPU utilization:**

@@ -189,7 +189,13 @@ pip install -r requirements.txt -r requirements-tensorflow.txt
 | transformers==4.34.0 | 3.8 | 3.11 | Generally follows PyTorch support |
 | pydantic==2.5.0 | 3.7 | 3.12 | Full 3.12 support |
 
-**IMPORTANT:** Current Python 3.12 may have compatibility issues with torch==2.0.1 and tensorflow==2.13.0. Consider using Python 3.10 or 3.11 for production.
+**IMPORTANT:** 
+- **Python 3.12** may have compatibility issues with torch==2.0.1 and tensorflow==2.13.0
+- **RECOMMENDED:** Use Python 3.10 or 3.11 for production
+- If you must use Python 3.12:
+  - Consider upgrading to torch>=2.1.0 (requires updating other dependencies)
+  - Consider upgrading to tensorflow>=2.15.0 (requires updating other dependencies)
+  - Test thoroughly before deploying to production
 
 ## Troubleshooting
 
@@ -242,13 +248,29 @@ pip install torch==2.0.1 --index-url https://download.pytorch.org/whl/cu118
 
 ## Dependency Management Tools
 
-### 1. pip check
+### 1. validate_dependencies.py (NEW)
+Custom validation script for FARFAN dependencies:
+```bash
+# Validate PyTorch installation
+python validate_dependencies.py --strategy torch
+
+# Validate TensorFlow installation
+python validate_dependencies.py --strategy tensorflow
+
+# Validate both (if installed)
+python validate_dependencies.py --strategy both
+
+# Skip import tests
+python validate_dependencies.py --skip-imports
+```
+
+### 2. pip check
 Verifies installed packages have compatible dependencies:
 ```bash
 pip check
 ```
 
-### 2. pipdeptree
+### 3. pipdeptree
 Visualizes dependency tree:
 ```bash
 pipdeptree
@@ -257,7 +279,7 @@ pipdeptree -p tensorflow
 pipdeptree --reverse -p numpy  # Shows what depends on numpy
 ```
 
-### 3. pip-tools
+### 4. pip-tools
 Manages requirements with constraints:
 ```bash
 pip-compile requirements.in -o requirements.txt
