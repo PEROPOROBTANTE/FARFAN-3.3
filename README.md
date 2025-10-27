@@ -1,1 +1,312 @@
-# FARFAN 3.0 - Deterministic Policy Analysis PipelineA deterministic pipeline for comprehensive policy document analysis using NLP and ML techniques.## OverviewFARFAN 3.0 is a production-ready policy analysis system that processes policy documents and questionnaires through a deterministic pipeline, ensuring reproducible and auditable results.### Key Features- **Deterministic Execution**: Same input always produces same output- **Fault Tolerance**: Circuit breaker pattern prevents cascading failures- **Dependency Management**: DAG-based module orchestration- **Scalable Architecture**: Parallel execution of independent modules- **Comprehensive Testing**: Unit, integration, and E2E test coverage- **Audit Trail**: Complete execution logging and traceability## Quick Start### Installation```bash# Create virtual environmentpython3 -m venv venvsource venv/bin/activate  # On Windows: venv\Scripts\activate# Install dependenciespip install --upgrade pippip install -r requirements.txt# Download spaCy modelspython -m spacy download es_core_news_smpython -m spacy download es_core_news_lg```### Running the Pipeline```bash# Single plan analysispython run_farfan.py --plan path/to/plan.json# Batch processingpython run_farfan.py --batch path/to/plans/ --max-plans 10# With custom workerspython run_farfan.py --plan path/to/plan.json --workers 4```## Project Structure```FARFAN-3.0/├── src/                    # Source code│   ├── orchestrator/      # Core orchestration│   ├── domain/            # Business logic│   ├── adapters/          # External interfaces│   └── stages/            # Pipeline stages├── config/                # Configuration files├── tests/                 # Test suite│   ├── unit/             # Unit tests│   ├── integration/      # Integration tests│   └── e2e/              # End-to-end tests├── data/                  # Data artifacts│   ├── raw/              # Input data│   ├── processed/        # Intermediate data│   └── output/           # Results├── logs/                  # Execution traces└── docs/                  # Documentation```See [Project Structure Guide](docs/guides/PROJECT_STRUCTURE.md) for detailed organization.## Development### Setup Development Environment```bash# Install dev dependenciespip install -e ".[dev]"# Run lintersblack src/ tests/flake8 src/ tests/isort src/ tests/# Run type checkingmypy src/```### Running Tests```bash# All testspytest# Unit tests onlypytest -m unit# Integration testspytest -m integration# E2E testspytest -m e2e# Skip slow testspytest -m "not slow"# With coveragepytest --cov=src --cov-report=html```### Code Style- **Line length**: 88 characters (Black default)- **Import order**: stdlib, third-party, first-party- **Type hints**: Encouraged but not required- **Docstrings**: Google style for public APIs## Architecture### Core Components1. **QuestionRouter**: Routes questions to appropriate modules based on execution mapping2. **Choreographer**: Orchestrates module execution in correct dependency order3. **CircuitBreaker**: Prevents cascading failures with fault tolerance4. **ReportAssembly**: Assembles final reports from module outputs5. **MappingLoader**: Loads and validates execution mappings### Pipeline Stages1. **Document Preprocessing**: Policy segmentation and normalization2. **Analysis**: Semantic analysis, embedding generation, theory of change3. **Synthesis**: Financial viability, contradiction detection, final reporting### Module Execution OrderModules execute in dependency waves for optimal parallelization:- **Wave 1**: Policy segmentation, text normalization- **Wave 2**: Semantic chunking, embedding generation- **Wave 3**: Municipal analysis, theory of change- **Wave 4**: Causal analysis, contradiction detection- **Wave 5**: Financial viability synthesis## Configuration### Configuration FilesConfiguration files in `config/`:- `execution_mapping.yaml`: Question routing rules and adapter method mappings- `module_config.yaml`: Module-specific settings (if exists)- `pipeline_config.yaml`: Pipeline execution parameters (if exists)- `responsibility_map.json`: Adapter responsibility assignments### Environment VariablesConfigure FARFAN using environment variables (see `.env.example` for all options):```bash# Core ConfigurationFARFAN_ENV=development                    # Environment: development|staging|productionFARFAN_LOG_LEVEL=INFO                    # Logging level: DEBUG|INFO|WARNING|ERRORFARFAN_DATA_DIR=/path/to/data           # Data directory for input/outputFARFAN_CONFIG_DIR=/path/to/config       # Configuration directory# Pipeline SettingsFARFAN_WORKERS=4                         # Number of parallel workersFARFAN_TIMEOUT_SECONDS=3600             # Pipeline timeoutFARFAN_RETRY_ENABLED=true               # Enable retry on failuresFARFAN_MAX_RETRIES=3                    # Maximum retry attempts# DeterminismFARFAN_RANDOM_SEED=42                   # Fixed seed for reproducibilityFARFAN_DETERMINISM_ENABLED=true         # Enforce determinism checks# Circuit BreakerFARFAN_CIRCUIT_BREAKER_ENABLED=true     # Enable circuit breakerFARFAN_CIRCUIT_BREAKER_THRESHOLD=5      # Failure thresholdFARFAN_CIRCUIT_BREAKER_TIMEOUT=60       # Recovery timeout (seconds)# TelemetryFARFAN_TELEMETRY_ENABLED=true           # Enable telemetry collectionFARFAN_TELEMETRY_ENDPOINT=http://localhost:9090  # Telemetry endpointFARFAN_TELEMETRY_BATCH_SIZE=100         # Events per batch# DashboardFARFAN_DASHBOARD_ENABLED=true           # Enable web dashboardFARFAN_DASHBOARD_HOST=0.0.0.0          # Dashboard hostFARFAN_DASHBOARD_PORT=5000             # Dashboard portFARFAN_DASHBOARD_CONFIG=/path/to/dashboard_config.json# NLP ModelsFARFAN_SPACY_MODEL=es_core_news_lg      # spaCy model for SpanishFARFAN_EMBEDDING_MODEL=sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2FARFAN_MODEL_CACHE_DIR=/path/to/models  # Model cache directory# Database (if applicable)FARFAN_DB_HOST=localhost                # Database hostFARFAN_DB_PORT=5432                     # Database portFARFAN_DB_NAME=farfan                   # Database nameFARFAN_DB_USER=farfan_user              # Database userFARFAN_DB_PASSWORD=secure_password       # Database password# SecurityFARFAN_SECRET_KEY=your-secret-key-here  # Application secret keyFARFAN_ENCRYPTION_KEY=encryption-key    # Data encryption keyFARFAN_AUTH_ENABLED=false               # Enable authentication```### Dashboard ConfigurationThe monitoring dashboard (`atroz_dashboard.html`) provides real-time visualization of:- Pipeline execution status- Adapter performance metrics (P50/P95/P99 latency)- Circuit breaker states- Determinism verification results- Error rates and patterns- Audit trail events#### Dashboard Configuration FileCreate `config/dashboard_config.json`:```json{  "dashboard": {    "title": "FARFAN 3.0 Monitoring",    "refresh_interval_ms": 5000,    "theme": "dark",    "language": "es"  },  "metrics": {    "enabled_charts": [      "pipeline_status",      "adapter_performance",      "circuit_breaker_status",      "error_rates",      "determinism_results"    ],    "retention_hours": 24,    "aggregation_interval_seconds": 60  },  "alerts": {    "enabled": true,    "thresholds": {      "error_rate_percentage": 5.0,      "p99_latency_ms": 10000,      "circuit_breaker_open_count": 3    }  },  "export": {    "enabled": true,    "formats": ["json", "csv", "pdf"],    "max_export_size_mb": 100  }}```#### Starting the Dashboard```bash# Start with default configurationpython -m orchestrator.dashboard_generator# Start with custom configurationFARFAN_DASHBOARD_CONFIG=config/dashboard_config.json python -m orchestrator.dashboard_generator# Access dashboardopen http://localhost:5000```## Documentation- [Contributing Guide](CONTRIBUTING.md) - Development guidelines, determinism rules, contract enforcement- [Code Fix Report](CODE_FIX_REPORT.md) - Per-file change logs and SIN_CARRETA compliance- [Architecture Guide](docs/architecture/) - System architecture and design decisions- [API Documentation](docs/api/) - API reference and usage examples- [Development Guide](docs/guides/AGENTS.md) - Agent-based development workflows- [Project Structure](docs/guides/PROJECT_STRUCTURE.md) - Repository organization- [Telemetry Schema](docs/TELEMETRY_SCHEMA.md) - Event formats and telemetry standards- [Compliance Standards](docs/COMPLIANCE.md) - Legal, security, and accessibility requirements## Tech Stack- **Python**: 3.10+- **NLP**: spaCy, transformers, sentence-transformers, NLTK, stanza- **ML**: scikit-learn, PyTorch, TensorFlow- **Testing**: pytest with custom markers- **Code Quality**: black, flake8, isort, mypy## LicenseCopyright © 2024 FARFAN 3.0 Team. All rights reserved.## SupportFor issues, questions, or contributions, please refer to the project documentation or contact the development team.
+# FARFAN 3.0 - Deterministic Policy Analysis Pipeline
+
+A deterministic pipeline for comprehensive policy document analysis using NLP and ML techniques.
+
+## Overview
+
+FARFAN 3.0 is a production-ready policy analysis system that processes policy documents and questionnaires through a deterministic pipeline, ensuring reproducible and auditable results.
+
+### Key Features
+
+- **Deterministic Execution**: Same input always produces same output
+- **Fault Tolerance**: Circuit breaker pattern prevents cascading failures
+- **Dependency Management**: DAG-based module orchestration
+- **Scalable Architecture**: Parallel execution of independent modules
+- **Comprehensive Testing**: Unit, integration, and E2E test coverage
+- **Audit Trail**: Complete execution logging and traceability
+
+## Quick Start
+
+### Installation
+
+```bash
+# Create virtual environment
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install core dependencies
+pip install --upgrade pip
+pip install -r requirements.txt
+
+# Choose ONE deep learning backend:
+# Option 1: PyTorch (RECOMMENDED)
+pip install -r requirements-torch.txt
+
+# Option 2: TensorFlow
+# pip install -r requirements-tensorflow.txt
+
+# Option 3: Both (NOT RECOMMENDED - see DEPENDENCY_CONFLICTS.md)
+# pip install -r requirements-both.txt
+
+# Download spaCy models
+python -m spacy download es_core_news_sm
+python -m spacy download es_core_news_lg
+
+# Validate installation
+python validate_dependencies.py --strategy torch
+```
+
+> **Note:** See [DEPENDENCY_CONFLICTS.md](DEPENDENCY_CONFLICTS.md) for detailed information about managing PyTorch and TensorFlow dependencies.
+
+### Running the Pipeline
+
+```bash
+# Single plan analysis
+python run_farfan.py --plan path/to/plan.json
+
+# Batch processing
+python run_farfan.py --batch path/to/plans/ --max-plans 10
+
+# With custom workers
+python run_farfan.py --plan path/to/plan.json --workers 4
+```
+
+## Project Structure
+
+```
+FARFAN-3.0/
+├── src/                    # Source code
+│   ├── orchestrator/      # Core orchestration
+│   ├── domain/            # Business logic
+│   ├── adapters/          # External interfaces
+│   └── stages/            # Pipeline stages
+├── config/                # Configuration files
+├── tests/                 # Test suite
+│   ├── unit/             # Unit tests
+│   ├── integration/      # Integration tests
+│   └── e2e/              # End-to-end tests
+├── data/                  # Data artifacts
+│   ├── raw/              # Input data
+│   ├── processed/        # Intermediate data
+│   └── output/           # Results
+├── logs/                  # Execution traces
+└── docs/                  # Documentation
+```
+
+See [Project Structure Guide](docs/guides/PROJECT_STRUCTURE.md) for detailed organization.
+
+## Development
+
+### Setup Development Environment
+
+```bash
+# Install dev dependencies
+pip install -e ".[dev]"
+
+# Run linters
+black src/ tests/
+flake8 src/ tests/
+isort src/ tests/
+
+# Run type checking
+mypy src/
+```
+
+### Running Tests
+
+```bash
+# All tests
+pytest
+
+# Unit tests only
+pytest -m unit
+
+# Integration tests
+pytest -m integration
+
+# E2E tests
+pytest -m e2e
+
+# Skip slow tests
+pytest -m "not slow"
+
+# With coverage
+pytest --cov=src --cov-report=html
+```
+
+### Code Style
+
+- **Line length**: 88 characters (Black default)
+- **Import order**: stdlib, third-party, first-party
+- **Type hints**: Encouraged but not required
+- **Docstrings**: Google style for public APIs
+
+## Architecture
+
+### Core Components
+
+1. **QuestionRouter**: Routes questions to appropriate modules based on execution mapping
+2. **Choreographer**: Orchestrates module execution in correct dependency order
+3. **CircuitBreaker**: Prevents cascading failures with fault tolerance
+4. **ReportAssembly**: Assembles final reports from module outputs
+5. **MappingLoader**: Loads and validates execution mappings
+
+### Pipeline Stages
+
+1. **Document Preprocessing**: Policy segmentation and normalization
+2. **Analysis**: Semantic analysis, embedding generation, theory of change
+3. **Synthesis**: Financial viability, contradiction detection, final reporting
+
+### Module Execution Order
+
+Modules execute in dependency waves for optimal parallelization:
+- **Wave 1**: Policy segmentation, text normalization
+- **Wave 2**: Semantic chunking, embedding generation
+- **Wave 3**: Municipal analysis, theory of change
+- **Wave 4**: Causal analysis, contradiction detection
+- **Wave 5**: Financial viability synthesis
+
+## Configuration
+
+### Configuration Files
+
+Configuration files in `config/`:
+- `execution_mapping.yaml`: Question routing rules and adapter method mappings
+- `module_config.yaml`: Module-specific settings (if exists)
+- `pipeline_config.yaml`: Pipeline execution parameters (if exists)
+- `responsibility_map.json`: Adapter responsibility assignments
+
+### Environment Variables
+
+Configure FARFAN using environment variables (see `.env.example` for all options):
+
+```bash
+# Core Configuration
+FARFAN_ENV=development                    # Environment: development|staging|production
+FARFAN_LOG_LEVEL=INFO                    # Logging level: DEBUG|INFO|WARNING|ERROR
+FARFAN_DATA_DIR=/path/to/data           # Data directory for input/output
+FARFAN_CONFIG_DIR=/path/to/config       # Configuration directory
+
+# Pipeline Settings
+FARFAN_WORKERS=4                         # Number of parallel workers
+FARFAN_TIMEOUT_SECONDS=3600             # Pipeline timeout
+FARFAN_RETRY_ENABLED=true               # Enable retry on failures
+FARFAN_MAX_RETRIES=3                    # Maximum retry attempts
+
+# Determinism
+FARFAN_RANDOM_SEED=42                   # Fixed seed for reproducibility
+FARFAN_DETERMINISM_ENABLED=true         # Enforce determinism checks
+
+# Circuit Breaker
+FARFAN_CIRCUIT_BREAKER_ENABLED=true     # Enable circuit breaker
+FARFAN_CIRCUIT_BREAKER_THRESHOLD=5      # Failure threshold
+FARFAN_CIRCUIT_BREAKER_TIMEOUT=60       # Recovery timeout (seconds)
+
+# Telemetry
+FARFAN_TELEMETRY_ENABLED=true           # Enable telemetry collection
+FARFAN_TELEMETRY_ENDPOINT=http://localhost:9090  # Telemetry endpoint
+FARFAN_TELEMETRY_BATCH_SIZE=100         # Events per batch
+
+# Dashboard
+FARFAN_DASHBOARD_ENABLED=true           # Enable web dashboard
+FARFAN_DASHBOARD_HOST=0.0.0.0          # Dashboard host
+FARFAN_DASHBOARD_PORT=5000             # Dashboard port
+FARFAN_DASHBOARD_CONFIG=/path/to/dashboard_config.json
+
+# NLP Models
+FARFAN_SPACY_MODEL=es_core_news_lg      # spaCy model for Spanish
+FARFAN_EMBEDDING_MODEL=sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+FARFAN_MODEL_CACHE_DIR=/path/to/models  # Model cache directory
+
+# Database (if applicable)
+FARFAN_DB_HOST=localhost                # Database host
+FARFAN_DB_PORT=5432                     # Database port
+FARFAN_DB_NAME=farfan                   # Database name
+FARFAN_DB_USER=farfan_user              # Database user
+FARFAN_DB_PASSWORD=secure_password       # Database password
+
+# Security
+FARFAN_SECRET_KEY=your-secret-key-here  # Application secret key
+FARFAN_ENCRYPTION_KEY=encryption-key    # Data encryption key
+FARFAN_AUTH_ENABLED=false               # Enable authentication
+```
+
+### Dashboard Configuration
+
+The monitoring dashboard (`atroz_dashboard.html`) provides real-time visualization of:
+- Pipeline execution status
+- Adapter performance metrics (P50/P95/P99 latency)
+- Circuit breaker states
+- Determinism verification results
+- Error rates and patterns
+- Audit trail events
+
+#### Dashboard Configuration File
+
+Create `config/dashboard_config.json`:
+
+```json
+{
+  "dashboard": {
+    "title": "FARFAN 3.0 Monitoring",
+    "refresh_interval_ms": 5000,
+    "theme": "dark",
+    "language": "es"
+  },
+  "metrics": {
+    "enabled_charts": [
+      "pipeline_status",
+      "adapter_performance",
+      "circuit_breaker_status",
+      "error_rates",
+      "determinism_results"
+    ],
+    "retention_hours": 24,
+    "aggregation_interval_seconds": 60
+  },
+  "alerts": {
+    "enabled": true,
+    "thresholds": {
+      "error_rate_percentage": 5.0,
+      "p99_latency_ms": 10000,
+      "circuit_breaker_open_count": 3
+    }
+  },
+  "export": {
+    "enabled": true,
+    "formats": ["json", "csv", "pdf"],
+    "max_export_size_mb": 100
+  }
+}
+```
+
+#### Starting the Dashboard
+
+```bash
+# Start with default configuration
+python -m orchestrator.dashboard_generator
+
+# Start with custom configuration
+FARFAN_DASHBOARD_CONFIG=config/dashboard_config.json python -m orchestrator.dashboard_generator
+
+# Access dashboard
+open http://localhost:5000
+```
+
+## Documentation
+
+- [Dependency Conflicts](DEPENDENCY_CONFLICTS.md) - Managing PyTorch/TensorFlow dependency conflicts
+- [Contributing Guide](CONTRIBUTING.md) - Development guidelines, determinism rules, contract enforcement
+- [Code Fix Report](CODE_FIX_REPORT.md) - Per-file change logs and SIN_CARRETA compliance
+- [Architecture Guide](docs/architecture/) - System architecture and design decisions
+- [API Documentation](docs/api/) - API reference and usage examples
+- [Development Guide](docs/guides/AGENTS.md) - Agent-based development workflows
+- [Project Structure](docs/guides/PROJECT_STRUCTURE.md) - Repository organization
+- [Telemetry Schema](docs/TELEMETRY_SCHEMA.md) - Event formats and telemetry standards
+- [Compliance Standards](docs/COMPLIANCE.md) - Legal, security, and accessibility requirements
+
+## Tech Stack
+
+- **Python**: 3.10-3.11 (recommended); limited 3.12 support
+- **NLP**: spaCy, transformers, sentence-transformers, NLTK, stanza
+- **ML**: scikit-learn, PyTorch OR TensorFlow (see [DEPENDENCY_CONFLICTS.md](DEPENDENCY_CONFLICTS.md))
+- **Testing**: pytest with custom markers
+- **Code Quality**: black, flake8, isort, mypy
+
+## License
+
+Copyright © 2024 FARFAN 3.0 Team. All rights reserved.
+
+## Support
+
+For issues, questions, or contributions, please refer to the project documentation or contact the development team.
